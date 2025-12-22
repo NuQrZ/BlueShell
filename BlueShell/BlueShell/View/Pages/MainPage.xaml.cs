@@ -73,7 +73,7 @@ namespace BlueShell.View.Pages
 
             if (selectedItem.Tag.ToString() == "Terminal")
             {
-                //MainFrame.Navigate(typeof(MainPage));
+                MainFrame.Navigate(typeof(TerminalPage));
             }
         }
     }

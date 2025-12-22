@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BlueShell.View.Pages.TerminalPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:BlueShell.Converters"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <converters:TextTrimmer x:Key="TextTrimmer"/>
+    </Page.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <RichEditBox x:Name="Terminal"
+                         AcceptsReturn="True"
+                         AutomationProperties.Name="multi-line TextBox"
+                         AutomationProperties.AutomationId="MultiLineTextBox"
+                         Background="Transparent"
+                         FontFamily="Cascadia Mono"
+                         FontSize="16"
+                         IsSpellCheckEnabled="False"
+                         PreviewKeyDown="Terminal_PreviewKeyDown"
+                         TextChanging="Terminal_TextChanging"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollMode="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollMode="Auto"
+>
+            </RichEditBox>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid Grid.Row="0"
+                      Height="115"
+                      Margin="0, 0, 0, 0"
+                      VerticalAlignment="Top"
+                      BorderBrush="{StaticResource SystemAccentColor}"
+                      BorderThickness="0, 0, 0, 0.5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <ScrollViewer Grid.Row="0" 
+                              HorizontalScrollBarVisibility="Auto"
+                              HorizontalScrollMode="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              VerticalScrollMode="Auto">
+                    <Grid>
+                        <RadioButton x:Name="RbFolders"
+                                         VerticalAlignment="Top"
+                                         HorizontalAlignment="Left"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15"
+                                         Margin="10, 8, 0, 15"
+                                         Padding="7, 7, 0, 0">Folders</RadioButton>
+                        <RadioButton x:Name="RbFiles"
+                                         VerticalAlignment="Top"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15"
+                                         Margin="110, 8, 0, 0"
+                                         Padding="7, 7, 0, 0">Files</RadioButton>
+                        <RadioButton x:Name="RbAll"
+                                         IsChecked="True"
+                                         VerticalAlignment="Top"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15"
+                                         Margin="195, 8, 0, 0"
+                                         Padding="7, 7, 0, 0">All</RadioButton>
+                        <CheckBox x:Name="CurrentFolder"
+                                     VerticalAlignment="Top"
+                                     FontFamily="Cascadia Mono"
+                                     FontSize="15"
+                                     IsEnabled="False"
+                                     Margin="260, 8, 0, 0"
+                                     Padding="10, 7, 0, 0">This Folder</CheckBox>
+                        <AutoSuggestBox x:Name="ExtensionSearch"
+                                            Height="35"
+                                            VerticalAlignment="Top"
+                                            Margin="400, 7, 0, 0"
+                                            Width="140"
+                                            HorizontalAlignment="Left"
+                                            PlaceholderText="Extension..."
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="16"
+                                            VerticalContentAlignment="Center"></AutoSuggestBox>
+                    </Grid>
+                </ScrollViewer>
+                <Grid Grid.Row="1"
+                          Margin="10, 35, 10, 0">
+                    <TextBlock x:Name="SearchedFolder"
+                                   FontFamily="Cascadia Mono"
+                                   FontSize="16"
+                                   Margin="0, -27, 0, 0"></TextBlock>
+                    <ProgressBar x:Name="SearchProgressBar"
+                                     Margin="0, 5, 0, 0"
+                                     Minimum="0"
+                                     Maximum="100"/>
+                </Grid>
+            </Grid>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          HorizontalScrollMode="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          VerticalScrollMode="Auto"
+                  Margin="0, 115, 0, 0">
+                <Grid Padding="0, 0, 0, 10">
+                    <ListView x:Name="DataDisplay"
+                                  Background="{ThemeResource LayerOnMicaBaseAltFillColorTransparentBrush}"
+                                  Margin="0, 0, 0, 0"
+                                  SelectionMode="Multiple">
+                        <ListView.Resources>
+                            <RadialGradientBrush x:Key="TextControlBackgroundFocused">
+                                <GradientStop Color="{ThemeResource LayerOnMicaBaseAltFillColorTransparent}"></GradientStop>
+                            </RadialGradientBrush>
+                            <RadialGradientBrush x:Key="TextControlBackgroundPointerOver">
+                                <GradientStop Color="{ThemeResource LayerOnMicaBaseAltFillColorTransparent}"></GradientStop>
+                            </RadialGradientBrush>
+                        </ListView.Resources>
+                    </ListView>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>

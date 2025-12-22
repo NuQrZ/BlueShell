@@ -26,6 +26,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="View\Pages\SettingsPage.xaml" />
+	  <None Remove="View\Pages\TerminalPage.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="View\Pages\MainPage.xaml" />
@@ -44,6 +45,12 @@
 
 	<ItemGroup>
 		<Folder Include="View\Windows\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="View\Pages\TerminalPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>
