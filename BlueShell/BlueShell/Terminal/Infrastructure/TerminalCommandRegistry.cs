@@ -1,5 +1,7 @@
-﻿using BlueShell.Terminal.Abstractions;
+﻿using BlueShell.Services;
+using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Commands;
+using BlueShell.Terminal.Commands.DriveCommand;
 using System.Collections.Generic;
 
 namespace BlueShell.Terminal.Infrastructure
@@ -11,6 +13,7 @@ namespace BlueShell.Terminal.Infrastructure
             new ExitCommand(),
             new ClearCommand(),
             new VersionCommand(),
+            new DriveCommand(new DriveService())
         ];
     }
 }

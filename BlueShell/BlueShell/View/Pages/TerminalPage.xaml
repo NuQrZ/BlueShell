@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:converters="using:BlueShell.Converters"
+    xmlns:model="using:BlueShell.Model"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -106,7 +107,7 @@
                           HorizontalScrollMode="Auto"
                           VerticalScrollBarVisibility="Auto"
                           VerticalScrollMode="Auto"
-                  Margin="0, 115, 0, 0">
+                          Margin="0, 115, 0, 0">
                 <Grid Padding="0, 0, 0, 10">
                     <ListView x:Name="DataDisplay"
                                   Background="{ThemeResource LayerOnMicaBaseAltFillColorTransparentBrush}"
@@ -120,6 +121,80 @@
                                 <GradientStop Color="{ThemeResource LayerOnMicaBaseAltFillColorTransparent}"></GradientStop>
                             </RadialGradientBrush>
                         </ListView.Resources>
+                        <ListView.Header>
+                            <model:DataDisplayHeader
+                                NameHeader=""
+                                TypeHeader=""
+                                SizeHeader="" />
+                        </ListView.Header>
+                        <ListView.HeaderTemplate>
+                            <DataTemplate x:DataType="model:DataDisplayHeader">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind NameHeader}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"                                      
+                                               Margin="{x:Bind NameMargin}"/>
+                                    <TextBlock Grid.Column="0" Text="{x:Bind TypeHeader}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               Margin="{x:Bind TypeMargin}"/>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind SizeHeader}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               Margin="{x:Bind SizeMargin}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="model:DataDisplayItem">
+                                <Grid>
+                                    <Image Source="{x:Bind ItemIcon}" 
+                                           Width="{x:Bind ImageSize}"        
+                                           Height="{x:Bind ImageSize}"
+                                           HorizontalAlignment="Left"
+                                           Margin="{x:Bind ImageMargin}"/>
+                                    <TextBlock Text="{x:Bind ItemName, Converter={StaticResource TextTrimmer}, ConverterParameter = 60}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               Padding="{x:Bind TextPadding}"
+                                               VerticalAlignment="Center"
+                                               Margin="14, 0, 0, 0"/>
+                                    <ProgressBar Value="{x:Bind TakenSpace}"
+                                                 Width="260"
+                                                 Minimum="0"
+                                                 Maximum="{x:Bind TotalSize}"
+                                                 Visibility="{x:Bind IsTakenSpaceVisible}"
+                                                 Foreground="{x:Bind Color}"
+                                                 Margin="{x:Bind ProgressMargin}"
+                                                 HorizontalAlignment="Left"/>
+                                    <TextBlock Text="{x:Bind ItemType}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               VerticalAlignment="Center"
+                                               Padding="0, 0, 0, 0"
+                                               Margin="{x:Bind ItemTypeMargin}"/>
+                                    <TextBlock Text="{x:Bind ItemSize}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               VerticalAlignment="Center"
+                                               Visibility="{x:Bind IsSizeVisible}"
+                                               Padding="0, 0, 0, 0"
+                                               Margin="542, 0, 0, 0"/>
+                                    <TextBlock Text="{x:Bind ItemSizeType}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               VerticalAlignment="Center"
+                                               Padding="0, 0, 0, 0"
+                                               Margin="680, 0, 0, 0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
             </ScrollViewer>
