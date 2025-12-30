@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlueShell.Services.Wrappers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,9 +26,9 @@ namespace BlueShell.Services
             return driveName;
         }
 
-        public async Task<List<DriveEntry>> GetDrives()
+        public async Task<List<DriveItem>> GetDrives()
         {
-            List<DriveEntry> driveEntries = [];
+            List<DriveItem> driveEntries = [];
             DriveInfo[] drives = DriveInfo.GetDrives();
             foreach (DriveInfo driveInfo in drives)
             {
@@ -44,7 +45,7 @@ namespace BlueShell.Services
                     continue;
                 }
 
-                DriveEntry driveEntry = new()
+                DriveItem driveItem = new()
                 {
                     DisplayName = driveName,
                     DriveInfo = driveInfo,
@@ -52,7 +53,7 @@ namespace BlueShell.Services
                     TotalSize = totalSize
                 };
 
-                driveEntries.Add(driveEntry);
+                driveEntries.Add(driveItem);
             }
 
             return driveEntries;

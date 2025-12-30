@@ -1,5 +1,6 @@
 ﻿using BlueShell.Model;
 using BlueShell.Services;
+using BlueShell.Services.Wrappers;
 using BlueShell.Terminal.Abstractions;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,32 +9,47 @@ using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Commands.DriveCommand
 {
-    public sealed class DriveCommand(IDriveService driveService) : ITerminalCommand
+    public sealed class DriveCommand(IDriveService driveService, FileSystemService fileSystemService) : ITerminalCommand
     {
+        private static readonly string[] DrivePatterns =
+        [
+            @"^Drive\s*$",
+            """^Drive\s+(?<Drive>"[^"]+")\s*$""",
+            @"^Drive\s+(?<Drive>\[-?\d+\])\s*$",
+            @"^Drive\s+-(?<Operation>\S+)\s*$",
+            """^Drive\s+(?<Drive>"[^"]+")\s+-(?<Operation>\S+)\s*$""",
+            @"^Drive\s+(?<Drive>\[-?\d+\])\s+-(?<Operation>\S+)\s*$"
+        ];
+
         public string CommandName => "Drive";
         public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
-            string[] patterns =
-            [
-                @"^Drive\s+-(?<Operation>\S+)\s*$",
-                "^Drive\\s+\"(?<Drive>[^\"]+)\"\\s+-(?<Operation>\\S+)\\s*$",
-                @"^Drive\s+(?<Drive>\[-?\d+\])\s+-(?<Operation>\S+)\s*$"
-            ];
+            string drive = string.Empty;
+            string operation = string.Empty;
 
-
-            string drive = "";
-            string operation = "";
-
-            foreach (string pattern in patterns)
+            foreach (string pattern in DrivePatterns)
             {
-                Match match = Regex.Match(commandLine, pattern);
+                Match match = Regex.Match(
+                    commandLine,
+                    pattern,
+                    RegexOptions.IgnoreCase | RegexOptions.Compiled
+                );
+
                 if (!match.Success)
                 {
                     continue;
                 }
 
-                drive = match.Groups["Drive"].Value;
-                operation = match.Groups["Operation"].Value;
+                if (match.Groups["Drive"]?.Success == true)
+                {
+                    drive = match.Groups["Drive"].Value;
+                }
+
+                if (match.Groups["Operation"]?.Success == true)
+                {
+                    operation = match.Groups["Operation"].Value;
+                }
+
                 break;
             }
 
@@ -53,11 +69,11 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 case "GetDrives":
                     context.Output.PrintLine("\nDisplaying all available drives!\n", TerminalMessageKind.Success);
-                    context.DataDisplay.SetHeader(DriveCommandUI.CreateHeaderType1());
-                    List<DriveEntry> drives = await driveService.GetDrives();
+                    context.DataDisplay.SetHeader(DriveCommandUI.CreateDriveHeader());
+                    List<DriveItem> drives = await driveService.GetDrives();
                     foreach (DataDisplayItem dataDisplayItem in drives.Select(DriveCommandUI.CreateDriveItem))
                     {
-                        await DriveCommandUI.ConfigureDataItem(dataDisplayItem);
+                        await DriveCommandUI.ConfigureDriveDataItem(dataDisplayItem);
                         context.DataDisplay.Add(dataDisplayItem);
                     }
                     break;
@@ -71,7 +87,21 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                             break;
                         }
 
-                        context.Output.PrintLine($"\n>> Open not implemented yet for {driveTarget}.\n", TerminalMessageKind.Info);
+                        context.Output.PrintLine($"\nOpening {driveTarget}...\n", TerminalMessageKind.Info);
+                        context.DataDisplay.SetHeader(DriveCommandUI.CreateFileSystemHeader());
+                        List<FileSystemItem> folders = fileSystemService.LoadFolders(driveTarget);
+                        List<FileSystemItem> files = fileSystemService.LoadFiles(driveTarget);
+
+                        foreach (DataDisplayItem dataDisplayItem in folders.Select(DriveCommandUI.CreateFileSystemItem))
+                        {
+                            await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
+                            context.DataDisplay.Add(dataDisplayItem);
+                        }
+                        foreach (DataDisplayItem dataDisplayItem in files.Select(DriveCommandUI.CreateFileSystemItem))
+                        {
+                            await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
+                            context.DataDisplay.Add(dataDisplayItem);
+                        }
                         break;
                     }
                 case "Properties":
@@ -113,7 +143,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 return index < 0 ? $"Invalid index: {index}!" : driveToken;
             }
 
-            List<DriveEntry> drives = await driveService.GetDrives();
+            List<DriveItem> drives = await driveService.GetDrives();
             int driveCount = drives.Count;
 
             return drives[index % driveCount].DriveInfo.Name;

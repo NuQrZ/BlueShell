@@ -132,22 +132,24 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition/>
-                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
+                                    <TextBlock Grid.Column="0" 
                                                Text="{x:Bind NameHeader}"
                                                FontFamily="Cascadia Mono"
                                                FontSize="14"                                      
                                                Margin="{x:Bind NameMargin}"/>
-                                    <TextBlock Grid.Column="0" Text="{x:Bind TypeHeader}"
-                                               FontFamily="Cascadia Mono"
-                                               FontSize="14"
-                                               Margin="{x:Bind TypeMargin}"/>
-                                    <TextBlock Grid.Column="1" Text="{x:Bind SizeHeader}"
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{x:Bind SizeHeader}"
                                                FontFamily="Cascadia Mono"
                                                FontSize="14"
                                                Margin="{x:Bind SizeMargin}"/>
+                                    <TextBlock Grid.Column="2" 
+                                               Text="{x:Bind TypeHeader}"
+                                               FontFamily="Cascadia Mono"
+                                               FontSize="14"
+                                               Margin="{x:Bind TypeMargin}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>

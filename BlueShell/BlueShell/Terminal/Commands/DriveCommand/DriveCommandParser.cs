@@ -15,6 +15,11 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 return ("\n>> Drive and operation parameters cannot be empty!\n", false, TerminalMessageKind.Warning);
             }
 
+            if (string.IsNullOrEmpty(drive))
+            {
+                return ("\n>> Drive cannot be empty!\n", false, TerminalMessageKind.Warning);
+            }
+
             if (string.IsNullOrWhiteSpace(operation))
             {
                 return ("\n>> Operation cannot be empty!\n", false, TerminalMessageKind.Warning);
@@ -23,26 +28,14 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             switch (operation)
             {
                 case "GetDrives":
-                    if (!string.IsNullOrWhiteSpace(drive))
-                    {
-                        return (
-                            "\n>> Operation \"-GetDrives\" does not take any drive parameters!\n",
-                            false,
-                            TerminalMessageKind.Warning
-                        );
-                    }
-                    return ("", true, TerminalMessageKind.Success);
+                    return !string.IsNullOrWhiteSpace(drive) ? ("\n>> Operation \"-GetDrives\" does not take any drive parameters!\n", false, TerminalMessageKind.Warning) : ("", true, TerminalMessageKind.Success);
 
                 case "Open":
                 case "Properties":
                 case "Advanced":
                     if (string.IsNullOrWhiteSpace(drive))
                     {
-                        return (
-                            "\n>> Missing drive. Use for example: Drive \"C:\\\" -Open OR Drive [1] -Open\n",
-                            false,
-                            TerminalMessageKind.Warning
-                        );
+                        return ("\n>> Missing drive. Use for example: Drive \"C:\\\" -Open OR Drive [1] -Open\n", false, TerminalMessageKind.Warning);
                     }
 
                     if (IndexRegex.IsMatch(drive) || PathRegex.IsMatch(drive))
@@ -50,18 +43,10 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         return ("", true, TerminalMessageKind.Success);
                     }
 
-                    return (
-                        "\n>> Drive must be a quoted path like \"C:\\\" or an index like [1].\n",
-                        false,
-                        TerminalMessageKind.Warning
-                    );
+                    return ("\n>> Drive must be a quoted path like \"C:\\\" or an index like [1].\n", false, TerminalMessageKind.Warning);
 
                 default:
-                    return (
-                        $"\n>> Operation \"{operation}\" is unknown!\n",
-                        false,
-                        TerminalMessageKind.Error
-                    );
+                    return ($"\n>> Operation \"{operation}\" is unknown!\n", false, TerminalMessageKind.Error);
             }
         }
 

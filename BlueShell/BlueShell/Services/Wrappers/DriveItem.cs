@@ -1,8 +1,8 @@
 ﻿using System.IO;
 
-namespace BlueShell.Services
+namespace BlueShell.Services.Wrappers
 {
-    public sealed class DriveEntry
+    public sealed class DriveItem
     {
         public required DriveInfo DriveInfo { get; init; }
         public required string DisplayName { get; init; }

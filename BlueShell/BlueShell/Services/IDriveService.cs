@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using BlueShell.Services.Wrappers;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace BlueShell.Services
 {
     public interface IDriveService
     {
-        Task<List<DriveEntry>> GetDrives();
+        Task<List<DriveItem>> GetDrives();
         DriveInfo? GetDrive(string filePath);
     }
 }

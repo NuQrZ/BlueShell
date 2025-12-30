@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -37,28 +38,42 @@ namespace BlueShell.Core
             { "-Open",        Color.FromArgb(255,  20, 160, 170) }  // teal-green (not success green)
         };
 
+        public static string ReturnSizeType(long sizeInBytes)
+        {
+            if (sizeInBytes == 0)
+            {
+                return "B";
+            }
+
+            int order = (int)Math.Log(sizeInBytes, 1024);
+            string[] units = ["B", "KB", "MB", "GB", "TB", "PB"];
+
+            return units[Math.Min(order, units.Length - 1)];
+        }
+
         public static async Task<BitmapImage?> GetItemIcon(string? filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
-
+            {
                 return null;
+            }
 
             try
             {
-                StorageItemThumbnail? thumb = null;
+                StorageItemThumbnail? thumbnail = null;
 
                 if (Directory.Exists(filePath))
                 {
-                    var folder = await StorageFolder.GetFolderFromPathAsync(filePath);
-                    thumb = await folder.GetThumbnailAsync(
+                    StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(filePath);
+                    thumbnail = await folder.GetThumbnailAsync(
                         ThumbnailMode.SingleItem,
                         40,
                         ThumbnailOptions.UseCurrentScale);
                 }
                 else if (File.Exists(filePath))
                 {
-                    var file = await StorageFile.GetFileFromPathAsync(filePath);
-                    thumb = await file.GetThumbnailAsync(
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(filePath);
+                    thumbnail = await file.GetThumbnailAsync(
                         ThumbnailMode.SingleItem,
                         40,
                         ThumbnailOptions.UseCurrentScale);
@@ -68,17 +83,17 @@ namespace BlueShell.Core
                     return null;
                 }
 
-                if (thumb is null || thumb.Size == 0)
+                if (thumbnail is null || thumbnail.Size == 0)
                 {
-                    thumb?.Dispose();
+                    thumbnail?.Dispose();
                     return null;
                 }
 
-                using (thumb)
+                using (thumbnail)
                 {
-                    var bmp = new BitmapImage();
-                    await bmp.SetSourceAsync(thumb);
-                    return bmp;
+                    BitmapImage bitmapImage = new();
+                    await bitmapImage.SetSourceAsync(thumbnail);
+                    return bitmapImage;
                 }
             }
             catch (UnauthorizedAccessException)
