@@ -21,7 +21,7 @@ namespace BlueShell.ViewModel
                 return;
             }
 
-            IsRunning = false;
+            IsRunning = true;
 
             if (_cancellationTokenSource != null)
             {

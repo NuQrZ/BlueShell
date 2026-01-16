@@ -12,7 +12,7 @@ namespace BlueShell.Model
         public string? Color { get; set; }
         public BitmapImage? ItemIcon { get; set; }
         public int ImageSize { get; set; }
-        public DriveInfo? DriveInfo { get; init; }
+        public string? DriveFilePath { get; set; }
         public DirectoryInfo? DirectoryInfo { get; set; }
         public FileInfo? FileInfo { get; set; }
         public double TakenSpace { get; init; }

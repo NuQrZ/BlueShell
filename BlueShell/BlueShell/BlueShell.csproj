@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
@@ -13,20 +13,20 @@
 		<LangVersion>preview</LangVersion>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Content Include="Assets\CPU.ico" />
-	  <Content Include="Assets\Graphics Card.ico" />
-	  <Content Include="Assets\Help.ico" />
-	  <Content Include="Assets\Motherboard.ico" />
-	  <Content Include="Assets\Processes.ico" />
-	  <Content Include="Assets\System Info.ico" />
-	  <Content Include="Assets\Terminal.ico" />
-	  <Content Include="Assets\Web.ico" />
-	  <Content Include="Assets\Wifi.ico" />
-	  <Content Include="Assets\Windows 11.ico" />
+		<Content Include="Assets\CPU.ico" />
+		<Content Include="Assets\Graphics Card.ico" />
+		<Content Include="Assets\Help.ico" />
+		<Content Include="Assets\Motherboard.ico" />
+		<Content Include="Assets\Processes.ico" />
+		<Content Include="Assets\System Info.ico" />
+		<Content Include="Assets\Terminal.ico" />
+		<Content Include="Assets\Web.ico" />
+		<Content Include="Assets\Wifi.ico" />
+		<Content Include="Assets\Windows 11.ico" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Remove="View\Pages\SettingsPage.xaml" />
-	  <None Remove="View\Pages\TerminalPage.xaml" />
+		<None Include="View\Pages\SettingsPage.xaml" />
+		<None Include="View\Pages\TerminalPage.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="View\Pages\MainPage.xaml" />
@@ -39,24 +39,21 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7463" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+		<PackageReference Include="System.Private.Uri" Version="4.3.2" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="View\Windows\" />
+		<Page Update="View\Pages\TerminalPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="View\Pages\TerminalPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Page Update="View\Pages\SettingsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
+		<Page Update="View\Pages\SettingsPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
 	</ItemGroup>
 
 	<ItemGroup>

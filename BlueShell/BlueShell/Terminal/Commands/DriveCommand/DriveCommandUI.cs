@@ -3,6 +3,11 @@ using BlueShell.Model;
 using BlueShell.Services.Wrappers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Commands.DriveCommand
@@ -18,7 +23,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 TypeHeader = "Type",
                 SubFoldersHeader = "",
                 NameMargin = new Thickness(110, 10, 0, 10),
-                SizeMargin = new Thickness(265, 10, 0, 10),
+                SizeMargin = new Thickness(255, 10, 0, 10),
                 TypeMargin = new Thickness(200, 10, 0, 10),
                 SubFoldersMargin = new Thickness(0, 0, 0, 0)
             };
@@ -43,11 +48,11 @@ namespace BlueShell.Terminal.Commands.DriveCommand
         {
             return new DataDisplayItem()
             {
-                ItemName = driveItem.DisplayName,
-                ItemType = "Drive",
-                DriveInfo = driveItem.DriveInfo,
-                TakenSpace = driveItem.TakenSpaceBytes,
-                TotalSize = driveItem.TotalSize
+                ItemName = driveItem.VolumeLabel,
+                ItemType = driveItem.DriveType + " Drive",
+                TakenSpace = driveItem.UsedBytes,
+                TotalSize = driveItem.TotalBytes,
+                DriveFilePath = driveItem.RootPath
             };
         }
 
@@ -60,7 +65,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 ItemSizeType = fileSystemItem.ItemSizeType,
                 ItemSize = fileSystemItem.ItemSize,
                 DirectoryInfo = fileSystemItem.DirectoryInfo,
-                FileInfo = fileSystemItem.FileInfo
+                FileInfo = fileSystemItem.FileInfo,
             };
         }
 
@@ -71,7 +76,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             dataDisplayItem.ProgressMargin = new Thickness(400, 0, 0, 0);
             dataDisplayItem.ItemTypeMargin = new Thickness(710, 0, 0, 0);
 
-            string? filePath = dataDisplayItem.DriveInfo?.RootDirectory.FullName;
+            string? filePath = dataDisplayItem.DriveFilePath;
             BitmapImage? itemIcon = await Utilities.GetItemIcon(filePath);
             double takenSpace = dataDisplayItem.TakenSpace;
 
@@ -89,9 +94,10 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             dataDisplayItem.ProgressMargin = new Thickness(400, 0, 0, 0);
             dataDisplayItem.ItemTypeMargin = new Thickness(680, 0, 0, 0);
 
-            string? filePath = dataDisplayItem.DirectoryInfo != null ? dataDisplayItem.DirectoryInfo?.FullName : dataDisplayItem.FileInfo?.FullName;
+            string? filePath = dataDisplayItem.DirectoryInfo != null
+                ? dataDisplayItem.DirectoryInfo?.FullName
+                : dataDisplayItem.FileInfo?.FullName;
             BitmapImage? itemIcon = await Utilities.GetItemIcon(filePath);
-            double takenSpace = dataDisplayItem.TakenSpace;
 
             dataDisplayItem.ItemIcon = itemIcon;
             dataDisplayItem.ImageSize = 40;

@@ -1,4 +1,11 @@
+using BlueShell.Core;
+using BlueShell.Terminal.Abstractions;
+using BlueShell.Terminal.Infrastructure;
+using BlueShell.Terminal.WinUI;
+using BlueShell.ViewModel;
 using Microsoft.UI;
+using Microsoft.UI.Input;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -7,29 +14,32 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI;
-using BlueShell.Core;
-using BlueShell.Terminal.Abstractions;
-using BlueShell.Terminal.Infrastructure;
-using BlueShell.Terminal.WinUI;
-using BlueShell.ViewModel;
-using Microsoft.UI.Text;
+using Windows.UI.Core;
 
 namespace BlueShell.View.Pages
 {
     public sealed partial class TerminalPage
     {
         private const string Prompt = "Terminal > ";
+        private const int MaxPasteChars = 50000;
+        private const int PasteChunkSize = 2000;
 
         private int _inputStart;
         private int _enterCount;
 
         private bool _suppressHighlight;
+        private bool _splitView = true;
+
         private DispatcherTimer? _highLightTimer;
 
         private TerminalViewModel? _terminalViewModel;
         private TerminalOutput? _terminalOutput;
+
+        private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
+        private GridLength _savedDisplayWidth = new(3, GridUnitType.Star);
 
         public TerminalPage()
         {
@@ -46,7 +56,7 @@ namespace BlueShell.View.Pages
                 TerminalCommandDispatcher dispatcher =
                     new(TerminalCommandRegistry.CreateDefault());
 
-                _terminalViewModel = new(dispatcher,
+                _terminalViewModel = new TerminalViewModel(dispatcher,
                     () => new TerminalCommandContext(_terminalOutput, dataDisplay, CancellationToken.None));
 
                 _suppressHighlight = true;
@@ -64,58 +74,74 @@ namespace BlueShell.View.Pages
             };
         }
 
-        private void HighLightTimer_Tick(object? sender, object e)
+        private void HighlightKeyWords()
         {
-            _highLightTimer?.Stop();
-            HighlightKeyWords();
-        }
+            RichEditTextDocument textDocument = Terminal.Document;
 
-        private async void Terminal_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            try
+            int end = textDocument.GetRange(0, int.MaxValue).EndPosition;
+            if (end <= _inputStart) return;
+
+            ITextRange commandRange = textDocument.GetRange(_inputStart, end);
+            commandRange.GetText(TextGetOptions.None, out string commandText);
+            commandText = commandText.TrimEnd('\r', '\n');
+
+            commandRange.CharacterFormat.ForegroundColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
+            commandRange.CharacterFormat.Bold = FormatEffect.Off;
+
+            var quotedRanges = new List<(int Start, int End)>();
+
+            const string quotePattern = "\"(?:\\\\.|[^\"\\\\])*\"";
+
+            Color stringColor = ActualTheme == ElementTheme.Light
+                ? Color.FromArgb(255, 186, 85, 211)
+                : Colors.DarkOrange;
+
+            foreach (Match m in Regex.Matches(commandText, quotePattern))
             {
-                RichEditTextDocument textDocument = Terminal.Document;
-                ITextSelection selection = textDocument.Selection;
+                quotedRanges.Add((m.Index, m.Index + m.Length));
 
-                if (e.Key == VirtualKey.Enter)
-                {
-                    e.Handled = true;
-                    await SubmitCurrentLineAsync();
-                    return;
-                }
+                ITextRange strRange = textDocument.GetRange(
+                    _inputStart + m.Index,
+                    _inputStart + m.Index + m.Length);
 
-
-                if (e.Key == VirtualKey.Left)
-                {
-                    if (selection.StartPosition <= _inputStart)
-                    {
-                        e.Handled = true;
-                        selection.SetRange(_inputStart, _inputStart);
-                    }
-                }
-
-                if (e.Key == VirtualKey.Back)
-                {
-                    if (selection.StartPosition <= _inputStart)
-                    {
-                        e.Handled = true;
-                    }
-                }
-
-                if (e.Key == VirtualKey.Home)
-                {
-                    e.Handled = true;
-                    selection.SetRange(_inputStart, _inputStart);
-                }
-
-                if (e.Key is VirtualKey.Up or VirtualKey.Down)
-                {
-                    e.Handled = true;
-                }
+                strRange.CharacterFormat.ForegroundColor = stringColor;
+                strRange.CharacterFormat.Bold = FormatEffect.On;
             }
-            catch (Exception exception)
+
+            static bool IsInsideQuotes(int index, List<(int Start, int End)> ranges)
             {
-                _terminalOutput?.PrintLine(exception.Message, TerminalMessageKind.Error);
+                foreach (var (s, e) in ranges)
+                    if (index >= s && index < e)
+                        return true;
+                return false;
+            }
+
+            Dictionary<string, Color> keywordColors = ActualTheme == ElementTheme.Light
+                ? Utilities.LightThemeKeywordColors
+                : Utilities.DarkThemeKeywordColors;
+
+            foreach (KeyValuePair<string, Color> keywordColor in keywordColors)
+            {
+                string keyword = keywordColor.Key;
+                Color color = keywordColor.Value;
+
+                string pattern = keyword.StartsWith("-", StringComparison.Ordinal)
+                    ? $@"(?<!\S){Regex.Escape(keyword)}(?!\S)"
+                    : $@"\b{Regex.Escape(keyword)}\b";
+
+                foreach (Match match in Regex.Matches(commandText, pattern, RegexOptions.IgnoreCase))
+                {
+                    if (IsInsideQuotes(match.Index, quotedRanges))
+                    {
+                        continue;
+                    }
+
+                    ITextRange hitRange = textDocument.GetRange(
+                        _inputStart + match.Index,
+                        _inputStart + match.Index + match.Length);
+
+                    hitRange.CharacterFormat.ForegroundColor = color;
+                }
             }
         }
 
@@ -178,86 +204,138 @@ namespace BlueShell.View.Pages
             _suppressHighlight = false;
         }
 
-        private void HighlightKeyWords()
+        public void ToggleLayout()
         {
-            RichEditTextDocument textDocument = Terminal.Document;
-
-            int end = textDocument.GetRange(0, int.MaxValue).EndPosition;
-            if (end <= _inputStart) return;
-
-            ITextRange commandRange = textDocument.GetRange(_inputStart, end);
-            commandRange.GetText(TextGetOptions.None, out string commandText);
-            commandText = commandText.TrimEnd('\r', '\n');
-
-            commandRange.CharacterFormat.ForegroundColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
-            commandRange.CharacterFormat.Bold = FormatEffect.Off;
-
-            var quotedRanges = new List<(int Start, int End)>();
-
-            const string quotePattern = "\"(.*?)\"";
-
-            Color stringColor = ActualTheme == ElementTheme.Light
-                ? Color.FromArgb(255, 186, 85, 211)
-                : Colors.DarkOrange;
-
-            foreach (Match m in Regex.Matches(commandText, quotePattern))
+            _splitView = !_splitView;
+            if (_splitView)
             {
-                quotedRanges.Add((m.Index, m.Index + m.Length));
+                DataDisplayGrid.Visibility = Visibility.Visible;
 
-                ITextRange strRange = textDocument.GetRange(
-                    _inputStart + m.Index,
-                    _inputStart + m.Index + m.Length);
-
-                strRange.CharacterFormat.ForegroundColor = stringColor;
-                strRange.CharacterFormat.Bold = FormatEffect.On;
+                TerminalColumnDefinition.Width = _savedTerminalWidth;
+                DisplayColumnDefinition.Width = _savedDisplayWidth;
             }
-
-            static bool IsInsideQuotes(int index, List<(int Start, int End)> ranges)
+            else
             {
-                foreach (var (s, e) in ranges)
-                    if (index >= s && index < e)
-                        return true;
-                return false;
-            }
-
-            Dictionary<string, Color> keywordColors = ActualTheme == ElementTheme.Light
-                ? Utilities.LightThemeKeywordColors
-                : Utilities.DarkThemeKeywordColors;
-
-            foreach (KeyValuePair<string, Color> keywordColor in keywordColors)
-            {
-                string keyword = keywordColor.Key;
-                Color color = keywordColor.Value;
-
-                string pattern = keyword.StartsWith("-", StringComparison.Ordinal)
-                    ? $@"(?<!\S){Regex.Escape(keyword)}(?!\S)"
-                    : $@"\b{Regex.Escape(keyword)}\b";
-
-                foreach (Match match in Regex.Matches(commandText, pattern, RegexOptions.IgnoreCase))
+                if (TerminalColumnDefinition.Width.Value > 0)
                 {
-                    if (IsInsideQuotes(match.Index, quotedRanges))
-                    {
-                        continue;
-                    }
-
-                    ITextRange hitRange = textDocument.GetRange(
-                        _inputStart + match.Index,
-                        _inputStart + match.Index + match.Length);
-
-                    hitRange.CharacterFormat.ForegroundColor = color;
+                    _savedTerminalWidth = TerminalColumnDefinition.Width;
                 }
+
+                if (DisplayColumnDefinition.Width.Value > 0)
+                {
+                    _savedDisplayWidth = DisplayColumnDefinition.Width;
+                }
+
+                DataDisplayGrid.Visibility = Visibility.Collapsed;
+                DisplayColumnDefinition.Width = new GridLength(0);
+
+                TerminalColumnDefinition.Width = new GridLength(1, GridUnitType.Star);
             }
         }
 
+        private void HighLightTimer_Tick(object? sender, object e)
+        {
+            _highLightTimer?.Stop();
+            HighlightKeyWords();
+        }
+
+        private async void Terminal_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            try
+            {
+                RichEditTextDocument document = Terminal.Document;
+                ITextSelection textSelection = document.Selection;
+
+                bool ctrlDown =
+                    (InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) & CoreVirtualKeyStates.Down) ==
+                    CoreVirtualKeyStates.Down;
+
+                if (e.Key == VirtualKey.Enter)
+                {
+                    e.Handled = true;
+                    await SubmitCurrentLineAsync();
+                    return;
+                }
+
+                if (textSelection.StartPosition < _inputStart || textSelection.EndPosition < _inputStart)
+                {
+                    if (!(ctrlDown && e.Key is VirtualKey.A or VirtualKey.C))
+                    {
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                    }
+                }
+
+                if (ctrlDown)
+                {
+                    switch (e.Key)
+                    {
+                        case VirtualKey.A:
+                            e.Handled = true;
+                            Terminal.Document.Selection.SetRange(0, int.MaxValue);
+                            return;
+
+                        case VirtualKey.C:
+                            return;
+                    }
+                }
+
+                if (textSelection.Length > 0 && (textSelection.StartPosition < _inputStart || textSelection.EndPosition < _inputStart))
+                {
+                    switch (e.Key)
+                    {
+                        case VirtualKey.Back:
+                        case VirtualKey.Delete:
+                            return;
+                    }
+
+                    switch (ctrlDown)
+                    {
+                        case true when e.Key is VirtualKey.X:
+                            e.Handled = true;
+                            return;
+                    }
+                }
+
+                if (textSelection.Length == 0)
+                {
+                    switch (e.Key)
+                    {
+                        case VirtualKey.Left when textSelection.StartPosition <= _inputStart:
+                        case VirtualKey.Home when textSelection.StartPosition <= _inputStart:
+                            e.Handled = true;
+                            textSelection.SetRange(_inputStart, _inputStart);
+                            return;
+                        case VirtualKey.Back when textSelection.StartPosition <= _inputStart:
+                            e.Handled = true;
+                            return;
+                    }
+                }
+                else
+                {
+                    if (e.Key == VirtualKey.Home)
+                    {
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                    }
+                }
+
+                if (e.Key is VirtualKey.Up or VirtualKey.Down || ctrlDown && e.Key == VirtualKey.E)
+                {
+                    e.Handled = true;
+                }
+            }
+            catch (Exception exception)
+            {
+                _terminalOutput?.PrintLine(exception.Message, TerminalMessageKind.Error);
+            }
+        }
 
         private void Terminal_TextChanging(RichEditBox sender, RichEditBoxTextChangingEventArgs args)
         {
             if (_suppressHighlight)
-            {
-                return;
-            }
-
-            if (sender.Document.Selection.StartPosition < _inputStart)
             {
                 return;
             }
@@ -268,6 +346,66 @@ namespace BlueShell.View.Pages
 
             _highLightTimer?.Stop();
             _highLightTimer?.Start();
+        }
+
+        private static string SanitizePaste(string pastedText)
+        {
+            pastedText = pastedText.Replace("\r\n", "\n").Replace("\r", "\n");
+
+            pastedText = pastedText.Replace("\n", " ");
+            pastedText = pastedText.Replace("\t", " ");
+
+            return pastedText;
+        }
+
+        private async void Terminal_Paste(object sender, TextControlPasteEventArgs e)
+        {
+            try
+            {
+                e.Handled = true;
+
+                DataPackageView content = Clipboard.GetContent();
+                if (content == null || !content.Contains(StandardDataFormats.Text))
+                {
+                    return;
+                }
+
+                string pastedText = SanitizePaste(await content.GetTextAsync());
+
+                string[] lines = pastedText.Split('\n');
+
+                RichEditTextDocument document = Terminal.Document;
+                ITextSelection textSelection = document.Selection;
+
+                int start = textSelection.StartPosition;
+                int end = textSelection.EndPosition;
+
+                if (start < _inputStart)
+                {
+                    return;
+                }
+
+                if (end < _inputStart)
+                {
+                    return;
+                }
+
+                foreach (var line in lines)
+                {
+                    string fixedLine = line.Replace("\t", "");
+
+                    textSelection.SetRange(start, end);
+
+                    await Task.Delay(30);
+
+                    textSelection.SetText(TextSetOptions.None, string.Empty);
+                    textSelection.SetText(TextSetOptions.None, fixedLine);
+                }
+            }
+            catch (Exception exception)
+            {
+                _terminalOutput?.PrintLine(exception.Message, TerminalMessageKind.Error);
+            }
         }
     }
 }

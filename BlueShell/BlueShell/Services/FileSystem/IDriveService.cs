@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace BlueShell.Services
+namespace BlueShell.Services.FileSystem
 {
     public interface IDriveService
     {

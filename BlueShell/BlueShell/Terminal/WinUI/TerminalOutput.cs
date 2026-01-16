@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using Windows.UI;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlueShell.Terminal.WinUI
 {
@@ -50,7 +49,6 @@ namespace BlueShell.Terminal.WinUI
             };
         }
 
-
         private void ResetTypingStyle()
         {
             RichEditTextDocument textDocument = terminal.Document;
@@ -61,7 +59,7 @@ namespace BlueShell.Terminal.WinUI
             textDocument.Selection.CharacterFormat.Bold = FormatEffect.Off;
         }
 
-        private void AppendInternal(string text, TerminalMessageKind kind)
+        private void AppendInternal(string text, TerminalMessageKind kind, string? fontName = "Consolas")
         {
             RichEditTextDocument textDocument = terminal.Document;
 
@@ -73,7 +71,7 @@ namespace BlueShell.Terminal.WinUI
                 kind is TerminalMessageKind.Error or TerminalMessageKind.Success
                     ? FormatEffect.On
                     : FormatEffect.Off;
-
+            range.CharacterFormat.Name = fontName;
             range.SetText(TextSetOptions.None, text);
 
             int newEnd = range.EndPosition;
@@ -83,7 +81,7 @@ namespace BlueShell.Terminal.WinUI
             setInputStart(newEnd);
         }
 
-        public void Print(string text, TerminalMessageKind kind = TerminalMessageKind.Output)
+        public void Print(string text, TerminalMessageKind kind = TerminalMessageKind.Output, string? fontName = "Consolas")
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -92,16 +90,21 @@ namespace BlueShell.Terminal.WinUI
 
             terminal.DispatcherQueue.TryEnqueue(() =>
             {
-                AppendInternal(text, kind);
+                AppendInternal(text, kind, fontName);
             });
         }
 
-        public void PrintLine(string text, TerminalMessageKind kind = TerminalMessageKind.Output)
+        public void PrintLine(string text, TerminalMessageKind kind = TerminalMessageKind.Output, string? fontName = "Consolas")
         {
             terminal.DispatcherQueue.TryEnqueue(() =>
             {
-                AppendInternal(text + "\r\n", kind);
+                AppendInternal(text + "\r\n", kind, fontName);
             });
+        }
+
+        public void SetTextWrap(bool wrap)
+        {
+            terminal.TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap;
         }
 
         public void Clear()

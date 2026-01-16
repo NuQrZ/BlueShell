@@ -1,11 +1,9 @@
 ﻿using BlueShell.Core;
 using BlueShell.Services.Wrappers;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
-namespace BlueShell.Services
+namespace BlueShell.Services.FileSystem
 {
     public sealed class FileSystemService : IFileSystemService
     {
@@ -27,7 +25,7 @@ namespace BlueShell.Services
             {
                 string fileName = fileInfo.Name;
                 string fileType = fileInfo.Extension.ToUpper() + " File";
-                string fileSizeType = Utilities.ReturnSizeType(fileInfo.Length);
+                string fileSizeType = Utilities.ReturnSize(fileInfo.Length, true);
 
                 FileSystemItem fileSystemItem = new()
                 {

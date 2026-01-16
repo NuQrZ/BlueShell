@@ -4,9 +4,19 @@ namespace BlueShell.Services.Wrappers
 {
     public sealed class DriveItem
     {
-        public required DriveInfo DriveInfo { get; init; }
-        public required string DisplayName { get; init; }
-        public long TakenSpaceBytes { get; init; }
-        public double TotalSize { get; init; }
+        public required string RootPath { get; init; }
+        public required string VolumeLabel { get; init; }
+
+        public required string DriveType { get; init; }
+        public required string DriveFormat { get; init; }
+
+        public long TotalBytes { get; init; }
+        public long FreeBytes { get; init; }
+        public long UsedBytes { get; init; }
+
+        public double UsedPrecent { get; init; }
+
+        public bool IsReady { get; init; }
+        public bool IsSystemDrive { get; init; }
     }
 }

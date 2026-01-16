@@ -73,7 +73,20 @@ namespace BlueShell.View.Pages
 
             if (selectedItem.Tag.ToString() == "Terminal")
             {
+                ToggleTerminalLayout.Visibility = Visibility.Visible;
                 MainFrame.Navigate(typeof(TerminalPage));
+            }
+            else
+            {
+                ToggleTerminalLayout.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ToggleTerminalLayout_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (MainFrame.Content is TerminalPage terminalPage)
+            {
+                terminalPage.ToggleLayout();
             }
         }
     }

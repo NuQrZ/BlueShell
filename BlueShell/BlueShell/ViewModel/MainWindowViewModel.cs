@@ -12,7 +12,7 @@ namespace BlueShell.ViewModel
     public sealed partial class MainWindowViewModel : ObservableObject
     {
         private int _tabIndex = 1;
-        public readonly ObservableCollection<TabModel> Tabs = [];
+        public ObservableCollection<TabModel> Tabs { get; } = [];
 
         [ObservableProperty]
         public partial TabModel SelectedTab { get; set; }

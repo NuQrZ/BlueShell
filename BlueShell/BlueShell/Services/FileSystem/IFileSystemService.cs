@@ -1,7 +1,7 @@
 ﻿using BlueShell.Services.Wrappers;
 using System.Collections.Generic;
 
-namespace BlueShell.Services
+namespace BlueShell.Services.FileSystem
 {
     public interface IFileSystemService
     {

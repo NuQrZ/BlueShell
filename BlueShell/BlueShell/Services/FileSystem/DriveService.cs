@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 
-namespace BlueShell.Services
+namespace BlueShell.Services.FileSystem
 {
     public sealed class DriveService : IDriveService
     {
@@ -32,25 +32,45 @@ namespace BlueShell.Services
             DriveInfo[] drives = DriveInfo.GetDrives();
             foreach (DriveInfo driveInfo in drives)
             {
-                string driveFilePath = driveInfo.RootDirectory.FullName;
-                string? driveName = await GetDriveDisplayName(driveFilePath);
+                if (!driveInfo.IsReady)
+                {
+                    continue;
+                }
+
+                string rootPath = driveInfo.RootDirectory.FullName;
+                string? volumeLabel = await GetDriveDisplayName(rootPath);
+                string driveType = driveInfo.DriveType.ToString();
+                string driveFormat = driveInfo.DriveFormat;
 
                 long totalFreeSpace = driveInfo.TotalFreeSpace;
                 long totalSize = driveInfo.TotalSize;
 
                 long takenSpace = totalSize - totalFreeSpace;
 
-                if (driveName == null)
+                if (volumeLabel == null)
                 {
                     continue;
                 }
 
+                double usedPrecent = totalSize > 0 ? (double)takenSpace / totalSize * 100 : 0;
+
+                bool isReady = driveInfo.IsReady;
+                bool isSystemDrive = string.Equals(driveInfo.Name,
+                    Environment.GetFolderPath(Environment.SpecialFolder.Windows)[..3],
+                    StringComparison.OrdinalIgnoreCase);
+
                 DriveItem driveItem = new()
                 {
-                    DisplayName = driveName,
-                    DriveInfo = driveInfo,
-                    TakenSpaceBytes = takenSpace,
-                    TotalSize = totalSize
+                    RootPath = rootPath,
+                    VolumeLabel = volumeLabel,
+                    DriveType = driveType,
+                    DriveFormat = driveFormat,
+                    TotalBytes = totalSize,
+                    UsedBytes = takenSpace,
+                    FreeBytes = totalFreeSpace,
+                    IsReady = driveInfo.IsReady,
+                    IsSystemDrive = isSystemDrive,
+                    UsedPrecent = usedPrecent,
                 };
 
                 driveEntries.Add(driveItem);

@@ -78,6 +78,25 @@
                     </Button.ContentTemplate>
                 </Button>
 
+                <Button x:Name="ToggleTerminalLayout"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontFamily="Cascadia Mono"
+                        Height="35"
+                        Margin="10, 0, 0, 0"
+                        Click="ToggleTerminalLayout_OnClick">
+                    <ToolTipService.ToolTip>
+                        <ToolTip Content="Toggle terminal layout" Placement="Top"/>
+                    </ToolTipService.ToolTip>
+                    <Button.ContentTemplate>
+                        <DataTemplate>
+                            <!-- “two panes” style icon -->
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7F8;" FontSize="15"/>
+                        </DataTemplate>
+                    </Button.ContentTemplate>
+                </Button>
+
+
                 <Button x:Name="BtnMoreTools"
                         Background="Transparent"
                         BorderThickness="0"

@@ -14,8 +14,8 @@
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition x:Name="TerminalColumnDefinition" Width="2*"/>
+            <ColumnDefinition x:Name="DisplayColumnDefinition" Width="3*"/>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
             <RichEditBox x:Name="Terminal"
@@ -23,19 +23,20 @@
                          AutomationProperties.Name="multi-line TextBox"
                          AutomationProperties.AutomationId="MultiLineTextBox"
                          Background="Transparent"
-                         FontFamily="Cascadia Mono"
-                         FontSize="16"
+                         FontFamily="Cascadia Code"
+                         FontSize="18"
                          IsSpellCheckEnabled="False"
+                         Paste="Terminal_Paste"
                          PreviewKeyDown="Terminal_PreviewKeyDown"
                          TextChanging="Terminal_TextChanging"
                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollMode="Auto"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         ScrollViewer.VerticalScrollMode="Auto"
->
+                         ScrollViewer.VerticalScrollMode="Auto">
             </RichEditBox>
         </Grid>
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="1"
+              x:Name="DataDisplayGrid">
             <Grid Grid.Row="0"
                       Height="115"
                       Margin="0, 0, 0, 0"
