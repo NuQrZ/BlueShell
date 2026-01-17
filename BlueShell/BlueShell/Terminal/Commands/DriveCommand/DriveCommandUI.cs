@@ -38,8 +38,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 SizeHeader = "Item Size",
                 SubFoldersHeader = "Subfolders",
                 NameMargin = new Thickness(110, 10, 0, 10),
-                SizeMargin = new Thickness(265, 10, 0, 10),
-                TypeMargin = new Thickness(200, 10, 0, 10),
+                SizeMargin = new Thickness(385, 10, 0, 10),
+                TypeMargin = new Thickness(85, 10, 0, 10),
                 SubFoldersMargin = new Thickness(200, 10, 0, 10)
             };
         }

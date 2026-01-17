@@ -70,7 +70,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 }
                 else if (extraOperation != "Print" && extraOperation != "")
                 {
-                    errorMessages.Add(Tuple.Create($">> Unknown option: \"-{extraOperation}\".\nAllowed options are:\n-Print\n", TerminalMessageKind.Error));
+                    errorMessages.Add(Tuple.Create($">> Unknown option: \"{extraOperation}\".\nAllowed options are:\n-Print\n", TerminalMessageKind.Error));
 
                     returnValue = false;
                 }

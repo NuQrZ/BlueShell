@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Commands
 {
-    public sealed class VersionCommand : ITerminalCommand
+    public sealed class ClearDisplayCommand : ITerminalCommand
     {
-        public string CommandName => "--Version";
+        public string CommandName => "ClearDisplay";
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
-            context.Output.PrintLine("\n>> Currently installed version: [3.0.0.6].\n", TerminalMessageKind.Info);
+            context.DataDisplay.Clear();
             return Task.CompletedTask;
         }
     }

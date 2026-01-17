@@ -15,31 +15,31 @@ namespace BlueShell.Core
     {
         public static Dictionary<string, Color> DarkThemeKeywordColors { get; } = new()
         {
-            { "Exit", Color.FromArgb(255, 255, 92, 125) }, // coral-pink (not pure error red)
-            { "Clear", Color.FromArgb(255,   0, 206, 209) }, // cyan (keep; very distinct)
-            { "ClearDisplay", Color.FromArgb(255, 155, 155, 155) }, // neutral gray
-            { "--Version", Color.FromArgb(255, 255, 179,  71) }, // gold-orange (not warning amber)
-            { "Drive", Color.FromArgb(255,  30, 144, 255) }, // bright blue (keep)
-            { "-GetDrives", Color.FromArgb(255, 255, 245, 170) }, // pale warm cream (distinct from --Version)
-            { "-Properties", Color.FromArgb(255, 205, 110, 255) }, // vivid lavender (more distinct from -Advanced)
-            { "-Advanced", Color.FromArgb(255, 120, 120, 255) }, // periwinkle (shifted away from purple)
-            { "-Open", Color.FromArgb(255,  64, 224, 208) },  // turquoise (not success green)
-            { "-Print", Color.FromArgb(255,  80, 250, 150) }  // mint green
+            { "Exit", Color.FromArgb(255, 255, 70, 110) },       // saturated coral-pink
+            { "Clear", Color.FromArgb(255,   0, 220, 225) },    // strong cyan
+            { "ClearDisplay", Color.FromArgb(255, 185, 185, 185) }, // brighter neutral gray
+            { "--Version", Color.FromArgb(255, 255, 165, 60) }, // richer gold-orange
+            { "Drive", Color.FromArgb(255,  50, 160, 255) },    // more vivid blue
+            { "-GetDrives", Color.FromArgb(255, 255, 215, 120) }, // warmer & stronger cream
+            { "-Properties", Color.FromArgb(255, 215, 120, 255) }, // vivid magenta-lavender
+            { "-Advanced", Color.FromArgb(255, 100, 140, 255) },   // deeper periwinkle
+            { "-Open", Color.FromArgb(255,  40, 235, 200) },    // saturated turquoise
+            { "-Print", Color.FromArgb(255,  60, 255, 145) }    // punchy mint green
         };
-
         public static Dictionary<string, Color> LightThemeKeywordColors { get; } = new()
         {
-            { "Exit", Color.FromArgb(255, 215,  45,  90) }, // deep coral (not pure red)
-            { "Clear", Color.FromArgb(255,   0, 139, 139) }, // teal/cyan (keep)
-            { "ClearDisplay", Color.FromArgb(255, 105, 105, 105) }, // gray (keep)
-            { "--Version", Color.FromArgb(255, 176, 110,  20) }, // golden-brown (not warning amber)
-            { "Drive", Color.FromArgb(255,  25,  55, 212) }, // deep blue (keep)
-            { "-GetDrives", Color.FromArgb(255, 165, 140,  40) }, // olive-gold (distinct from --Version)
-            { "-Properties", Color.FromArgb(255, 150,  60, 200) }, // purple (slightly adjusted for distinction)
-            { "-Advanced", Color.FromArgb(255,  65, 105, 225) }, // royal blue (keep; distinct from Drive)
-            { "-Open", Color.FromArgb(255,  20, 160, 170) },  // teal-green (not success green)
-            { "-Print", Color.FromArgb(255,  20, 140,  70) }  // deep mint green
+            { "Exit", Color.FromArgb(255, 210,  30,  80) },     // stronger coral-red
+            { "Clear", Color.FromArgb(255,   0, 155, 155) },   // richer teal
+            { "ClearDisplay", Color.FromArgb(255,  90,  90,  90) }, // darker gray for clarity
+            { "--Version", Color.FromArgb(255, 190, 115,  15) },   // deeper gold
+            { "Drive", Color.FromArgb(255,  20,  45, 225) },   // high-contrast blue
+            { "-GetDrives", Color.FromArgb(255, 175, 145,  25) },  // saturated olive-gold
+            { "-Properties", Color.FromArgb(255, 155,  55, 215) }, // clearer purple
+            { "-Advanced", Color.FromArgb(255,  55,  95, 235) },   // royal blue (cleaner)
+            { "-Open", Color.FromArgb(255,  10, 175, 180) },   // stronger teal-green
+            { "-Print", Color.FromArgb(255,  10, 155,  70) }   // deeper mint green
         };
+
 
         public static string ReturnSize(long sizeInBytes, bool returnOnlySizeType = false)
         {

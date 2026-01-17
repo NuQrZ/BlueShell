@@ -5,7 +5,6 @@ using BlueShell.Terminal.WinUI;
 using BlueShell.ViewModel;
 using Microsoft.UI;
 using Microsoft.UI.Input;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -18,14 +17,19 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Core;
+using FormatEffect = Microsoft.UI.Text.FormatEffect;
+using ITextRange = Microsoft.UI.Text.ITextRange;
+using ITextSelection = Microsoft.UI.Text.ITextSelection;
+using PointOptions = Microsoft.UI.Text.PointOptions;
+using RichEditTextDocument = Microsoft.UI.Text.RichEditTextDocument;
+using TextGetOptions = Microsoft.UI.Text.TextGetOptions;
+using TextSetOptions = Microsoft.UI.Text.TextSetOptions;
 
 namespace BlueShell.View.Pages
 {
     public sealed partial class TerminalPage
     {
         private const string Prompt = "Terminal > ";
-        private const int MaxPasteChars = 50000;
-        private const int PasteChunkSize = 2000;
 
         private int _inputStart;
         private int _enterCount;
@@ -72,6 +76,13 @@ namespace BlueShell.View.Pages
                 };
                 _highLightTimer.Tick += HighLightTimer_Tick;
             };
+
+            ActualThemeChanged += AppActualThemeChanged;
+        }
+
+        private void AppActualThemeChanged(FrameworkElement sender, object args)
+        {
+            HighlightKeyWords();
         }
 
         private void HighlightKeyWords()
@@ -90,7 +101,7 @@ namespace BlueShell.View.Pages
 
             var quotedRanges = new List<(int Start, int End)>();
 
-            const string quotePattern = "\"(?:\\\\.|[^\"\\\\])*\"";
+            const string quotePattern = "\"(.*?)\"";
 
             Color stringColor = ActualTheme == ElementTheme.Light
                 ? Color.FromArgb(255, 186, 85, 211)
@@ -105,7 +116,6 @@ namespace BlueShell.View.Pages
                     _inputStart + m.Index + m.Length);
 
                 strRange.CharacterFormat.ForegroundColor = stringColor;
-                strRange.CharacterFormat.Bold = FormatEffect.On;
             }
 
             static bool IsInsideQuotes(int index, List<(int Start, int End)> ranges)
@@ -233,6 +243,92 @@ namespace BlueShell.View.Pages
             }
         }
 
+        private void HighlightCurrentTokenOnly()
+        {
+            RichEditTextDocument document = Terminal.Document;
+            ITextSelection textSelection = document.Selection;
+
+            int end = document.GetRange(0, int.MaxValue).EndPosition;
+
+            if (end <= _inputStart)
+            {
+                return;
+            }
+
+            int textSelector = textSelection.StartPosition;
+
+            ITextRange inputRange = document.GetRange(_inputStart, end);
+            inputRange.GetText(TextGetOptions.None, out string currentText);
+            currentText = currentText.TrimEnd('\r', '\n');
+
+
+            int selectorIndex = Math.Min(currentText.Length, textSelector - _inputStart);
+
+            if (selectorIndex < 0)
+            {
+                selectorIndex = 0;
+            }
+
+            int lineStart = currentText.LastIndexOf('\n', Math.Max(0, selectorIndex - 1));
+            if (lineStart < 0)
+            {
+                lineStart = 0;
+            }
+            else
+            {
+                lineStart += 1;
+            }
+
+            int wordStart = selectorIndex;
+            while (wordStart > lineStart && !char.IsWhiteSpace(currentText[wordStart - 1]))
+            {
+                wordStart--;
+            }
+
+            int wordEnd = selectorIndex;
+            while (wordEnd < currentText.Length && !char.IsWhiteSpace(currentText[wordEnd]))
+            {
+                wordEnd++;
+            }
+
+            if (wordEnd <= wordStart)
+            {
+                return;
+            }
+
+            string token = currentText.Substring(wordStart, wordEnd - wordStart);
+
+            Color defaultColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
+
+            ITextRange tokenRange = document.GetRange(_inputStart + wordStart, _inputStart + wordEnd);
+
+            if (token.Contains(">>", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (token.Contains('"', StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Dictionary<string, Color> keywordColors = ActualTheme == ElementTheme.Light
+                ? Utilities.LightThemeKeywordColors
+                : Utilities.DarkThemeKeywordColors;
+
+            bool isKeyword = keywordColors.TryGetValue(token, out Color color);
+
+            if (!isKeyword)
+            {
+                tokenRange.CharacterFormat.ForegroundColor = defaultColor;
+                tokenRange.CharacterFormat.Bold = FormatEffect.Off;
+                return;
+            }
+
+            tokenRange.CharacterFormat.ForegroundColor = color;
+            tokenRange.CharacterFormat.Bold = FormatEffect.Off;
+        }
+
         private void HighLightTimer_Tick(object? sender, object e)
         {
             _highLightTimer?.Stop();
@@ -273,7 +369,9 @@ namespace BlueShell.View.Pages
                     {
                         case VirtualKey.A:
                             e.Handled = true;
+                            Microsoft.UI.Text.ITextCharacterFormat characterFormat = Terminal.Document.Selection.CharacterFormat;
                             Terminal.Document.Selection.SetRange(0, int.MaxValue);
+                            Terminal.Document.Selection.CharacterFormat = characterFormat;
                             return;
 
                         case VirtualKey.C:
@@ -322,7 +420,7 @@ namespace BlueShell.View.Pages
                     }
                 }
 
-                if (e.Key is VirtualKey.Up or VirtualKey.Down || ctrlDown && e.Key == VirtualKey.E)
+                if (e.Key is VirtualKey.Up or VirtualKey.Down || (ctrlDown && e.Key == VirtualKey.E))
                 {
                     e.Handled = true;
                 }
@@ -340,9 +438,7 @@ namespace BlueShell.View.Pages
                 return;
             }
 
-            var defaultColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
-            sender.Document.Selection.CharacterFormat.ForegroundColor = defaultColor;
-            sender.Document.Selection.CharacterFormat.Bold = FormatEffect.Off;
+            HighlightCurrentTokenOnly();
 
             _highLightTimer?.Stop();
             _highLightTimer?.Start();

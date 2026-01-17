@@ -13,6 +13,9 @@
 		<LangVersion>preview</LangVersion>
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="View\Pages\HelpPage.xaml" />
+	</ItemGroup>
+	<ItemGroup>
 		<Content Include="Assets\CPU.ico" />
 		<Content Include="Assets\Graphics Card.ico" />
 		<Content Include="Assets\Help.ico" />
@@ -42,6 +45,12 @@
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7463" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 		<PackageReference Include="System.Private.Uri" Version="4.3.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="View\Pages\HelpPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>

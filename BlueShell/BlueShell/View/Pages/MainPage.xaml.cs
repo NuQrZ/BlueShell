@@ -71,14 +71,21 @@ namespace BlueShell.View.Pages
             _tabModel?.SelectedNavTag = itemTag;
             _tabModel?.ApplyNavSelection(itemTag);
 
-            if (selectedItem.Tag.ToString() == "Terminal")
+            string? tag = selectedItem.Tag.ToString();
+
+            switch (tag)
             {
-                ToggleTerminalLayout.Visibility = Visibility.Visible;
-                MainFrame.Navigate(typeof(TerminalPage));
-            }
-            else
-            {
-                ToggleTerminalLayout.Visibility = Visibility.Collapsed;
+                case "Terminal":
+                    ToggleTerminalLayout.Visibility = Visibility.Visible;
+                    MainFrame.Navigate(typeof(TerminalPage));
+                    break;
+                case "Help":
+                    ToggleTerminalLayout.Visibility = Visibility.Collapsed;
+                    MainFrame.Navigate(typeof(HelpPage));
+                    break;
+                default:
+                    ToggleTerminalLayout.Visibility = Visibility.Collapsed;
+                    break;
             }
         }
 

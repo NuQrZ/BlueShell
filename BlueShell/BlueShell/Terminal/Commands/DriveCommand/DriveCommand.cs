@@ -25,11 +25,20 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 {
                     context.Output.Print("\n");
                 }
-                foreach (Tuple<string, TerminalMessageKind> errorMessage in errorMessages)
+
+                for (int i = 0; i < errorMessages.Count; i++)
                 {
+                    Tuple<string, TerminalMessageKind> errorMessage = errorMessages[i];
                     string message = errorMessage.Item1;
                     TerminalMessageKind messageKind = errorMessage.Item2;
-                    context.Output.PrintLine(message, messageKind);
+                    if (i == errorMessages.Count - 1)
+                    {
+                        context.Output.PrintLine("\n" + message, messageKind);
+                    }
+                    else
+                    {
+                        context.Output.PrintLine(message, messageKind);
+                    }
                 }
                 return;
             }
@@ -37,6 +46,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             switch (operation)
             {
                 case "GetDrives":
+                    context.DataDisplay.Clear();
                     context.Output.PrintLine("\n>> Displaying all available drives!\n", TerminalMessageKind.Success);
                     List<DriveItem> drives = await driveService.GetDrives();
 
@@ -70,20 +80,32 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                         driveTarget = ConvertIndexToDrivePath(driveTarget);
 
+                        context.DataDisplay.Clear();
                         context.Output.PrintLine($"\nOpening {driveTarget}...\n", TerminalMessageKind.Info);
-                        context.DataDisplay.SetHeader(DriveCommandUI.CreateFileSystemHeader());
                         List<FileSystemItem> folders = fileSystemService.LoadFolders(driveTarget);
                         List<FileSystemItem> files = fileSystemService.LoadFiles(driveTarget);
+                        switch (extraOperation)
+                        {
+                            case "Print":
+                                context.Output.SetTextWrap(true);
+                                List<FileSystemItem> fileSystemItems = [.. folders, .. files];
+                                context.Output.PrintLine(printService.PrintFolderContents(fileSystemItems), default, "Cascadia Code");
+                                context.Output.SetTextWrap(false);
+                                break;
+                            case "":
+                                context.DataDisplay.SetHeader(DriveCommandUI.CreateFileSystemHeader());
 
-                        foreach (DataDisplayItem dataDisplayItem in folders.Select(DriveCommandUI.CreateFileSystemItem))
-                        {
-                            await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
-                            context.DataDisplay.Add(dataDisplayItem);
-                        }
-                        foreach (DataDisplayItem dataDisplayItem in files.Select(DriveCommandUI.CreateFileSystemItem))
-                        {
-                            await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
-                            context.DataDisplay.Add(dataDisplayItem);
+                                foreach (DataDisplayItem dataDisplayItem in folders.Select(DriveCommandUI.CreateFileSystemItem))
+                                {
+                                    await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
+                                    context.DataDisplay.Add(dataDisplayItem);
+                                }
+                                foreach (DataDisplayItem dataDisplayItem in files.Select(DriveCommandUI.CreateFileSystemItem))
+                                {
+                                    await DriveCommandUI.ConfigureFileSystemDataItem(dataDisplayItem);
+                                    context.DataDisplay.Add(dataDisplayItem);
+                                }
+                                break;
                         }
                         break;
                     }
@@ -102,9 +124,14 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private string ConvertIndexToDrivePath(string driveIndex)
+        private static string ConvertIndexToDrivePath(string driveIndex)
         {
-            _ = int.TryParse(driveIndex, out int index);
+            bool ok = int.TryParse(driveIndex, out int index);
+
+            if (!ok)
+            {
+                return driveIndex;
+            }
 
             DriveInfo[] drives = DriveInfo.GetDrives();
 
