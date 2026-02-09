@@ -9,6 +9,7 @@ namespace BlueShell.Terminal.Commands
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             context.DataDisplay.Clear();
+            context.Output.PrintLine("\n\n>> Data Display Cleared!\n", TerminalMessageKind.Success);
             return Task.CompletedTask;
         }
     }

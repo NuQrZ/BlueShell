@@ -194,7 +194,7 @@
                                                FontSize="14"
                                                VerticalAlignment="Center"
                                                Padding="0, 0, 0, 0"
-                                               Margin="680, 0, 0, 0"/>
+                                               Margin="640, 0, 0, 0"/>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

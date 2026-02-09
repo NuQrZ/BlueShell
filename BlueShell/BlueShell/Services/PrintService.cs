@@ -10,7 +10,7 @@ namespace BlueShell.Services
 {
     public sealed class PrintService : IPrintService
     {
-        public string PrintDrives(List<DriveItem> drives)
+        public string[] PrintDrives(List<DriveItem> drives)
         {
             StringBuilder stringBuilder = new();
 
@@ -95,24 +95,24 @@ namespace BlueShell.Services
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
 
-        public string PrintDriveProperties(List<DriveItem> drives)
+        public string[] PrintDriveProperties(List<DriveItem> drives)
         {
             StringBuilder stringBuilder = new();
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
 
-        public string PrintDriveAdvancedProperties(List<DriveItem> drives)
+        public string[] PrintDriveAdvancedProperties(List<DriveItem> drives)
         {
             StringBuilder stringBuilder = new();
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
 
-        public string PrintFolderContents(List<FileSystemItem> folders)
+        public string[] PrintFolderContents(List<FileSystemItem> folders)
         {
             StringBuilder stringBuilder = new();
 
@@ -169,22 +169,22 @@ namespace BlueShell.Services
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
 
 
-        public string PrintFolderProperties(List<FileSystemItem> folders)
+        public string[] PrintFolderProperties(List<FileSystemItem> folders)
         {
             StringBuilder stringBuilder = new();
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
 
-        public string PrintFileProperties(List<FileSystemItem> files)
+        public string[] PrintFileProperties(List<FileSystemItem> files)
         {
             StringBuilder stringBuilder = new();
 
-            return stringBuilder.ToString();
+            return stringBuilder.ToString().Split('\n');
         }
     }
 }

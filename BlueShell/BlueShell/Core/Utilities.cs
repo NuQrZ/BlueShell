@@ -1,5 +1,4 @@
-﻿using Microsoft.UI;
-using Microsoft.UI.Xaml.Media.Imaging;
+﻿using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -83,7 +82,7 @@ namespace BlueShell.Core
 
             try
             {
-                StorageItemThumbnail? thumbnail = null;
+                StorageItemThumbnail? thumbnail;
 
                 if (Directory.Exists(filePath))
                 {

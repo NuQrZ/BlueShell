@@ -3,11 +3,6 @@ using BlueShell.Model;
 using BlueShell.Services.Wrappers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Commands.DriveCommand
@@ -38,7 +33,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 SizeHeader = "Item Size",
                 SubFoldersHeader = "Subfolders",
                 NameMargin = new Thickness(110, 10, 0, 10),
-                SizeMargin = new Thickness(385, 10, 0, 10),
+                SizeMargin = new Thickness(355, 10, 0, 10),
                 TypeMargin = new Thickness(85, 10, 0, 10),
                 SubFoldersMargin = new Thickness(200, 10, 0, 10)
             };

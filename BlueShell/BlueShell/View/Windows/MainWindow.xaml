@@ -163,7 +163,7 @@
             </TabView>
         </Grid>
         <Grid Grid.Row="1">
-            <Frame Content="{x:Bind _mainWindowViewModel.SelectedTab.TabFrame, Mode=OneWay}"
+            <Frame Content="{x:Bind _mainWindowViewModel.SelectedTab.TabFrame, Mode=TwoWay}"
                    DataContext="{x:Bind _mainWindowViewModel.SelectedTab, Mode=TwoWay}"/>
         </Grid>
     </Grid>

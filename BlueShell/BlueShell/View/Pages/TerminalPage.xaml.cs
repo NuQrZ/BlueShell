@@ -1,23 +1,20 @@
-using BlueShell.Core;
+using BlueShell.Model;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using BlueShell.Terminal.WinUI;
+using BlueShell.View.Pages.States;
 using BlueShell.ViewModel;
-using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.Core;
-using FormatEffect = Microsoft.UI.Text.FormatEffect;
 using ITextRange = Microsoft.UI.Text.ITextRange;
 using ITextSelection = Microsoft.UI.Text.ITextSelection;
 using PointOptions = Microsoft.UI.Text.PointOptions;
@@ -29,18 +26,25 @@ namespace BlueShell.View.Pages
 {
     public sealed partial class TerminalPage
     {
-        private const string Prompt = "Terminal > ";
+        private const string Prompt = "Shell > ";
+        private const string StateKey = "TerminalPage";
 
         private int _inputStart;
         private int _enterCount;
 
         private bool _suppressHighlight;
         private bool _splitView = true;
+        private bool _isInitialized;
+        private bool _isRestoring;
+        private bool _restoreRequested;
 
         private DispatcherTimer? _highLightTimer;
 
         private TerminalViewModel? _terminalViewModel;
         private TerminalOutput? _terminalOutput;
+        private DataDisplay? _dataDisplay;
+        private TabModel? _tabModel;
+        private TerminalPageState? _terminalPageState;
 
         private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
         private GridLength _savedDisplayWidth = new(3, GridUnitType.Star);
@@ -49,110 +53,140 @@ namespace BlueShell.View.Pages
         {
             InitializeComponent();
 
-            Loaded += (_, _) =>
-            {
-                IDataDisplay dataDisplay = new DataDisplay(DataDisplay);
-                _terminalOutput = new TerminalOutput(
-                    Terminal,
-                    () => ActualTheme,
-                    value => _inputStart = value);
-
-                TerminalCommandDispatcher dispatcher =
-                    new(TerminalCommandRegistry.CreateDefault());
-
-                _terminalViewModel = new TerminalViewModel(dispatcher,
-                    () => new TerminalCommandContext(_terminalOutput, dataDisplay, CancellationToken.None));
-
-                _suppressHighlight = true;
-                _terminalOutput.Print(Prompt);
-                _inputStart = Terminal.Document.Selection.StartPosition;
-                _suppressHighlight = false;
-
-                Terminal.Focus(FocusState.Programmatic);
-
-                _highLightTimer = new DispatcherTimer()
-                {
-                    Interval = TimeSpan.FromMilliseconds(30),
-                };
-                _highLightTimer.Tick += HighLightTimer_Tick;
-            };
-
+            Loaded += TerminalPage_Loaded;
+            Unloaded += TerminalPage_Unloaded;
             ActualThemeChanged += AppActualThemeChanged;
+        }
+
+        private void TerminalPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            SaveToState();
+
+            if (_highLightTimer is null)
+            {
+                return;
+            }
+
+            _highLightTimer.Stop();
+            _highLightTimer.Tick -= HighLightTimer_Tick;
+        }
+
+        private void TerminalPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_isInitialized)
+            {
+                return;
+            }
+
+            _isInitialized = true;
+
+            _dataDisplay = new DataDisplay(
+                DataDisplay,
+                (item) =>
+                {
+                    if (_isRestoring)
+                    {
+                        return;
+                    }
+
+                    if (_terminalPageState is null)
+                    {
+                        return;
+                    }
+
+                    if (item is DataDisplayItem dataDisplayItem)
+                    {
+                        _terminalPageState.DisplayItems.Add(dataDisplayItem);
+                    }
+                });
+            _terminalOutput = new TerminalOutput(
+                Terminal,
+                () => ActualTheme,
+                value => _inputStart = value,
+                onPrinted: (text, messageKind, fontName) =>
+                {
+                    if (_isRestoring)
+                    {
+                        return;
+                    }
+
+                    if (_terminalPageState is null)
+                    {
+                        return;
+                    }
+
+                    TerminalLine terminalLine = new()
+                    {
+                        Text = text,
+                        MessageKind = messageKind,
+                        FontName = fontName
+                    };
+                    _terminalPageState.Lines.Add(terminalLine);
+                });
+
+            TerminalCommandDispatcher dispatcher =
+                new(TerminalCommandRegistry.CreateDefault());
+
+            _terminalViewModel = new TerminalViewModel(dispatcher,
+                () => new TerminalCommandContext(_terminalOutput, _dataDisplay, CancellationToken.None));
+
+            _suppressHighlight = true;
+
+            _inputStart = Terminal.Document.Selection.StartPosition;
+            _suppressHighlight = false;
+
+            Terminal.Focus(FocusState.Programmatic);
+
+            _highLightTimer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromMilliseconds(30),
+            };
+            _highLightTimer.Tick += HighLightTimer_Tick;
+            if (_restoreRequested)
+            {
+                RestoreFromState();
+            }
+            else
+            {
+                _terminalOutput.Print(Prompt, isRestoring: true);
+                _terminalPageState?.Lines.Add(new TerminalLine()
+                {
+                    Text = Prompt,
+                    FontName = "Cascadia Code",
+                });
+            }
+        }
+
+        public void ToggleLayout()
+        {
+            _splitView = !_splitView;
+            if (_splitView)
+            {
+                DataDisplayGrid.Visibility = Visibility.Visible;
+
+                TerminalColumnDefinition.Width = _savedTerminalWidth;
+                DisplayColumnDefinition.Width = _savedDisplayWidth;
+            }
+            else
+            {
+                if (TerminalColumnDefinition.Width.Value > 0)
+                {
+                    _savedTerminalWidth = TerminalColumnDefinition.Width;
+                }
+
+                if (DisplayColumnDefinition.Width.Value > 0)
+                {
+                    _savedDisplayWidth = DisplayColumnDefinition.Width;
+                }
+
+                DisplayColumnDefinition.Width = new GridLength(0);
+                TerminalColumnDefinition.Width = new GridLength(1, GridUnitType.Star);
+            }
         }
 
         private void AppActualThemeChanged(FrameworkElement sender, object args)
         {
-            HighlightKeyWords();
-        }
-
-        private void HighlightKeyWords()
-        {
-            RichEditTextDocument textDocument = Terminal.Document;
-
-            int end = textDocument.GetRange(0, int.MaxValue).EndPosition;
-            if (end <= _inputStart) return;
-
-            ITextRange commandRange = textDocument.GetRange(_inputStart, end);
-            commandRange.GetText(TextGetOptions.None, out string commandText);
-            commandText = commandText.TrimEnd('\r', '\n');
-
-            commandRange.CharacterFormat.ForegroundColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
-            commandRange.CharacterFormat.Bold = FormatEffect.Off;
-
-            var quotedRanges = new List<(int Start, int End)>();
-
-            const string quotePattern = "\"(.*?)\"";
-
-            Color stringColor = ActualTheme == ElementTheme.Light
-                ? Color.FromArgb(255, 186, 85, 211)
-                : Colors.DarkOrange;
-
-            foreach (Match m in Regex.Matches(commandText, quotePattern))
-            {
-                quotedRanges.Add((m.Index, m.Index + m.Length));
-
-                ITextRange strRange = textDocument.GetRange(
-                    _inputStart + m.Index,
-                    _inputStart + m.Index + m.Length);
-
-                strRange.CharacterFormat.ForegroundColor = stringColor;
-            }
-
-            static bool IsInsideQuotes(int index, List<(int Start, int End)> ranges)
-            {
-                foreach (var (s, e) in ranges)
-                    if (index >= s && index < e)
-                        return true;
-                return false;
-            }
-
-            Dictionary<string, Color> keywordColors = ActualTheme == ElementTheme.Light
-                ? Utilities.LightThemeKeywordColors
-                : Utilities.DarkThemeKeywordColors;
-
-            foreach (KeyValuePair<string, Color> keywordColor in keywordColors)
-            {
-                string keyword = keywordColor.Key;
-                Color color = keywordColor.Value;
-
-                string pattern = keyword.StartsWith("-", StringComparison.Ordinal)
-                    ? $@"(?<!\S){Regex.Escape(keyword)}(?!\S)"
-                    : $@"\b{Regex.Escape(keyword)}\b";
-
-                foreach (Match match in Regex.Matches(commandText, pattern, RegexOptions.IgnoreCase))
-                {
-                    if (IsInsideQuotes(match.Index, quotedRanges))
-                    {
-                        continue;
-                    }
-
-                    ITextRange hitRange = textDocument.GetRange(
-                        _inputStart + match.Index,
-                        _inputStart + match.Index + match.Length);
-
-                    hitRange.CharacterFormat.ForegroundColor = color;
-                }
-            }
+            RestoreFromState();
         }
 
         private async Task SubmitCurrentLineAsync()
@@ -192,11 +226,20 @@ namespace BlueShell.View.Pages
                 return;
             }
 
-            HighlightKeyWords();
+            TerminalUtilities.Highlight(new HighlightContext(
+                Terminal.Document,
+                HighlightMode.CurrentInput,
+                ActualTheme,
+                _inputStart,
+                Prompt));
 
             _suppressHighlight = true;
 
-            _terminalOutput?.PrintLine("");
+            _terminalPageState?.Lines.Add(new TerminalLine()
+            {
+                Text = commandText,
+                FontName = "Cascadia Code",
+            });
 
             await _terminalViewModel!.SubmitAsync(commandText);
 
@@ -214,125 +257,127 @@ namespace BlueShell.View.Pages
             _suppressHighlight = false;
         }
 
-        public void ToggleLayout()
+        private void SaveToState()
         {
-            _splitView = !_splitView;
-            if (_splitView)
+            if (_terminalPageState is null)
             {
-                DataDisplayGrid.Visibility = Visibility.Visible;
-
-                TerminalColumnDefinition.Width = _savedTerminalWidth;
-                DisplayColumnDefinition.Width = _savedDisplayWidth;
+                return;
             }
-            else
+
+            RichEditTextDocument document = Terminal.Document;
+
+            _terminalPageState.InputStart = _inputStart;
+            _terminalPageState.EnterCount = _enterCount;
+            _terminalPageState.TextSelectorPosition = document.Selection.StartPosition;
+
+            _terminalPageState.TerminalWidthStar = TerminalColumnDefinition.Width.Value;
+            _terminalPageState.DisplayWidthStar = DisplayColumnDefinition.Width.Value;
+
+            _terminalPageState.SplitView = _splitView;
+        }
+
+        private void RestoreFromState()
+        {
+            if (_terminalPageState is null)
             {
-                if (TerminalColumnDefinition.Width.Value > 0)
+                return;
+            }
+
+            if (_terminalOutput is null)
+            {
+                return;
+            }
+
+            _isRestoring = true;
+            try
+            {
+                _highLightTimer?.Stop();
+
+                GridLength restoredTerminalWidth = new(_terminalPageState.TerminalWidthStar, GridUnitType.Star);
+                GridLength restoredDisplayWidth = new(_terminalPageState.DisplayWidthStar, GridUnitType.Star);
+
+                TerminalColumnDefinition.Width = restoredTerminalWidth;
+                DisplayColumnDefinition.Width = restoredDisplayWidth;
+
+                _splitView = _terminalPageState.SplitView;
+                DataDisplayGrid.Visibility = _splitView ? Visibility.Visible : Visibility.Collapsed;
+
+                if (_splitView && _savedDisplayWidth.Value > 0 && _savedTerminalWidth.Value > 0)
                 {
-                    _savedTerminalWidth = TerminalColumnDefinition.Width;
+                    _savedTerminalWidth = restoredTerminalWidth;
+                    _savedDisplayWidth = restoredDisplayWidth;
                 }
 
-                if (DisplayColumnDefinition.Width.Value > 0)
+                Terminal.Document.SetText(TextSetOptions.None, string.Empty);
+
+                if (_terminalPageState.Lines.Count == 0)
                 {
-                    _savedDisplayWidth = DisplayColumnDefinition.Width;
+                    _terminalOutput.Print(Prompt, TerminalMessageKind.Output, "Cascadia Code", true);
                 }
 
-                DataDisplayGrid.Visibility = Visibility.Collapsed;
-                DisplayColumnDefinition.Width = new GridLength(0);
+                foreach (TerminalLine terminalLine in _terminalPageState.Lines)
+                {
+                    _terminalOutput.Print(terminalLine.Text, terminalLine.MessageKind, terminalLine.FontName, true);
+                }
 
-                TerminalColumnDefinition.Width = new GridLength(1, GridUnitType.Star);
+                _dataDisplay?.Clear();
+                foreach (DataDisplayItem dataDisplayItem in _terminalPageState.DisplayItems)
+                {
+                    _dataDisplay?.Add(dataDisplayItem);
+                }
+
+                _enterCount = _terminalPageState.EnterCount;
+
+                int end = Terminal.Document.GetRange(0, int.MaxValue).EndPosition;
+                int textSelector = Math.Clamp(_terminalPageState.TextSelectorPosition, 0, end);
+
+                Terminal.Document.Selection.SetRange(textSelector, textSelector);
+
+                _inputStart = _terminalPageState.InputStart;
+            }
+            finally
+            {
+                _isRestoring = false;
+                _restoreRequested = false;
+                TerminalUtilities.Highlight(new HighlightContext(
+                    Terminal.Document,
+                    HighlightMode.AllCommands,
+                    ActualTheme,
+                    _inputStart,
+                    Prompt));
+                _highLightTimer?.Start();
             }
         }
 
-        private void HighlightCurrentTokenOnly()
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            RichEditTextDocument document = Terminal.Document;
-            ITextSelection textSelection = document.Selection;
+            base.OnNavigatedTo(e);
 
-            int end = document.GetRange(0, int.MaxValue).EndPosition;
+            _tabModel = e.Parameter as TabModel ?? DataContext as TabModel;
+            _terminalPageState = _tabModel?.GetOrCreateState(StateKey, () => new TerminalPageState());
+            _highLightTimer?.Start();
 
-            if (end <= _inputStart)
+            _restoreRequested =
+                _terminalPageState is not null &&
+                (_terminalPageState.Lines.Count > 0 ||
+                 _terminalPageState.DisplayItems.Count > 0 ||
+                 _terminalPageState.EnterCount > 0);
+
+            if (_isInitialized && _restoreRequested)
             {
-                return;
+                RestoreFromState();
             }
-
-            int textSelector = textSelection.StartPosition;
-
-            ITextRange inputRange = document.GetRange(_inputStart, end);
-            inputRange.GetText(TextGetOptions.None, out string currentText);
-            currentText = currentText.TrimEnd('\r', '\n');
-
-
-            int selectorIndex = Math.Min(currentText.Length, textSelector - _inputStart);
-
-            if (selectorIndex < 0)
-            {
-                selectorIndex = 0;
-            }
-
-            int lineStart = currentText.LastIndexOf('\n', Math.Max(0, selectorIndex - 1));
-            if (lineStart < 0)
-            {
-                lineStart = 0;
-            }
-            else
-            {
-                lineStart += 1;
-            }
-
-            int wordStart = selectorIndex;
-            while (wordStart > lineStart && !char.IsWhiteSpace(currentText[wordStart - 1]))
-            {
-                wordStart--;
-            }
-
-            int wordEnd = selectorIndex;
-            while (wordEnd < currentText.Length && !char.IsWhiteSpace(currentText[wordEnd]))
-            {
-                wordEnd++;
-            }
-
-            if (wordEnd <= wordStart)
-            {
-                return;
-            }
-
-            string token = currentText.Substring(wordStart, wordEnd - wordStart);
-
-            Color defaultColor = ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
-
-            ITextRange tokenRange = document.GetRange(_inputStart + wordStart, _inputStart + wordEnd);
-
-            if (token.Contains(">>", StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            if (token.Contains('"', StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            Dictionary<string, Color> keywordColors = ActualTheme == ElementTheme.Light
-                ? Utilities.LightThemeKeywordColors
-                : Utilities.DarkThemeKeywordColors;
-
-            bool isKeyword = keywordColors.TryGetValue(token, out Color color);
-
-            if (!isKeyword)
-            {
-                tokenRange.CharacterFormat.ForegroundColor = defaultColor;
-                tokenRange.CharacterFormat.Bold = FormatEffect.Off;
-                return;
-            }
-
-            tokenRange.CharacterFormat.ForegroundColor = color;
-            tokenRange.CharacterFormat.Bold = FormatEffect.Off;
         }
 
         private void HighLightTimer_Tick(object? sender, object e)
         {
             _highLightTimer?.Stop();
-            HighlightKeyWords();
+            TerminalUtilities.Highlight(new HighlightContext(
+                Terminal.Document,
+                HighlightMode.CurrentInput,
+                ActualTheme,
+                _inputStart,
+                Prompt));
         }
 
         private async void Terminal_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
@@ -375,6 +420,9 @@ namespace BlueShell.View.Pages
                             return;
 
                         case VirtualKey.C:
+                            return;
+                        case VirtualKey.Q:
+                            _terminalViewModel?.Cancel();
                             return;
                     }
                 }
@@ -438,7 +486,12 @@ namespace BlueShell.View.Pages
                 return;
             }
 
-            HighlightCurrentTokenOnly();
+            TerminalUtilities.Highlight(new HighlightContext(
+                Terminal.Document,
+                HighlightMode.CurrentToken,
+                ActualTheme,
+                _inputStart,
+                Prompt));
 
             _highLightTimer?.Stop();
             _highLightTimer?.Start();
@@ -486,7 +539,7 @@ namespace BlueShell.View.Pages
                     return;
                 }
 
-                foreach (var line in lines)
+                foreach (string line in lines)
                 {
                     string fixedLine = line.Replace("\t", "");
 

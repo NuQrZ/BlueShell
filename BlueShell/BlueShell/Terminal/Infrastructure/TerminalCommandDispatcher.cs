@@ -7,15 +7,10 @@ using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Infrastructure
 {
-    public sealed class TerminalCommandDispatcher
+    public sealed class TerminalCommandDispatcher(IEnumerable<ITerminalCommand> commands)
     {
-        private readonly Dictionary<string, ITerminalCommand> _commands;
-
-        public TerminalCommandDispatcher(IEnumerable<ITerminalCommand> commands)
-        {
-            _commands = commands.ToDictionary(command => command.CommandName, command => command,
-                StringComparer.OrdinalIgnoreCase);
-        }
+        private readonly Dictionary<string, ITerminalCommand> _commands = commands.ToDictionary(command => command.CommandName, command => command,
+            StringComparer.OrdinalIgnoreCase);
 
         public async Task ExecuteAsync(TerminalCommandContext context, string rawLine)
         {
@@ -26,7 +21,7 @@ namespace BlueShell.Terminal.Infrastructure
                 return;
             }
 
-            rawLine = rawLine.Replace("BlueShell > ", "", StringComparison.OrdinalIgnoreCase);
+            rawLine = rawLine.Replace("Shell > ", "", StringComparison.OrdinalIgnoreCase);
 
             Match match = Regex.Match(rawLine, @"^(\S+)");
             if (!match.Success)
@@ -38,7 +33,7 @@ namespace BlueShell.Terminal.Infrastructure
 
             if (!_commands.TryGetValue(commandName, out var command))
             {
-                context.Output.Print($"\n>> Unknown command: {commandName}\n\n", TerminalMessageKind.Error);
+                context.Output.Print($"\n\n>> Unknown command: {commandName}\n\n", TerminalMessageKind.Error);
                 return;
             }
 

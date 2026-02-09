@@ -1,5 +1,6 @@
 ﻿using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -37,6 +38,7 @@ namespace BlueShell.Model
             }
         }
 
+        private Dictionary<string, object> State { get; } = new(StringComparer.Ordinal);
         public Frame? TabFrame { get; set; } = new();
 
         public int TabNumber { get; init; } = 1;
@@ -56,6 +58,18 @@ namespace BlueShell.Model
                 UriSource = new Uri($"ms-appx:///Assets/{iconName}"),
                 ShowAsMonochrome = false
             };
+        }
+
+        public T GetOrCreateState<T>(string key, Func<T> factory) where T : class
+        {
+            if (State.TryGetValue(key, out object? value) && value is T tValue)
+            {
+                return tValue;
+            }
+
+            T created = factory();
+            State[key] = created;
+            return created;
         }
 
         private static string ConvertTagIntoImageName(string itemTag) => itemTag switch

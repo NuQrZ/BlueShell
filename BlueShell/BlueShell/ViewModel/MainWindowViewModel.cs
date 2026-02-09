@@ -38,7 +38,7 @@ namespace BlueShell.ViewModel
                 },
                 TabNumber = _tabIndex
             };
-            tabFrame.Navigate(typeof(MainPage), null, new SlideNavigationTransitionInfo()
+            tabFrame.Navigate(typeof(MainPage), newTab, new SlideNavigationTransitionInfo()
             {
                 Effect = SlideNavigationTransitionEffect.FromLeft
             });
@@ -76,7 +76,7 @@ namespace BlueShell.ViewModel
         [RelayCommand]
         private void ToggleSettingsPage(bool isChecked)
         {
-            SelectedTab.TabFrame?.Navigate(isChecked ? typeof(SettingsPage) : typeof(MainPage), null, new SlideNavigationTransitionInfo()
+            SelectedTab.TabFrame?.Navigate(isChecked ? typeof(SettingsPage) : typeof(MainPage), SelectedTab, new SlideNavigationTransitionInfo()
             {
                 Effect = SlideNavigationTransitionEffect.FromLeft
             });

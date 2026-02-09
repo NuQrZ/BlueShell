@@ -11,7 +11,8 @@ namespace BlueShell.Terminal.WinUI
     public sealed class TerminalOutput(
         RichEditBox terminal,
         Func<ElementTheme> themeProvider,
-        Action<int> setInputStart)
+        Action<int> setInputStart,
+        Action<string, TerminalMessageKind, string> onPrinted)
         : ITerminalOutput
     {
         private Color GetColor(TerminalMessageKind kind)
@@ -29,6 +30,7 @@ namespace BlueShell.Terminal.WinUI
             {
                 ElementTheme.Dark => kind switch
                 {
+                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 110, 190, 220),
                     TerminalMessageKind.Error => Color.FromArgb(255, 220, 80, 80),
                     TerminalMessageKind.Warning => Color.FromArgb(255, 210, 160, 90),
                     TerminalMessageKind.Success => Color.FromArgb(255, 80, 180, 130),
@@ -38,6 +40,7 @@ namespace BlueShell.Terminal.WinUI
 
                 ElementTheme.Light => kind switch
                 {
+                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 60, 120, 155),
                     TerminalMessageKind.Error => Color.FromArgb(255, 190, 55, 55),
                     TerminalMessageKind.Warning => Color.FromArgb(255, 170, 115, 40),
                     TerminalMessageKind.Success => Color.FromArgb(255, 45, 135, 90),
@@ -59,7 +62,7 @@ namespace BlueShell.Terminal.WinUI
             textDocument.Selection.CharacterFormat.Bold = FormatEffect.Off;
         }
 
-        private void AppendInternal(string text, TerminalMessageKind kind, string? fontName = "Consolas")
+        private void AppendInternal(string text, TerminalMessageKind kind, string fontName, bool isRestoring)
         {
             RichEditTextDocument textDocument = terminal.Document;
 
@@ -74,6 +77,11 @@ namespace BlueShell.Terminal.WinUI
             range.CharacterFormat.Name = fontName;
             range.SetText(TextSetOptions.None, text);
 
+            if (!isRestoring)
+            {
+                onPrinted(text, kind, fontName);
+            }
+
             int newEnd = range.EndPosition;
             textDocument.Selection.SetRange(newEnd, newEnd);
             ResetTypingStyle();
@@ -81,24 +89,46 @@ namespace BlueShell.Terminal.WinUI
             setInputStart(newEnd);
         }
 
-        public void Print(string text, TerminalMessageKind kind = TerminalMessageKind.Output, string? fontName = "Consolas")
+        public void Print(string text, TerminalMessageKind kind = TerminalMessageKind.Output, string fontName = "Cascadia Code", bool isRestoring = false)
         {
+            if (terminal.DispatcherQueue == null)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(text))
             {
                 return;
             }
 
+            if (terminal.DispatcherQueue.HasThreadAccess)
+            {
+                AppendInternal(text, kind, fontName, isRestoring);
+                return;
+            }
+
             terminal.DispatcherQueue.TryEnqueue(() =>
             {
-                AppendInternal(text, kind, fontName);
+                AppendInternal(text, kind, fontName, isRestoring);
             });
         }
 
-        public void PrintLine(string text, TerminalMessageKind kind = TerminalMessageKind.Output, string? fontName = "Consolas")
+        public void PrintLine(string text = "", TerminalMessageKind kind = TerminalMessageKind.Output, string fontName = "Cascadia Code", bool isRestoring = false)
         {
+            if (terminal.DispatcherQueue == null)
+            {
+                return;
+            }
+
+            if (terminal.DispatcherQueue.HasThreadAccess)
+            {
+                AppendInternal(text + "\r\n", kind, fontName, isRestoring);
+                return;
+            }
+
             terminal.DispatcherQueue.TryEnqueue(() =>
             {
-                AppendInternal(text + "\r\n", kind, fontName);
+                AppendInternal(text + "\r\n", kind, fontName, isRestoring);
             });
         }
 
@@ -109,6 +139,15 @@ namespace BlueShell.Terminal.WinUI
 
         public void Clear()
         {
+            if (terminal.DispatcherQueue.HasThreadAccess)
+            {
+                terminal.Document.SetText(TextSetOptions.None, "");
+                int end = terminal.Document.GetRange(0, int.MaxValue).EndPosition;
+                setInputStart(end);
+                ResetTypingStyle();
+                return;
+            }
+
             terminal.DispatcherQueue.TryEnqueue(() =>
             {
                 terminal.Document.SetText(TextSetOptions.None, "");
