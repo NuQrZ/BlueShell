@@ -19,7 +19,7 @@ namespace BlueShell.View.Pages
         private const string Prompt = "Shell > ";
         private readonly int _inputStart = Prompt.Length;
 
-        private bool _splitView;
+        private bool _splitView = true;
 
         private ITerminalOutput? _terminalOutput;
         private IDataDisplay? _dataDisplay;
@@ -79,20 +79,10 @@ namespace BlueShell.View.Pages
 
             command = command.Trim();
 
-            (bool isRunning, bool isExiting) = await _terminalViewModel!.SubmitAsync(command);
-
-            if (isRunning)
-            {
-                return;
-            }
-
-            if (isExiting)
-            {
-                return;
-            }
-
             textDocument.SetText(TextSetOptions.None, Prompt);
             textDocument.Selection.SetRange(_inputStart, _inputStart);
+
+            await _terminalViewModel!.SubmitAsync(command);
         }
 
         private void TerminalPage_Loaded(object sender, RoutedEventArgs e)
@@ -112,7 +102,8 @@ namespace BlueShell.View.Pages
                 _dataDisplay,
                 CancellationToken.None);
 
-            _terminalViewModel = new TerminalViewModel(dispatcher, context);
+            _terminalViewModel = new TerminalViewModel(dispatcher,
+                () => new TerminalCommandContext(_terminalOutput, _dataDisplay, CancellationToken.None));
 
             InitializeInput();
             Terminal.Focus(FocusState.Programmatic);
@@ -148,6 +139,12 @@ namespace BlueShell.View.Pages
                 return;
             }
 
+            if (e.Key is VirtualKey.Delete or VirtualKey.Back && start <= _inputStart)
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (textSelection.Length > 0 && start < _inputStart)
             {
                 e.Handled = true;
@@ -155,10 +152,18 @@ namespace BlueShell.View.Pages
                 return;
             }
 
-            if (isCtrl && e.Key == VirtualKey.A)
+            if (isCtrl)
             {
-                e.Handled = true;
-                textSelection.SetRange(_inputStart, end);
+                switch (e.Key)
+                {
+                    case VirtualKey.A:
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, end);
+                        return;
+                    case VirtualKey.Q:
+                        _terminalViewModel?.Cancel();
+                        return;
+                }
             }
         }
 

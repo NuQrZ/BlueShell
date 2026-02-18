@@ -5,9 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:BlueShell.Converters"
     xmlns:model="using:BlueShell.Model"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <converters:TextTrimmer x:Key="TextTrimmer"/>
+    </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="TerminalColumnDefinition" Width="2*"/>
@@ -30,7 +34,8 @@
 
             <ScrollViewer x:Name="OutputScrollViewer"
                           Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Auto"
+                          VerticalAnchorRatio="1.0">
                 <ItemsRepeater x:Name="OutputRepeater">
                     <ItemsRepeater.Layout>
                         <StackLayout Spacing="0"/>

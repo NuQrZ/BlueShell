@@ -13,10 +13,9 @@ namespace BlueShell.Terminal.WinUI
     public sealed class TerminalOutput : ITerminalOutput
     {
         private readonly ObservableCollection<OutputLine> _lines = [];
-        private readonly ItemsRepeater _terminalOutput;
         private readonly ScrollViewer _scrollViewer;
 
-        private Func<ElementTheme> _themeProvider;
+        private readonly Func<ElementTheme> _themeProvider;
 
         private const int MaxLines = 100_000;
 
@@ -27,11 +26,10 @@ namespace BlueShell.Terminal.WinUI
         {
             _lines = [];
 
-            _terminalOutput = terminalOutput;
             _scrollViewer = scrollViewer;
             _themeProvider = themeProvider;
 
-            _terminalOutput.ItemsSource = _lines;
+            terminalOutput.ItemsSource = _lines;
         }
 
         public void Write(string text, TerminalMessageKind messageKind = TerminalMessageKind.Output)

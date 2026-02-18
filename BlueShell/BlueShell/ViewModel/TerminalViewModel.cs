@@ -8,28 +8,28 @@ namespace BlueShell.ViewModel
 {
     public sealed class TerminalViewModel(
         TerminalCommandDispatcher commandDispatcher,
-        TerminalCommandContext commandContext)
+        Func<TerminalCommandContext> contextFactory)
     {
         private CancellationTokenSource? _cancellationTokenSource = new();
 
         private bool IsRunning { get; set; }
         private bool IsExiting { get; set; }
 
-        public async Task<(bool, bool)> SubmitAsync(string commandLine)
+        public async Task SubmitAsync(string commandLine)
         {
             if (IsExiting)
             {
-                return (false, true);
+                return;
             }
 
-            if (commandLine == "Exit")
+            if (commandLine.Trim() == "Exit")
             {
                 IsExiting = true;
             }
 
             if (IsRunning)
             {
-                return (true, false);
+                return;
             }
 
             IsRunning = true;
@@ -41,10 +41,13 @@ namespace BlueShell.ViewModel
 
             _cancellationTokenSource = new CancellationTokenSource();
 
+            TerminalCommandContext commandContext = contextFactory();
+
             try
             {
                 Task task = commandDispatcher.ExecuteAsync(
-                    commandContext, commandLine);
+                    new TerminalCommandContext(commandContext.TerminalOutput, commandContext.DataDisplay, _cancellationTokenSource.Token),
+                    commandLine);
                 await task;
             }
             catch (OperationCanceledException)
@@ -60,13 +63,12 @@ namespace BlueShell.ViewModel
             {
                 IsRunning = false;
             }
-
-            return (IsRunning, IsExiting);
         }
 
         public void Cancel()
         {
             _cancellationTokenSource?.Cancel();
+            IsRunning = false;
         }
     }
 }
