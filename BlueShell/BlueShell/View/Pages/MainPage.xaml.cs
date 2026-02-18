@@ -1,7 +1,8 @@
 using BlueShell.Model;
-using Microsoft.UI.Xaml.Controls;
-using System.Collections.Generic;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using System.Collections.Generic;
 
 namespace BlueShell.View.Pages
 {
@@ -12,11 +13,10 @@ namespace BlueShell.View.Pages
         public MainPage()
         {
             InitializeComponent();
-            NavigationViewControl.IsPaneOpen = false;
-            NavigationViewControl.SelectedItem = TerminalItem;
 
             BuildNavItemMap();
-            Loaded += MainPage_Loaded;
+
+            NavigationViewControl.IsPaneOpen = false;
         }
 
         private void BuildNavItemMap()
@@ -59,6 +59,15 @@ namespace BlueShell.View.Pages
             }
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            _tabModel = e.Parameter as TabModel;
+
+            _tabModel!.SelectedNavTag ??= "Terminal";
+        }
+
+
         private void NavigationViewControl_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             if (sender.SelectedItem is not NavigationViewItem selectedItem)
@@ -71,9 +80,25 @@ namespace BlueShell.View.Pages
             _tabModel?.SelectedNavTag = itemTag;
             _tabModel?.ApplyNavSelection(itemTag);
 
-            if (selectedItem.Tag.ToString() == "Terminal")
+            string? tag = selectedItem.Tag.ToString();
+
+            switch (tag)
             {
-                //MainFrame.Navigate(typeof(MainPage));
+                case "Terminal":
+                    ToggleTerminalLayout.Visibility = Visibility.Visible;
+                    MainFrame.Navigate(typeof(TerminalPage), _tabModel);
+                    break;
+                default:
+                    ToggleTerminalLayout.Visibility = Visibility.Collapsed;
+                    break;
+            }
+        }
+
+        private void ToggleTerminalLayout_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (MainFrame.Content is TerminalPage terminalPage)
+            {
+                terminalPage.ToggleLayout();
             }
         }
     }

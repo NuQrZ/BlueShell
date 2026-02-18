@@ -26,6 +26,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="View\Pages\SettingsPage.xaml" />
+	  <None Remove="View\Pages\TerminalPage.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="View\Pages\MainPage.xaml" />
@@ -37,13 +38,19 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Folder Include="View\Windows\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="View\Pages\TerminalPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<ItemGroup>
