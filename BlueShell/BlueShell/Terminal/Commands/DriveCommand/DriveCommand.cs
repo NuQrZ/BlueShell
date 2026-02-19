@@ -82,7 +82,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
         {
             foreach (string line in outputLines)
             {
-                await Task.Delay(2, context.CancellationToken);
+                await Task.Delay(1, context.CancellationToken);
                 context.TerminalOutput.Write(line, TerminalMessageKind.PrintOutput);
             }
         }

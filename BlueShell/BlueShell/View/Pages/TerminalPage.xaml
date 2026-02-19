@@ -24,12 +24,13 @@
             </Grid.RowDefinitions>
 
             <RichEditBox x:Name="Terminal"
-                         Grid.Row="0"
                          AcceptsReturn="False"
                          FontFamily="Cascadia Code"
                          FontSize="18"
+                         Grid.Row="0"
                          PreviewKeyDown="Terminal_PreviewKeyDown"
-                         SelectionChanged="Terminal_SelectionChanged">
+                         SelectionChanged="Terminal_SelectionChanged"
+                         TextChanging="Terminal_TextChanging">
             </RichEditBox>
 
             <ScrollViewer x:Name="OutputScrollViewer"
@@ -47,7 +48,7 @@
                                        Foreground="{x:Bind SolidColorBrush}"
                                        FontFamily="Cascadia Code"
                                        FontSize="18"
-                                       TextWrapping="Wrap"/>
+                                       TextWrapping="NoWrap"/>
                         </DataTemplate>
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>

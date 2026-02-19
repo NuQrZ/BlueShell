@@ -1,3 +1,4 @@
+using BlueShell.Helpers;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using BlueShell.Terminal.WinUI;
@@ -7,6 +8,7 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.System;
@@ -21,8 +23,8 @@ namespace BlueShell.View.Pages
 
         private bool _splitView = true;
 
-        private ITerminalOutput? _terminalOutput;
-        private IDataDisplay? _dataDisplay;
+        private TerminalOutput? _terminalOutput;
+        private DataDisplay? _dataDisplay;
         private TerminalViewModel? _terminalViewModel;
 
         private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
@@ -94,13 +96,8 @@ namespace BlueShell.View.Pages
 
             _dataDisplay = new DataDisplay(DataDisplay);
 
-            var dispatcher = new TerminalCommandDispatcher(
+            TerminalCommandDispatcher dispatcher = new(
                 TerminalCommandRegistry.CreateDefault());
-
-            var context = new TerminalCommandContext(
-                _terminalOutput,
-                _dataDisplay,
-                CancellationToken.None);
 
             _terminalViewModel = new TerminalViewModel(dispatcher,
                 () => new TerminalCommandContext(_terminalOutput, _dataDisplay, CancellationToken.None));
@@ -111,59 +108,66 @@ namespace BlueShell.View.Pages
 
         private async void Terminal_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
         {
-            ITextSelection textSelection = Terminal.Document.Selection;
-
-            int start = textSelection.StartPosition;
-            int end = textSelection.EndPosition;
-
-            bool isCtrl = (
-                InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
-                & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
-
-            if (e.Key == VirtualKey.Enter)
+            try
             {
-                e.Handled = true;
-                await HandleInput();
-                return;
-            }
+                ITextSelection textSelection = Terminal.Document.Selection;
 
-            if (e.Key == VirtualKey.Home)
-            {
-                e.Handled = true;
-                textSelection.SetRange(_inputStart, _inputStart);
-            }
+                int start = textSelection.StartPosition;
+                int end = textSelection.EndPosition;
 
-            if (e.Key is VirtualKey.Left or VirtualKey.Right && start <= _inputStart)
-            {
-                e.Handled = true;
-                return;
-            }
+                bool isCtrl = (
+                    InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+                    & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
 
-            if (e.Key is VirtualKey.Delete or VirtualKey.Back && start <= _inputStart)
-            {
-                e.Handled = true;
-                return;
-            }
-
-            if (textSelection.Length > 0 && start < _inputStart)
-            {
-                e.Handled = true;
-                textSelection.SetRange(_inputStart, _inputStart);
-                return;
-            }
-
-            if (isCtrl)
-            {
-                switch (e.Key)
+                if (e.Key == VirtualKey.Enter)
                 {
-                    case VirtualKey.A:
-                        e.Handled = true;
-                        textSelection.SetRange(_inputStart, end);
-                        return;
-                    case VirtualKey.Q:
-                        _terminalViewModel?.Cancel();
-                        return;
+                    e.Handled = true;
+                    await HandleInput();
+                    return;
                 }
+
+                if (e.Key == VirtualKey.Home)
+                {
+                    e.Handled = true;
+                    textSelection.SetRange(_inputStart, _inputStart);
+                }
+
+                if (e.Key is VirtualKey.Left or VirtualKey.Right && start <= _inputStart)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                if (e.Key is VirtualKey.Delete or VirtualKey.Back && start <= _inputStart)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                if (textSelection.Length > 0 && start < _inputStart)
+                {
+                    e.Handled = true;
+                    textSelection.SetRange(_inputStart, _inputStart);
+                    return;
+                }
+
+                if (isCtrl)
+                {
+                    switch (e.Key)
+                    {
+                        case VirtualKey.A:
+                            e.Handled = true;
+                            textSelection.SetRange(_inputStart, end);
+                            return;
+                        case VirtualKey.Q:
+                            _terminalViewModel?.Cancel();
+                            return;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                _terminalOutput?.WriteLine(exception.Message, messageKind: TerminalMessageKind.Error);
             }
         }
 
@@ -175,6 +179,14 @@ namespace BlueShell.View.Pages
             {
                 textSelection.SetRange(_inputStart, _inputStart);
             }
+        }
+
+        private void Terminal_TextChanging(RichEditBox sender, RichEditBoxTextChangingEventArgs args)
+        {
+            TerminalUtilities.HighlightCurrentInput(
+                Terminal.Document,
+                _inputStart,
+                ActualTheme);
         }
     }
 }

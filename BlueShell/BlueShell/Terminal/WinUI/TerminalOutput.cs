@@ -12,7 +12,7 @@ namespace BlueShell.Terminal.WinUI
 {
     public sealed class TerminalOutput : ITerminalOutput
     {
-        private readonly ObservableCollection<OutputLine> _lines = [];
+        private readonly ObservableCollection<OutputLine> _lines;
         private readonly ScrollViewer _scrollViewer;
 
         private readonly Func<ElementTheme> _themeProvider;
