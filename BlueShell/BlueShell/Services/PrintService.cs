@@ -97,5 +97,65 @@ namespace BlueShell.Services
 
             return stringBuilder.ToString().Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
         }
+
+        public string[] PrintFolderContents(List<FileSystemItem> folders)
+        {
+            StringBuilder stringBuilder = new();
+
+            const string itemNameLabel = "Item Name";
+            const string itemSizeLabel = "Item Size";
+            const string itemTypeLabel = "Item Type";
+
+            const string vertical = "|";
+            const string separator = "   ";
+
+            var formattedItems = folders.Select(folder => new
+            {
+                ItemName = folder.ItemName ?? "",
+                ItemType = folder.ItemType ?? "",
+                ItemSizeFull = (folder.ItemSize + " " + (folder.ItemSizeType ?? "")).Trim()
+            }).ToList();
+
+            int itemNameWidth = Math.Max(itemNameLabel.Length,
+                formattedItems.Select(formattedItem => formattedItem.ItemName.Length).DefaultIfEmpty(0).Max());
+
+            int itemSizeWidth = Math.Max(itemSizeLabel.Length,
+                formattedItems.Select(formattedItem => formattedItem.ItemSizeFull.Length).DefaultIfEmpty(0).Max());
+
+            int itemTypeWidth = Math.Max(itemTypeLabel.Length,
+                formattedItems.Select(formattedItem => formattedItem.ItemType.Length).DefaultIfEmpty(0).Max());
+
+            int totalWidth =
+                itemNameWidth + itemSizeWidth + itemTypeWidth +
+                separator.Length * 2 +
+                vertical.Length * 2;
+
+            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
+
+            stringBuilder.AppendLine(
+                vertical +
+                itemNameLabel.PadRight(itemNameWidth) + separator +
+                itemSizeLabel.PadRight(itemSizeWidth) + separator +
+                itemTypeLabel.PadRight(itemTypeWidth) +
+                vertical
+            );
+
+            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
+
+            foreach (var formattedItem in formattedItems)
+            {
+                stringBuilder.AppendLine(
+                    vertical +
+                    formattedItem.ItemName.PadRight(itemNameWidth) + separator +
+                    formattedItem.ItemSizeFull.PadRight(itemSizeWidth) + separator +
+                    formattedItem.ItemType.PadRight(itemTypeWidth) +
+                    vertical
+                );
+            }
+
+            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
+
+            return stringBuilder.ToString().Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+        }
     }
 }

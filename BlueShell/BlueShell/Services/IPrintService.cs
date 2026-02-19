@@ -6,5 +6,6 @@ namespace BlueShell.Services
     public interface IPrintService
     {
         string[] PrintDrives(List<DriveItem> drives);
+        string[] PrintFolderContents(List<FileSystemItem> folders);
     }
 }

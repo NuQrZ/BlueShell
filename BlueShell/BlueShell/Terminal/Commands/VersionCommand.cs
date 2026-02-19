@@ -8,7 +8,7 @@ namespace BlueShell.Terminal.Commands
         public string CommandName => "--Version";
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
-            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.0.3].", TerminalMessageKind.Info);
+            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.0.4].", TerminalMessageKind.Info);
             return Task.CompletedTask;
         }
     }
