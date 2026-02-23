@@ -95,7 +95,10 @@ namespace BlueShell.Services
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
-            return stringBuilder.ToString().Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            return stringBuilder.ToString()
+                .Replace("\r\n", "\n")
+                .TrimEnd('\n')
+                .Split('\n');
         }
 
         public string[] PrintFolderContents(List<FileSystemItem> folders)
@@ -155,7 +158,10 @@ namespace BlueShell.Services
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
-            return stringBuilder.ToString().Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            return stringBuilder.ToString()
+                .Replace("\r\n", "\n")
+                .TrimEnd('\n')
+                .Split('\n');
         }
     }
 }

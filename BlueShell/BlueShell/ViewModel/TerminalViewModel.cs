@@ -52,12 +52,12 @@ namespace BlueShell.ViewModel
             }
             catch (OperationCanceledException)
             {
-                commandContext.TerminalOutput.WriteLine("\n>> Operation Canceled.\n", TerminalMessageKind.Info);
+                commandContext.TerminalOutput.WriteLine(">> Operation Canceled.\n", TerminalMessageKind.Info);
 
             }
             catch (Exception exception)
             {
-                commandContext.TerminalOutput.WriteLine($"\n>> Error: {exception.Message}\n", TerminalMessageKind.Error);
+                commandContext.TerminalOutput.WriteLine($">> Error: {exception.Message}\n", TerminalMessageKind.Error);
             }
             finally
             {

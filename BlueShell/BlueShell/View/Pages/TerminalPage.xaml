@@ -11,6 +11,8 @@
 
     <Page.Resources>
         <converters:TextTrimmer x:Key="TextTrimmer"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisible"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibleInverted" Invert="True"/>
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -42,15 +44,42 @@
                         <StackLayout Spacing="0"/>
                     </ItemsRepeater.Layout>
 
-                    <ItemsRepeater.ItemTemplate>
-                        <DataTemplate x:DataType="model:OutputLine">
-                            <TextBlock Text="{x:Bind Text, Mode = OneWay}"
-                                       Foreground="{x:Bind SolidColorBrush}"
-                                       FontFamily="Cascadia Code"
-                                       FontSize="18"
-                                       TextWrapping="NoWrap"/>
-                        </DataTemplate>
-                    </ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="model:OutputLine">
+                        <Grid>
+                            <TextBlock Visibility="{x:Bind IsRich, Converter={StaticResource BoolToVisibleInverted}}"
+                                   Text="{x:Bind Text}"
+                                   Foreground="{x:Bind Foreground}"
+                                   FontFamily="Cascadia Code"
+                                   FontSize="18"
+                                   IsTextSelectionEnabled="False"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="{Binding ElementName=OutputScrollViewer, Path=ViewportWidth}"/>
+                            <ItemsControl Visibility="{x:Bind IsRich, Converter={StaticResource BoolToVisible}}"
+                                      ItemsSource="{x:Bind Segments}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="model:OutputSegment">
+                                        <TextBlock Text="{x:Bind Text}"
+                                               Foreground="{x:Bind Color}"
+                                               FontStyle="{x:Bind FontStyle}"
+                                               FontWeight="{x:Bind FontWeight}"
+                                               FontFamily="Cascadia Code"
+                                               FontSize="18"
+                                               IsTextSelectionEnabled="False"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               MaxWidth="{Binding ElementName=OutputScrollViewer, Path=ViewportWidth}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </DataTemplate>
                 </ItemsRepeater>
             </ScrollViewer>
         </Grid>

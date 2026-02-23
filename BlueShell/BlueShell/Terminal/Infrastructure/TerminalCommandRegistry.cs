@@ -15,6 +15,7 @@ namespace BlueShell.Terminal.Infrastructure
             new ClearCommand(),
             new ClearDisplayCommand(),
             new DriveCommand(new DriveService(), new FileSystemService(), new PrintService()),
+            new SimulateCommand(),
             new VersionCommand()
         ];
     }

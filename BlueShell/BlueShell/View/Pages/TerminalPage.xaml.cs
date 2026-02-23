@@ -30,6 +30,8 @@ namespace BlueShell.View.Pages
         private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
         private GridLength _savedDisplayWidth = new(3, GridUnitType.Star);
 
+        private DispatcherTimer? _highlightDebouncer;
+
         public TerminalPage()
         {
             InitializeComponent();
@@ -104,6 +106,22 @@ namespace BlueShell.View.Pages
 
             InitializeInput();
             Terminal.Focus(FocusState.Programmatic);
+
+            _highlightDebouncer = new DispatcherTimer()
+            {
+                Interval = TimeSpan.FromMilliseconds(30)
+            };
+
+            _highlightDebouncer.Tick += HighlightDebouncer_Tick;
+        }
+
+        private void HighlightDebouncer_Tick(object? sender, object e)
+        {
+            _highlightDebouncer?.Stop();
+            TerminalUtilities.HighlightCurrentInput(
+                Terminal.Document,
+                _inputStart,
+                ActualTheme);
         }
 
         private async void Terminal_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
@@ -135,20 +153,55 @@ namespace BlueShell.View.Pages
                 if (e.Key is VirtualKey.Left or VirtualKey.Right && start <= _inputStart)
                 {
                     e.Handled = true;
-                    return;
+                    textSelection.SetRange(_inputStart, _inputStart);
                 }
 
-                if (e.Key is VirtualKey.Delete or VirtualKey.Back && start <= _inputStart)
+                if (e.Key is VirtualKey.Back)
                 {
-                    e.Handled = true;
-                    return;
-                }
+                    if (textSelection.Length > 0)
+                    {
+                        if (start < _inputStart)
+                        {
+                            textSelection.SetRange(_inputStart, _inputStart);
+                        }
 
-                if (textSelection.Length > 0 && start < _inputStart)
-                {
+                        return;
+                    }
+
+                    if (start > _inputStart)
+                    {
+                        return;
+                    }
+
                     e.Handled = true;
                     textSelection.SetRange(_inputStart, _inputStart);
+
                     return;
+                }
+
+                if (e.Key is VirtualKey.Delete)
+                {
+                    if (start <= _inputStart)
+                    {
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                    }
+
+                    if (start == _inputStart)
+                    {
+                        e.Handled = true;
+
+                        RichEditTextDocument textDocument = Terminal.Document;
+                        ITextRange range = textDocument.GetRange(_inputStart, _inputStart + 1);
+
+                        if (range.EndPosition > range.StartPosition)
+                        {
+                            range.Text = string.Empty;
+                        }
+
+                        return;
+                    }
                 }
 
                 if (isCtrl)
@@ -183,10 +236,8 @@ namespace BlueShell.View.Pages
 
         private void Terminal_TextChanging(RichEditBox sender, RichEditBoxTextChangingEventArgs args)
         {
-            TerminalUtilities.HighlightCurrentInput(
-                Terminal.Document,
-                _inputStart,
-                ActualTheme);
+            _highlightDebouncer?.Stop();
+            _highlightDebouncer?.Start();
         }
     }
 }

@@ -80,10 +80,16 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private static async Task PrintOutput(TerminalCommandContext context, string[] outputLines)
         {
-            foreach (string line in outputLines)
+            for (int i = 0; i < outputLines.Length; i++)
             {
-                await Task.Delay(1, context.CancellationToken);
+                string line = outputLines[i];
+
                 context.TerminalOutput.Write(line, TerminalMessageKind.PrintOutput);
+
+                if (i % 300 == 0)
+                {
+                    await Task.Yield();
+                }
             }
         }
 
