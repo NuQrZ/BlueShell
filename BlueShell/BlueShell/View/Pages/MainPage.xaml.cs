@@ -1,8 +1,12 @@
+using BlueShell.Helpers;
 using BlueShell.Model;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace BlueShell.View.Pages
 {
@@ -17,6 +21,23 @@ namespace BlueShell.View.Pages
             BuildNavItemMap();
 
             NavigationViewControl.IsPaneOpen = false;
+
+            Loaded += async (_, _) =>
+            {
+                Stopwatch stopwatch = Stopwatch.StartNew();
+
+                await Task.Run(() =>
+                {
+                    foreach (DriveInfo driveInfo in DriveInfo.GetDrives())
+                    {
+                        WmiUtilities.GetAllDriveProperties(driveInfo.RootDirectory.FullName);
+                    }
+                });
+
+                stopwatch.Stop();
+
+                Debug.WriteLine($"WMI preload total time: {stopwatch.ElapsedMilliseconds} ms");
+            };
         }
 
         private void BuildNavItemMap()

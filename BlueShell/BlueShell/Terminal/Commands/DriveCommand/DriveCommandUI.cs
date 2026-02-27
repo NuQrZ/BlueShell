@@ -1,6 +1,11 @@
 ﻿using BlueShell.Helpers;
 using BlueShell.Model;
+using BlueShell.Model.Properties;
 using BlueShell.Services.Wrappers;
+using BlueShell.View.Windows;
+using BlueShell.ViewModel;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Threading.Tasks;
@@ -99,6 +104,23 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             dataDisplayItem.IsTakenSpaceVisible = false;
             dataDisplayItem.IsSizeVisible = true;
             dataDisplayItem.Color = "Transparent";
+        }
+
+        public static void InitializeDriveProperties(PropertyItem propertyItem)
+        {
+            DispatcherQueue dispatcherQueue = App.MainWindow?.DispatcherQueue ?? DispatcherQueue.GetForCurrentThread();
+
+            dispatcherQueue.TryEnqueue(() =>
+            {
+                PropertiesWindowViewModel propertiesWindowViewModel =
+                    App.ServiceProvider!.GetRequiredService<PropertiesWindowViewModel>();
+                propertiesWindowViewModel.ClearItems();
+                propertiesWindowViewModel.AddItem(propertyItem);
+                propertiesWindowViewModel.SelectedItem = propertyItem;
+
+                PropertiesWindow propertiesWindow = new(propertiesWindowViewModel);
+                propertiesWindow.Activate();
+            });
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using BlueShell.Model;
+using BlueShell.Model.Properties;
 using BlueShell.Services;
 using BlueShell.Services.FileSystem;
+using BlueShell.Services.Properties;
 using BlueShell.Services.Wrappers;
 using BlueShell.Terminal.Abstractions;
 using System;
@@ -69,11 +71,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 case "Open":
                     await HandleOpenOperation(context, driveTarget, extraOperation);
                     break;
-                case "Properties":
-                    context.TerminalOutput.WriteLine($">> Properties not implemented yet.", TerminalMessageKind.Info);
-                    break;
-                case "Advanced":
-                    context.TerminalOutput.WriteLine($">> Advanced not implemented yet.", TerminalMessageKind.Info);
+                case "Properties" or "Advanced":
+                    await HandlePropertiesOperation(context, operation, driveTarget, extraOperation);
                     break;
             }
         }
@@ -153,6 +152,52 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 case "Print":
                     List<FileSystemItem> fileSystemItems = [.. folders, .. files];
                     string[] lines = printService.PrintFolderContents(fileSystemItems);
+                    await PrintOutput(context, lines);
+                    break;
+            }
+        }
+
+        private async Task HandlePropertiesOperation(TerminalCommandContext context, string operation, string driveTarget, string extraOperation)
+        {
+            (int returnValue, string message) = ConvertIndexToDrivePath(driveTarget);
+
+            if (returnValue == -1)
+            {
+                context.TerminalOutput.WriteLine($">> {message}", TerminalMessageKind.Error);
+                return;
+            }
+
+            Dictionary<string, object> properties = [];
+
+            PropertyItem? propertyItem = null;
+
+            string displayName = await driveService.GetDriveDisplayName(driveTarget);
+
+            switch (operation)
+            {
+                case "Properties":
+                    properties = driveService.GetDriveProperties(driveTarget);
+                    context.TerminalOutput.WriteLine($">> Displaying properties for drive: {driveTarget}\n", TerminalMessageKind.Success);
+
+                    propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
+                        displayName, driveTarget, properties, false);
+                    break;
+                case "Advanced":
+                    properties = driveService.GetAdvancedDriveProperties(driveTarget);
+                    context.TerminalOutput.WriteLine($">> Displaying advanced properties for drive: {driveTarget}\n", TerminalMessageKind.Success);
+
+                    propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
+                        displayName, driveTarget, properties, true);
+                    break;
+            }
+
+            switch (extraOperation)
+            {
+                case "":
+                    DriveCommandUi.InitializeDriveProperties(propertyItem!);
+                    break;
+                case "Print":
+                    string[] lines = printService.PrintGeneralProperties(propertyItem!);
                     await PrintOutput(context, lines);
                     break;
             }

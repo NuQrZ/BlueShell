@@ -1,4 +1,5 @@
-﻿using BlueShell.Services.Wrappers;
+﻿using BlueShell.Helpers;
+using BlueShell.Services.Wrappers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,74 +11,91 @@ namespace BlueShell.Services.FileSystem
 {
     public sealed class DriveService : IDriveService
     {
-        private async Task<string?> GetDriveDisplayName(string driveFilePath)
+        private static DriveInfo? GetDrive(string filePath)
         {
-            string? driveName;
+            // filePath može biti "C:\\" ili "C:"
+            string normalized = NormalizeDriveKey(filePath);
+
+            return DriveInfo.GetDrives()
+                .FirstOrDefault(d => string.Equals(
+                    NormalizeDriveKey(d.RootDirectory.FullName),
+                    normalized,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string NormalizeDriveKey(string? drivePath)
+        {
+            // "C:\\" -> "C:" ; "C:" -> "C:"
+            drivePath = (drivePath ?? "").Trim();
+            if (drivePath.EndsWith("\\", StringComparison.Ordinal))
+                drivePath = drivePath.TrimEnd('\\');
+            return drivePath;
+        }
+
+        private async Task<DriveItem?> BuildDriveItem(string filePath)
+        {
+            DriveInfo? driveInfo = GetDrive(filePath);
+            if (driveInfo == null)
+                return null;
+
+            string rootPath = driveInfo.RootDirectory.FullName; // "C:\\"
+            string volumeLabel = await GetDriveDisplayName(rootPath);
+
+            long totalSize = driveInfo.TotalSize;
+            long totalFreeSpace = driveInfo.TotalFreeSpace;
+            long usedBytes = totalSize - totalFreeSpace;
+
+            double usedPrecent = totalSize > 0
+                ? (double)usedBytes / totalSize * 100.0
+                : 0.0;
+
+            bool isSystemDrive =
+                string.Equals(
+                    driveInfo.Name,
+                    Environment.GetFolderPath(Environment.SpecialFolder.Windows)[..3],
+                    StringComparison.OrdinalIgnoreCase);
+
+            return new DriveItem
+            {
+                RootPath = rootPath,
+                VolumeLabel = volumeLabel,
+                DriveType = driveInfo.DriveType.ToString(),
+                DriveFormat = driveInfo.DriveFormat,
+                TotalBytes = totalSize,
+                UsedBytes = usedBytes,
+                FreeBytes = totalFreeSpace,
+                IsReady = true,
+                IsSystemDrive = isSystemDrive,
+                UsedPrecent = usedPrecent,
+            };
+        }
+
+        public async Task<string> GetDriveDisplayName(string driveFilePath)
+        {
             try
             {
                 StorageFolder driveFolder = await StorageFolder.GetFolderFromPathAsync(driveFilePath);
-                driveName = driveFolder.DisplayName;
+                return driveFolder.DisplayName;
             }
             catch (Exception)
             {
-                driveName = GetDrive(driveFilePath)?.VolumeLabel;
+                return GetDrive(driveFilePath)?.VolumeLabel ?? "";
             }
-
-            return driveName;
         }
 
         public async Task<List<DriveItem>> GetDrives()
         {
             List<DriveItem> driveEntries = [];
             DriveInfo[] drives = DriveInfo.GetDrives();
+
             foreach (DriveInfo driveInfo in drives)
             {
                 if (!driveInfo.IsReady)
-                {
                     continue;
-                }
 
-                string rootPath = driveInfo.RootDirectory.FullName;
-                string? volumeLabel = await GetDriveDisplayName(rootPath);
-                string driveType = driveInfo.DriveType.ToString();
-                string driveFormat = driveInfo.DriveFormat;
-
-                long totalFreeSpace = driveInfo.TotalFreeSpace;
-                long totalSize = driveInfo.TotalSize;
-
-                long takenSpace = totalSize - totalFreeSpace;
-
-                if (volumeLabel == null)
-                {
+                DriveItem? driveItem = await BuildDriveItem(driveInfo.RootDirectory.FullName);
+                if (driveItem == null)
                     continue;
-                }
-
-                double usedPrecent = totalSize > 0 ? (double)takenSpace / totalSize * 100 : 0;
-
-                bool isReady = driveInfo.IsReady;
-
-                if (!isReady)
-                {
-                    continue;
-                }
-
-                bool isSystemDrive = string.Equals(driveInfo.Name,
-                    Environment.GetFolderPath(Environment.SpecialFolder.Windows)[..3],
-                    StringComparison.OrdinalIgnoreCase);
-
-                DriveItem driveItem = new()
-                {
-                    RootPath = rootPath,
-                    VolumeLabel = volumeLabel,
-                    DriveType = driveType,
-                    DriveFormat = driveFormat,
-                    TotalBytes = totalSize,
-                    UsedBytes = takenSpace,
-                    FreeBytes = totalFreeSpace,
-                    IsReady = driveInfo.IsReady,
-                    IsSystemDrive = isSystemDrive,
-                    UsedPrecent = usedPrecent,
-                };
 
                 driveEntries.Add(driveItem);
             }
@@ -85,11 +103,28 @@ namespace BlueShell.Services.FileSystem
             return driveEntries;
         }
 
-        public DriveInfo? GetDrive(string filePath)
+        public Dictionary<string, object> GetDriveProperties(string driveLetter)
         {
-            return (from DriveInfo driveInfo in DriveInfo.GetDrives()
-                    where driveInfo.RootDirectory.FullName == filePath
-                    select driveInfo).FirstOrDefault();
+            string key = NormalizeDriveKey(driveLetter);
+
+            if (!WmiUtilities.DriveProperties.TryGetValue(key, out var allProperties))
+                return [];
+
+            return allProperties
+                .Where(kv => WmiUtilities.GeneralKeys.Contains(kv.Key))
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public Dictionary<string, object> GetAdvancedDriveProperties(string driveLetter)
+        {
+            string key = NormalizeDriveKey(driveLetter);
+
+            if (!WmiUtilities.DriveProperties.TryGetValue(key, out var allProperties))
+                return [];
+
+            return allProperties
+                .Where(kv => !WmiUtilities.GeneralKeys.Contains(kv.Key))
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

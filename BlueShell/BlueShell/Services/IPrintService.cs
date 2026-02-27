@@ -1,4 +1,5 @@
-﻿using BlueShell.Services.Wrappers;
+﻿using BlueShell.Model.Properties;
+using BlueShell.Services.Wrappers;
 using System.Collections.Generic;
 
 namespace BlueShell.Services
@@ -7,5 +8,6 @@ namespace BlueShell.Services
     {
         string[] PrintDrives(List<DriveItem> drives);
         string[] PrintFolderContents(List<FileSystemItem> folders);
+        string[] PrintGeneralProperties(PropertyItem propertyItem);
     }
 }

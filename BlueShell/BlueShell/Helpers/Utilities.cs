@@ -15,28 +15,29 @@ namespace BlueShell.Helpers
         public static Dictionary<string, Color> DarkThemeKeywordColors { get; } = new()
         {
             { "Exit", Color.FromArgb(255, 255, 70, 110) },
-            { "Clear", Color.FromArgb(255,   0, 220, 225) },
+            { "Clear", Color.FromArgb(255, 0, 220, 225) },
             { "ClearDisplay", Color.FromArgb(255, 185, 185, 185) },
             { "--Version", Color.FromArgb(255, 255, 165, 60) },
-            { "Drive", Color.FromArgb(255,  50, 160, 255) },
+            { "Drive", Color.FromArgb(255, 50, 160, 255) },
             { "-GetDrives", Color.FromArgb(255, 255, 215, 120) },
             { "-Properties", Color.FromArgb(255, 215, 120, 255) },
             { "-Advanced", Color.FromArgb(255, 100, 140, 255) },
-            { "-Open", Color.FromArgb(255,  40, 235, 200) },
-            { "-Print", Color.FromArgb(255,  60, 255, 145) }
+            { "-Open", Color.FromArgb(255, 40, 235, 200) },
+            { "-Print", Color.FromArgb(255, 60, 255, 145) }
         };
+
         public static Dictionary<string, Color> LightThemeKeywordColors { get; } = new()
         {
-            { "Exit", Color.FromArgb(255, 210,  30,  80) },
-            { "Clear", Color.FromArgb(255,   0, 155, 155) },
-            { "ClearDisplay", Color.FromArgb(255,  90,  90,  90) },
-            { "--Version", Color.FromArgb(255, 190, 115,  15) },
-            { "Drive", Color.FromArgb(255,  20,  45, 225) },
-            { "-GetDrives", Color.FromArgb(255, 175, 145,  25) },
-            { "-Properties", Color.FromArgb(255, 155,  55, 215) },
-            { "-Advanced", Color.FromArgb(255,  55,  95, 235) },
-            { "-Open", Color.FromArgb(255,  10, 175, 180) },
-            { "-Print", Color.FromArgb(255,  10, 155,  70) }
+            { "Exit", Color.FromArgb(255, 210, 30, 80) },
+            { "Clear", Color.FromArgb(255, 0, 155, 155) },
+            { "ClearDisplay", Color.FromArgb(255, 90, 90, 90) },
+            { "--Version", Color.FromArgb(255, 190, 115, 15) },
+            { "Drive", Color.FromArgb(255, 20, 45, 225) },
+            { "-GetDrives", Color.FromArgb(255, 175, 145, 25) },
+            { "-Properties", Color.FromArgb(255, 155, 55, 215) },
+            { "-Advanced", Color.FromArgb(255, 55, 95, 235) },
+            { "-Open", Color.FromArgb(255, 10, 175, 180) },
+            { "-Print", Color.FromArgb(255, 10, 155, 70) }
         };
 
         public static string ReturnSize(long sizeInBytes, bool returnOnlySizeType = false)

@@ -1,4 +1,5 @@
 ﻿using BlueShell.Helpers;
+using BlueShell.Model.Properties;
 using BlueShell.Services.Wrappers;
 using System;
 using System.Collections.Generic;
@@ -8,89 +9,64 @@ using System.Text;
 
 namespace BlueShell.Services
 {
-    internal class PrintService : IPrintService
+    public sealed class PrintService : IPrintService
     {
-        public string[] PrintDrives(List<DriveItem> drives)
+        private string[] PrintTable(
+            List<string> headers,
+            List<List<string>> rows)
         {
             StringBuilder stringBuilder = new();
-
-            const string driveLabel = "Display Name";
-            const string driveRoot = "Drive Root";
-            const string driveType = "Drive Type";
-            const string driveFormat = "Drive Format";
-            const string totalSize = "Total Size";
-            const string usedSpace = "Used Space";
-            const string freeSpace = "Free Space";
-            const string usedPercent = "Used Percent";
 
             const string vertical = "|";
             const string separator = "   ";
 
-            var formattedDrives = drives.Select(drive => new
-            {
-                DisplayName = drive.VolumeLabel,
-                Root = drive.RootPath,
-                Type = drive.DriveType,
-                Format = drive.DriveFormat,
-                Total = Utilities.ReturnSize(drive.TotalBytes),
-                Used = Utilities.ReturnSize(drive.UsedBytes),
-                Free = Utilities.ReturnSize(drive.FreeBytes),
-                Percent = Math.Round(drive.UsedPrecent).ToString(CultureInfo.InvariantCulture) + " %"
-            }).ToList();
+            int columnCount = headers.Count;
 
-            int displayWidth = Math.Max(driveLabel.Length,
-                formattedDrives.Select(drive => drive.DisplayName.Length).DefaultIfEmpty(0).Max());
-            int rootWidth = Math.Max(driveRoot.Length,
-                formattedDrives.Select(drive => drive.Root.Length).DefaultIfEmpty(0).Max());
-            int typeWidth = Math.Max(driveType.Length,
-                formattedDrives.Select(drive => drive.Type.Length).DefaultIfEmpty(0).Max());
-            int formatWidth = Math.Max(driveFormat.Length,
-                formattedDrives.Select(drive => drive.Format.Length).DefaultIfEmpty(0).Max());
-            int totalSizeWidth = Math.Max(totalSize.Length,
-                formattedDrives.Select(drive => drive.Total.Length).DefaultIfEmpty(0).Max());
-            int usedSpaceWidth = Math.Max(usedSpace.Length,
-                formattedDrives.Select(drive => drive.Used.Length).DefaultIfEmpty(0).Max());
-            int freeSpaceWidth = Math.Max(freeSpace.Length,
-                formattedDrives.Select(drive => drive.Free.Length).DefaultIfEmpty(0).Max());
-            int usedPercentWidth = Math.Max(usedPercent.Length,
-                formattedDrives.Select(drive => drive.Percent.Length).DefaultIfEmpty(0).Max());
+            int[] widths = new int[columnCount];
+
+            for (int i = 0; i < columnCount; i++)
+            {
+                int headerWidth = headers[i].Length;
+                int contentWidth = rows
+                    .Select(r => r[i].Length)
+                    .DefaultIfEmpty(0)
+                    .Max();
+
+                widths[i] = Math.Max(headerWidth, contentWidth);
+            }
 
             int totalWidth =
-                displayWidth + rootWidth + typeWidth + formatWidth +
-                totalSizeWidth + usedSpaceWidth + freeSpaceWidth + usedPercentWidth +
-                separator.Length * 7 + vertical.Length * 2;
+                widths.Sum() +
+                separator.Length * (columnCount - 1) +
+                vertical.Length * 2;
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
-            stringBuilder.AppendLine(
-                vertical +
-                driveLabel.PadRight(displayWidth) + separator +
-                driveRoot.PadRight(rootWidth) + separator +
-                driveType.PadRight(typeWidth) + separator +
-                driveFormat.PadRight(formatWidth) + separator +
-                totalSize.PadRight(totalSizeWidth) + separator +
-                usedSpace.PadRight(usedSpaceWidth) + separator +
-                freeSpace.PadRight(freeSpaceWidth) + separator +
-                usedPercent.PadRight(usedPercentWidth) +
-                vertical
-            );
-
-            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
-
-            foreach (var drive in formattedDrives)
+            stringBuilder.Append(vertical);
+            for (int i = 0; i < columnCount; i++)
             {
-                stringBuilder.AppendLine(
-                    vertical +
-                    drive.DisplayName.PadRight(displayWidth) + separator +
-                    drive.Root.PadRight(rootWidth) + separator +
-                    drive.Type.PadRight(typeWidth) + separator +
-                    drive.Format.PadRight(formatWidth) + separator +
-                    drive.Total.PadRight(totalSizeWidth) + separator +
-                    drive.Used.PadRight(usedSpaceWidth) + separator +
-                    drive.Free.PadRight(freeSpaceWidth) + separator +
-                    drive.Percent.PadRight(usedPercentWidth) +
-                    vertical
-                );
+                stringBuilder.Append(headers[i].PadRight(widths[i]));
+                if (i < columnCount - 1)
+                {
+                    stringBuilder.Append(separator);
+                }
+            }
+            stringBuilder.AppendLine(vertical);
+
+            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
+
+            foreach (var row in rows)
+            {
+                stringBuilder.Append(vertical);
+                for (int i = 0; i < columnCount; i++)
+                {
+                    stringBuilder.Append(row[i].PadRight(widths[i]));
+                    if (i < columnCount - 1)
+                    {
+                        stringBuilder.Append(separator);
+                    }
+                }
+                stringBuilder.AppendLine(vertical);
             }
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
@@ -101,62 +77,96 @@ namespace BlueShell.Services
                 .Split('\n');
         }
 
-        public string[] PrintFolderContents(List<FileSystemItem> folders)
+        public string[] PrintDrives(List<DriveItem> drives)
+        {
+            List<string> headers =
+            [
+                "Display Name",
+                "Drive Root",
+                "Drive Type",
+                "Drive Format",
+                "Total Size",
+                "Used Space",
+                "Free Space",
+                "Used Percent"
+            ];
+
+            List<List<string>> rows = drives.Select(d => new List<string>
+            {
+                d.VolumeLabel ?? "",
+                d.RootPath ?? "",
+                d.DriveType ?? "",
+                d.DriveFormat ?? "",
+                Utilities.ReturnSize(d.TotalBytes),
+                Utilities.ReturnSize(d.UsedBytes),
+                Utilities.ReturnSize(d.FreeBytes),
+                Math.Round(d.UsedPrecent).ToString(CultureInfo.InvariantCulture) + " %"
+            }).ToList();
+
+            return PrintTable(headers, rows);
+        }
+
+        public string[] PrintFolderContents(List<FileSystemItem>? folders)
+        {
+            List<string> headers =
+            [
+                "Item Name",
+                "Item Size",
+                "Item Type"
+            ];
+
+            List<List<string>> rows = [.. (folders ?? [])
+                .Select(folder => new List<string>
+                {
+                    folder.ItemName ?? "",
+                    (folder.ItemSize + " " + (folder.ItemSizeType ?? "")).Trim(),
+                    folder.ItemType ?? ""
+                })
+            ];
+
+            return PrintTable(headers, rows);
+        }
+
+        private string[] PrintPropertyRows(List<PropertyRow>? propertyRows)
+        {
+            List<string> headers =
+            [
+                "Property",
+                "Value"
+            ];
+
+            List<List<string>> rows =
+            [
+                .. (propertyRows ?? [])
+                .Select(row => new List<string>
+                {
+                    row.Label ?? "",
+                    row.Text ?? ""
+                })
+            ];
+
+            return PrintTable(headers, rows);
+        }
+
+        public string[] PrintGeneralProperties(PropertyItem propertyItem)
         {
             StringBuilder stringBuilder = new();
 
-            const string itemNameLabel = "Item Name";
-            const string itemSizeLabel = "Item Size";
-            const string itemTypeLabel = "Item Type";
+            stringBuilder.AppendLine($"== {propertyItem.ItemName} ==");
+            stringBuilder.AppendLine();
 
-            const string vertical = "|";
-            const string separator = "   ";
-
-            var formattedItems = folders.Select(folder => new
+            foreach (PropertyGroup propertyGroup in propertyItem.PropertyGroups ?? [])
             {
-                ItemName = folder.ItemName ?? "",
-                ItemType = folder.ItemType ?? "",
-                ItemSizeFull = (folder.ItemSize + " " + (folder.ItemSizeType ?? "")).Trim()
-            }).ToList();
+                stringBuilder.AppendLine($"-- {propertyGroup.GroupName} --");
 
-            int itemNameWidth = Math.Max(itemNameLabel.Length,
-                formattedItems.Select(formattedItem => formattedItem.ItemName.Length).DefaultIfEmpty(0).Max());
+                string[] lines = PrintPropertyRows(propertyGroup.PropertyRows ?? []);
+                foreach (string line in lines)
+                {
+                    stringBuilder.AppendLine(line);
+                }
 
-            int itemSizeWidth = Math.Max(itemSizeLabel.Length,
-                formattedItems.Select(formattedItem => formattedItem.ItemSizeFull.Length).DefaultIfEmpty(0).Max());
-
-            int itemTypeWidth = Math.Max(itemTypeLabel.Length,
-                formattedItems.Select(formattedItem => formattedItem.ItemType.Length).DefaultIfEmpty(0).Max());
-
-            int totalWidth =
-                itemNameWidth + itemSizeWidth + itemTypeWidth +
-                separator.Length * 2 +
-                vertical.Length * 2;
-
-            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
-
-            stringBuilder.AppendLine(
-                vertical +
-                itemNameLabel.PadRight(itemNameWidth) + separator +
-                itemSizeLabel.PadRight(itemSizeWidth) + separator +
-                itemTypeLabel.PadRight(itemTypeWidth) +
-                vertical
-            );
-
-            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
-
-            foreach (var formattedItem in formattedItems)
-            {
-                stringBuilder.AppendLine(
-                    vertical +
-                    formattedItem.ItemName.PadRight(itemNameWidth) + separator +
-                    formattedItem.ItemSizeFull.PadRight(itemSizeWidth) + separator +
-                    formattedItem.ItemType.PadRight(itemTypeWidth) +
-                    vertical
-                );
+                stringBuilder.AppendLine();
             }
-
-            stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
             return stringBuilder.ToString()
                 .Replace("\r\n", "\n")

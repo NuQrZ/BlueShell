@@ -2,11 +2,11 @@
 {
     public sealed class DriveItem
     {
-        public required string RootPath { get; init; }
-        public required string VolumeLabel { get; init; }
+        public string? RootPath { get; init; }
+        public string? VolumeLabel { get; init; }
 
-        public required string DriveType { get; init; }
-        public required string DriveFormat { get; init; }
+        public string? DriveType { get; init; }
+        public string? DriveFormat { get; init; }
 
         public long TotalBytes { get; init; }
         public long FreeBytes { get; init; }

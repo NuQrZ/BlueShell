@@ -21,6 +21,8 @@ namespace BlueShell
             ServiceCollection serviceCollection = new();
 
             serviceCollection.AddSingleton<MainWindowViewModel>();
+            serviceCollection.AddSingleton<TerminalViewModel>();
+            serviceCollection.AddSingleton<PropertiesWindowViewModel>();
 
             return serviceCollection.BuildServiceProvider();
         }
