@@ -5,7 +5,7 @@ using Windows.UI.Text;
 
 namespace BlueShell.Terminal.Commands
 {
-    internal class SimulateCommand : ITerminalCommand
+    public sealed class SimulateCommand : ITerminalCommand
     {
         public string CommandName => "Simulate";
         public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)

@@ -4,7 +4,7 @@ using System;
 
 namespace BlueShell.Converters
 {
-    internal class BoolToVisibilityConverter : IValueConverter
+    public sealed class BoolToVisibilityConverter : IValueConverter
     {
         public bool Invert { get; set; }
 

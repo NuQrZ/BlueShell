@@ -1,28 +1,28 @@
 ﻿using BlueShell.Terminal.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace BlueShell.Terminal.Commands.DriveCommand
 {
-    public static class DriveCommandParser
+    public static partial class DriveCommandParser
     {
         private static readonly Regex Full =
-            new(@"^\s*Drive(?:\s+(?<Target>(""[^""]*""|\[[^\]]*\]))\s*)?(?:\s+(?<Operation>-\S+))?(?:\s+(?<Extra>-\S+))?(?<Rest>(?:\s+.+)?)\s*$",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            FullRegex();
 
-        private static readonly Regex IndexExact = new(@"^\[(?<n>\d+)\]$", RegexOptions.Compiled);
-
-        private static readonly Regex EmptyIndex = new(@"^\[\s*\]$", RegexOptions.Compiled);
+        private static readonly Regex IndexExact = IndexExactRegex();
+        private static readonly Regex EmptyIndex = EmptyIndexRegex();
 
         public static bool TryParse(
             string commandLine,
-            out string driveTarget,
+            out List<string> driveTarget,
             out string operation,
             out string extraOperation,
             out List<Tuple<string, TerminalMessageKind>> errorMessages)
         {
-            driveTarget = "";
+            driveTarget = [];
             operation = "";
             extraOperation = "";
             errorMessages = [];
@@ -42,122 +42,249 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             operation = NormalizeOperation(operationText);
             extraOperation = NormalizeExtraOperation(extraOperationText);
 
-            (List<Tuple<string, TerminalMessageKind>>, bool, string) output = GenerateOutput(
-                targetText,
-                operation,
-                extraOperation,
-                rest);
+            var (messages, ok, drives) = GenerateOutput(targetText, operation, extraOperation, rest);
 
-            errorMessages = output.Item1;
-            driveTarget = output.Item3;
-
-            return output.Item2;
+            errorMessages = messages;
+            driveTarget = drives;
+            return ok;
         }
 
-        private static (List<Tuple<string, TerminalMessageKind>>, bool, string) GenerateOutput(string driveTarget, string operation, string extraOperation, string rest)
+        private static (List<Tuple<string, TerminalMessageKind>> Messages, bool Ok, List<string> Drives)
+            GenerateOutput(string driveTarget, string operation, string extraOperation, string rest)
         {
-            List<Tuple<string, TerminalMessageKind>> errorMessages = [];
-            bool returnValue = false;
-            string drive = "";
+            List<Tuple<string, TerminalMessageKind>> messages = [];
+            List<string> drives = [];
 
-            if (operation == "GetDrives")
-            {
-                if (!string.IsNullOrWhiteSpace(driveTarget))
-                {
-                    errorMessages.Add(Tuple.Create(">> This operation does not take any drive target!\n", TerminalMessageKind.Warning));
-
-                    returnValue = false;
-                }
-                else if (extraOperation != "Print" && extraOperation != "")
-                {
-                    errorMessages.Add(Tuple.Create($">> Unknown option: \"{extraOperation}\".\nAllowed options are:\n-Print\n", TerminalMessageKind.Error));
-
-                    returnValue = false;
-                }
-                else
-                {
-                    driveTarget = "";
-                    returnValue = true;
-                }
-            }
+            bool returnValue = true;
 
             bool isKnownOperation = IsKnownOperation(operation);
             bool isKnownExtraOperation = IsKnownExtraOperation(extraOperation);
 
-            if (operation != "GetDrives")
-            {
-                if (string.IsNullOrWhiteSpace(driveTarget))
-                {
-                    errorMessages.Add(Tuple.Create(">> Missing drive target! Use \"C:\\\" ...\n", TerminalMessageKind.Error));
-                    returnValue = false;
-                }
-                else if (EmptyIndex.IsMatch(driveTarget))
-                {
-                    errorMessages.Add(Tuple.Create(">> Index cannot be empty! Use [0], [1], ...\n", TerminalMessageKind.Warning));
-                    returnValue = false;
-                }
-                else if (IndexExact.IsMatch(driveTarget))
-                {
-                    drive = driveTarget;
-                    returnValue = true;
-                }
-                else if (driveTarget.StartsWith('[') && driveTarget.EndsWith(']'))
-                {
-                    errorMessages.Add(Tuple.Create(">> Index must be a number like [0].\n", TerminalMessageKind.Warning));
-                    returnValue = false;
-                }
-                else if (driveTarget is ['"', _, ..] && driveTarget[^1] == '"')
-                {
-                    drive = driveTarget[1..^1];
-                    returnValue = true;
-                }
-                else
-                {
-                    errorMessages.Add(Tuple.Create(">> Drive target must be quoted. Use \"C:\\\" or an index like [0].\n", TerminalMessageKind.Warning));
-                    returnValue = false;
-                }
-            }
-
             if (string.IsNullOrEmpty(operation))
             {
-                errorMessages.Add(Tuple.Create(">> Operation is required.\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n", TerminalMessageKind.Error));
+                messages.Add(Tuple.Create(
+                    "\n>> Operation is required.\n\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n",
+                    TerminalMessageKind.Error));
                 returnValue = false;
             }
             else
             {
                 if (!isKnownOperation)
                 {
-                    errorMessages.Add(Tuple.Create($">> Unknown drive operation: \"{operation}\".\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n", TerminalMessageKind.Warning));
+                    messages.Add(Tuple.Create(
+                        $"\n>> Unknown drive operation: \"{operation}\".\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
 
                 if (!isKnownExtraOperation)
                 {
-                    errorMessages.Add(Tuple.Create($">> Unknown extra operation: \"{extraOperation}\".\nAllowed extra operations are: \n-Print", TerminalMessageKind.Warning));
+                    messages.Add(Tuple.Create(
+                        $"\n>> Unknown extra operation: \"{extraOperation}\".\nAllowed extra operations are: \n-Print\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(rest))
+            if (operation.Equals("GetDrives", StringComparison.OrdinalIgnoreCase))
             {
-                errorMessages.Add(Tuple.Create($">> Unexpected argument: \"{rest}\".\n", TerminalMessageKind.Error));
-                returnValue = false;
+                if (!string.IsNullOrWhiteSpace(driveTarget))
+                {
+                    messages.Add(Tuple.Create(
+                        "\n>> This operation does not take any drive target!\n",
+                        TerminalMessageKind.Warning));
+                    returnValue = false;
+                }
+
+                if (!string.IsNullOrWhiteSpace(extraOperation) &&
+                    !extraOperation.Equals("Print", StringComparison.OrdinalIgnoreCase))
+                {
+                    messages.Add(Tuple.Create(
+                        $"\n>> Unknown option: \"{extraOperation}\".\nAllowed options are:\n-Print\n",
+                        TerminalMessageKind.Error));
+                    returnValue = false;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(driveTarget))
+                {
+                    messages.Add(Tuple.Create(
+                        "\n>> Missing drive target! Use \"C:\\\" or an index like [0].\n",
+                        TerminalMessageKind.Error));
+                    returnValue = false;
+                }
+                else if (EmptyIndex.IsMatch(driveTarget))
+                {
+                    messages.Add(Tuple.Create(
+                        "\n>> Index cannot be empty! Use [0], [1], ...\n",
+                        TerminalMessageKind.Warning));
+                    returnValue = false;
+                }
+                else
+                {
+
+                    Match match = IndexExact.Match(driveTarget);
+                    if (match.Success)
+                    {
+                        int index = int.Parse(match.Groups["n"].Value);
+
+                        if (index < 0 || index >= DriveInfo.GetDrives().Length)
+                        {
+                            messages.Add(Tuple.Create(
+                                $"\n>> Drive with index: {index} does not exist!\n",
+                                TerminalMessageKind.Error));
+                            returnValue = false;
+                        }
+                        else
+                        {
+                            drives.Add(DriveInfo.GetDrives()[index].RootDirectory.FullName);
+                        }
+                    }
+
+                    else if (driveTarget.StartsWith('[') && driveTarget.EndsWith(']'))
+                    {
+                        if (!CheckDriveInputInBrackets(driveTarget, DriveInfo.GetDrives(), drives, messages))
+                            returnValue = false;
+                    }
+
+                    else if (driveTarget is ['"', _, ..] && driveTarget[^1] == '"')
+                    {
+                        string path = driveTarget[1..^1].Trim();
+                        DriveInfo? driveInfo = GetDriveByName(DriveInfo.GetDrives(), path);
+                        if (driveInfo == null)
+                        {
+                            messages.Add(Tuple.Create(
+                                $"\n>> Drive: \"{path}\" does not exist!\n",
+                                TerminalMessageKind.Error));
+                            returnValue = false;
+                        }
+                        else
+                        {
+                            drives.Add(driveInfo.RootDirectory.FullName);
+                        }
+                    }
+                    else
+                    {
+                        messages.Add(Tuple.Create(
+                            "\n>> Drive target must be quoted. Use \"C:\\\" or an index like [0].\n",
+                            TerminalMessageKind.Warning));
+                        returnValue = false;
+                    }
+                }
             }
 
+            if (string.IsNullOrWhiteSpace(rest))
+            {
+                return (messages, returnValue, drives);
+            }
 
-            return (errorMessages, returnValue, drive);
+            messages.Add(Tuple.Create(
+                $"\n>> Unexpected argument: \"{rest}\".\n",
+                TerminalMessageKind.Error));
+            returnValue = false;
+
+            return (messages, returnValue, drives);
+        }
+
+        private static DriveInfo? GetDriveByName(DriveInfo[] driveInfos, string filePath)
+        {
+            foreach (DriveInfo driveInfo in driveInfos)
+            {
+                if (driveInfo.RootDirectory.FullName == filePath)
+                {
+                    return driveInfo;
+                }
+            }
+            return null;
+        }
+
+        private static bool CheckDriveInputInBrackets(
+            string driveInput,
+            DriveInfo[] driveInfos,
+            List<string> drives,
+            List<Tuple<string, TerminalMessageKind>> messages)
+        {
+            string inner = driveInput[1..^1].Trim();
+
+            if (inner == "\"All\"")
+            {
+                drives.AddRange(driveInfos.Select(driveInfo => driveInfo.RootDirectory.FullName));
+                return true;
+            }
+
+            inner = inner.Replace("\"", "").Trim();
+
+            string[] items = inner.Split(',');
+
+            if (items.Length == 0 || items.Any(string.IsNullOrWhiteSpace))
+            {
+                messages.Add(Tuple.Create(
+                    "\n>> Drive array contains empty elements or trailing comma!\n",
+                    TerminalMessageKind.Error));
+                return false;
+            }
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                items[i] = items[i].Trim();
+            }
+
+            if (items.All(s => int.TryParse(s, out _)))
+            {
+                foreach (string s in items)
+                {
+                    int index = int.Parse(s);
+
+                    if (index < 0 || index >= driveInfos.Length)
+                    {
+                        messages.Add(Tuple.Create(
+                            $"\n>> Drive with index: {index} does not exist!\n",
+                            TerminalMessageKind.Error));
+                        return false;
+                    }
+
+                    drives.Add(driveInfos[index].RootDirectory.FullName);
+                }
+
+                return true;
+            }
+
+            if (items.Any(s => int.TryParse(s, out _)))
+            {
+                messages.Add(Tuple.Create(
+                    "\n>> Drive array must be only of one type, drive paths or drive indexes!\n",
+                    TerminalMessageKind.Warning));
+                return false;
+            }
+
+            foreach (string path in items)
+            {
+                DriveInfo? di = GetDriveByName(driveInfos, path);
+                if (di == null)
+                {
+                    messages.Add(Tuple.Create(
+                        $"\n>> Drive: \"{path}\" does not exist!\n",
+                        TerminalMessageKind.Error));
+                    return false;
+                }
+
+                drives.Add(di.RootDirectory.FullName);
+            }
+
+            return true;
         }
 
         private static string NormalizeOperation(string operation)
         {
-            string normalizedOperation = operation.StartsWith('-') ? operation[1..] : operation;
-            return normalizedOperation.Trim();
+            string normalized = operation.StartsWith('-') ? operation[1..] : operation;
+            return normalized.Trim();
         }
 
         private static string NormalizeExtraOperation(string extraOperation)
         {
-            string normalizedExtraOperation = extraOperation.StartsWith('-') ? extraOperation[1..] : extraOperation;
-            return normalizedExtraOperation.Trim();
+            string normalized = extraOperation.StartsWith('-') ? extraOperation[1..] : extraOperation;
+            return normalized.Trim();
         }
 
         private static bool IsKnownOperation(string operation)
@@ -173,5 +300,12 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             return string.IsNullOrEmpty(extraOperation)
                    || extraOperation.Equals("Print", StringComparison.OrdinalIgnoreCase);
         }
+
+        [GeneratedRegex("""^\s*Drive(?:\s+(?<Target>("[^"]*"|\[[^\]]*\]))\s*)?(?:\s+(?<Operation>-\S+))?(?:\s+(?<Extra>-\S+))?(?<Rest>(?:\s+.+)?)\s*$""", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex FullRegex();
+        [GeneratedRegex(@"^\[(?<n>\d+)\]$", RegexOptions.Compiled)]
+        private static partial Regex IndexExactRegex();
+        [GeneratedRegex(@"^\[\s*\]$", RegexOptions.Compiled)]
+        private static partial Regex EmptyIndexRegex();
     }
 }

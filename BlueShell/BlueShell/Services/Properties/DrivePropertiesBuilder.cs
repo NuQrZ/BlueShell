@@ -197,7 +197,7 @@ namespace BlueShell.Services.Properties
 
         private static ulong? GetBytes(Dictionary<string, object> props, string key)
         {
-            if (!props.TryGetValue(key, out var v) || v is null)
+            if (!props.TryGetValue(key, out var v))
             {
                 return null;
             }

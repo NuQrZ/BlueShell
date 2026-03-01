@@ -13,22 +13,21 @@ namespace BlueShell.Services.FileSystem
     {
         private static DriveInfo? GetDrive(string filePath)
         {
-            // filePath može biti "C:\\" ili "C:"
-            string normalized = NormalizeDriveKey(filePath);
-
             return DriveInfo.GetDrives()
                 .FirstOrDefault(d => string.Equals(
-                    NormalizeDriveKey(d.RootDirectory.FullName),
-                    normalized,
+                    d.RootDirectory.FullName,
+                    filePath,
                     StringComparison.OrdinalIgnoreCase));
         }
 
         private static string NormalizeDriveKey(string? drivePath)
         {
-            // "C:\\" -> "C:" ; "C:" -> "C:"
             drivePath = (drivePath ?? "").Trim();
             if (drivePath.EndsWith("\\", StringComparison.Ordinal))
+            {
                 drivePath = drivePath.TrimEnd('\\');
+            }
+
             return drivePath;
         }
 
@@ -38,7 +37,7 @@ namespace BlueShell.Services.FileSystem
             if (driveInfo == null)
                 return null;
 
-            string rootPath = driveInfo.RootDirectory.FullName; // "C:\\"
+            string rootPath = driveInfo.RootDirectory.FullName;
             string volumeLabel = await GetDriveDisplayName(rootPath);
 
             long totalSize = driveInfo.TotalSize;

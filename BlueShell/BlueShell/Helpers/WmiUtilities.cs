@@ -25,20 +25,6 @@ namespace BlueShell.Helpers
             return driveLetter;
         }
 
-        private static int? ParsePhysicalDriveIndex(string deviceId)
-        {
-            const string marker = "PHYSICALDRIVE";
-            int position = deviceId.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-
-            if (position < 0)
-            {
-                return null;
-            }
-
-            string tail = deviceId[(position + marker.Length)..];
-            return int.TryParse(tail, out int index) ? index : null;
-        }
-
         private static ManagementBaseObject? FirstOrDefaultWmi(string scope, string query)
         {
             using ManagementObjectSearcher objectSearcher = new(scope, query);

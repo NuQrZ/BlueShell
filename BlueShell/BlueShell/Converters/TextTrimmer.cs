@@ -3,7 +3,7 @@ using System;
 
 namespace BlueShell.Converters
 {
-    internal partial class TextTrimmer : IValueConverter
+    public sealed partial class TextTrimmer : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {

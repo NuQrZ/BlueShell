@@ -181,24 +181,23 @@ namespace BlueShell.Terminal.WinUI
             {
                 ElementTheme.Dark => kind switch
                 {
-                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 110, 190, 220),
-                    TerminalMessageKind.Error => Color.FromArgb(255, 220, 80, 80),
-                    TerminalMessageKind.Warning => Color.FromArgb(255, 210, 160, 90),
-                    TerminalMessageKind.Success => Color.FromArgb(255, 80, 180, 130),
-                    TerminalMessageKind.Info => Color.FromArgb(255, 160, 170, 185),
+                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 188, 188, 188),
+                    TerminalMessageKind.Error => Color.FromArgb(255, 255, 0, 0),
+                    TerminalMessageKind.Warning => Color.FromArgb(255, 255, 175, 0),
+                    TerminalMessageKind.Success => Color.FromArgb(255, 0, 255, 0),
+                    TerminalMessageKind.Info => Color.FromArgb(255, 0, 175, 255),
                     _ => Colors.White
                 },
 
                 ElementTheme.Light => kind switch
                 {
-                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 60, 120, 155),
-                    TerminalMessageKind.Error => Color.FromArgb(255, 190, 55, 55),
-                    TerminalMessageKind.Warning => Color.FromArgb(255, 170, 115, 40),
-                    TerminalMessageKind.Success => Color.FromArgb(255, 45, 135, 90),
-                    TerminalMessageKind.Info => Color.FromArgb(255, 90, 100, 115),
+                    TerminalMessageKind.PrintOutput => Color.FromArgb(255, 68, 68, 68),
+                    TerminalMessageKind.Error => Color.FromArgb(255, 215, 0, 0),
+                    TerminalMessageKind.Warning => Color.FromArgb(255, 215, 95, 0),
+                    TerminalMessageKind.Success => Color.FromArgb(255, 0, 135, 0),
+                    TerminalMessageKind.Info => Color.FromArgb(255, 0, 95, 175),
                     _ => Colors.Black
                 },
-
                 _ => Colors.Gray
             };
         }

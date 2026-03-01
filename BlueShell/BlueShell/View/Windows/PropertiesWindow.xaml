@@ -24,12 +24,12 @@
         </Grid>
         <Grid Grid.Row="1">
             <NavigationView
-        MenuItemsSource="{x:Bind _propertiesWindowViewModel.PropertyItems}"
-        IsSettingsVisible="False"
-        IsBackButtonVisible="Collapsed"
-        PaneDisplayMode="Left"
-        SelectionChanged="NavigationView_SelectionChanged"
-        SelectedItem="{x:Bind _propertiesWindowViewModel.SelectedItem}">
+                MenuItemsSource="{x:Bind _propertiesWindowViewModel.PropertyItems}"
+                IsSettingsVisible="False"
+                IsBackButtonVisible="Collapsed"
+                PaneDisplayMode="Left"
+                SelectionChanged="NavigationView_SelectionChanged"
+                SelectedItem="{x:Bind _propertiesWindowViewModel.SelectedItem, Mode=TwoWay}">
                 <NavigationView.MenuItemTemplate>
                     <DataTemplate x:DataType="model:PropertyItem">
                         <NavigationViewItem Content="{x:Bind ItemName}"
@@ -44,7 +44,7 @@
 
                 <NavigationView.Content>
                     <ScrollViewer>
-                        <ItemsControl ItemsSource="{x:Bind _propertiesWindowViewModel.SelectedItem.PropertyGroups, FallbackValue=null}">
+                        <ItemsControl ItemsSource="{x:Bind _propertiesWindowViewModel.SelectedItem.PropertyGroups, FallbackValue=null, Mode=TwoWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="model:PropertyGroup">
                                     <StackPanel Margin="0,0,0,24">
