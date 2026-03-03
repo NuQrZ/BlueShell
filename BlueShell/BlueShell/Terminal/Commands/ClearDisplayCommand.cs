@@ -5,10 +5,10 @@ namespace BlueShell.Terminal.Commands
 {
     public sealed class ClearDisplayCommand : ITerminalCommand
     {
-        public string CommandName => "ClearDisplayCommand";
+        public string CommandName => "ClearDisplay";
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
-            context.TerminalOutput.Clear();
+            context.DataDisplay.Clear();
             return Task.CompletedTask;
         }
     }

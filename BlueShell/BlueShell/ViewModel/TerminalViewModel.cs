@@ -1,8 +1,6 @@
-﻿using BlueShell.Model;
-using BlueShell.Terminal.Abstractions;
+﻿using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using System;
-using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,8 +14,6 @@ namespace BlueShell.ViewModel
 
         private bool IsRunning { get; set; }
         private bool IsExiting { get; set; }
-
-        public ObservableCollection<DataDisplayPanel> DisplayPanels { get; } = [];
 
         public async Task SubmitAsync(string commandLine)
         {

@@ -13,11 +13,12 @@ namespace BlueShell.Services
     {
         private string[] PrintTable(
             List<string> headers,
-            List<List<string>> rows)
+            List<List<string>> rows,
+            string? drive = null)
         {
             StringBuilder stringBuilder = new();
 
-            const string vertical = "|";
+            const char vertical = '|';
             const string separator = "   ";
 
             int columnCount = headers.Count;
@@ -38,8 +39,9 @@ namespace BlueShell.Services
             int totalWidth =
                 widths.Sum() +
                 separator.Length * (columnCount - 1) +
-                vertical.Length * 2;
+                1 * 2;
 
+            stringBuilder.AppendLine("\"" + drive + "\"");
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
             stringBuilder.Append(vertical);
@@ -51,7 +53,7 @@ namespace BlueShell.Services
                     stringBuilder.Append(separator);
                 }
             }
-            stringBuilder.AppendLine(vertical);
+            stringBuilder.Append(vertical);
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
@@ -66,14 +68,13 @@ namespace BlueShell.Services
                         stringBuilder.Append(separator);
                     }
                 }
-                stringBuilder.AppendLine(vertical);
+                stringBuilder.Append(vertical);
             }
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
             return stringBuilder.ToString()
                 .Replace("\r\n", "\n")
-                .TrimEnd('\n')
                 .Split('\n');
         }
 
@@ -106,7 +107,7 @@ namespace BlueShell.Services
             return PrintTable(headers, rows);
         }
 
-        public string[] PrintFolderContents(List<FileSystemItem>? folders)
+        public string[] PrintFolderContents(List<FileSystemItem>? folders, string drive)
         {
             List<string> headers =
             [
@@ -124,7 +125,7 @@ namespace BlueShell.Services
                 })
             ];
 
-            return PrintTable(headers, rows);
+            return PrintTable(headers, rows, drive);
         }
 
         private string[] PrintPropertyRows(List<PropertyRow>? propertyRows)

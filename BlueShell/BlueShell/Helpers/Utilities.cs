@@ -40,6 +40,8 @@ namespace BlueShell.Helpers
             { "-Print", Color.FromArgb(255, 25, 150, 80) },
         };
 
+        private static readonly Dictionary<string, BitmapImage> CachedImages = [];
+
         public static string ReturnSize(long sizeInBytes, bool returnOnlySizeType = false)
         {
             if (sizeInBytes == 0)
@@ -72,6 +74,11 @@ namespace BlueShell.Helpers
             if (string.IsNullOrWhiteSpace(filePath))
             {
                 return null;
+            }
+
+            if (CachedImages.TryGetValue(filePath, out BitmapImage? icon))
+            {
+                return icon;
             }
 
             try
@@ -109,6 +116,7 @@ namespace BlueShell.Helpers
                 {
                     BitmapImage bitmapImage = new();
                     await bitmapImage.SetSourceAsync(thumbnail);
+                    CachedImages[filePath] = bitmapImage;
                     return bitmapImage;
                 }
             }

@@ -12,6 +12,7 @@ namespace BlueShell.Helpers
         private static readonly Regex QuoteRegex = GeneratedQuoteRegex();
 
         [GeneratedRegex("\"(.*?)\"", RegexOptions.Compiled)]
+
         private static partial Regex GeneratedQuoteRegex();
 
         private static Color GetStringColor(ElementTheme elementTheme)

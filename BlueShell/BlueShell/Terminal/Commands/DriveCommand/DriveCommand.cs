@@ -38,30 +38,13 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private static (int, string) ConvertIndexToDrivePath(string driveIndex)
         {
-            if (!driveIndex.StartsWith('[') && !driveIndex.EndsWith(']'))
-            {
-                return (0, driveIndex);
-            }
-
             driveIndex = driveIndex.Replace("[", "").Replace("]", "");
 
             bool ok = int.TryParse(driveIndex, out int index);
 
             DriveInfo[] drives = DriveInfo.GetDrives();
 
-            if (!ok)
-            {
-                string[] driveNames = [.. drives.Select(drive => drive.RootDirectory.FullName)];
-
-                if ((driveIndex.Length > 3 && driveNames.Any(driveIndex.Contains)) || driveIndex.Length < 3)
-                {
-                    return (-1, $"There is no drive with name \"{driveIndex}\"");
-                }
-            }
-
-            index %= drives.Length;
-
-            return (0, drives[index].RootDirectory.FullName);
+            return ok ? (0, drives[index].RootDirectory.FullName) : (0, driveIndex);
         }
 
         private async Task HandleOperation(TerminalCommandContext context, List<string> drives, string operation, string extraOperation)
@@ -72,10 +55,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                     await HandleGetDrivesOperation(context, extraOperation);
                     break;
                 case "Open":
-                    foreach (string drive in drives)
-                    {
-                        await HandleOpenOperation(context, drive, extraOperation);
-                    }
+                    await HandleOpenOperation(context, drives, extraOperation);
                     break;
                 case "Properties" or "Advanced":
                     await HandlePropertiesOperation(context, operation, drives, extraOperation);
@@ -122,7 +102,35 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private async Task HandleOpenOperation(TerminalCommandContext context, string driveTarget, string extraOperation)
+        private async Task HandleOpenOperation(TerminalCommandContext context, List<string> drives, string extraOperation)
+        {
+            context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
+
+            if (drives.Count == 1)
+            {
+                context.TerminalOutput.WriteLine($">> Opening {drives[0]}...", TerminalMessageKind.Success);
+                await HandleOpenSingleDrive(context, drives[0], extraOperation);
+            }
+            else
+            {
+                string message = ">> Opening: [";
+                for (int i = 0; i < drives.Count; i++)
+                {
+                    if (i == drives.Count - 1)
+                    {
+                        message += $"{drives[i]}]...";
+                    }
+                    else
+                    {
+                        message += $"{drives[i]}, ";
+                    }
+                }
+                context.TerminalOutput.WriteLine(message, TerminalMessageKind.Success);
+                await HandleOpenMultipleDrives(context, drives, extraOperation);
+            }
+        }
+
+        private async Task HandleOpenSingleDrive(TerminalCommandContext context, string driveTarget, string extraOperation)
         {
             (int returnValue, string message) = ConvertIndexToDrivePath(driveTarget);
 
@@ -132,34 +140,82 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 return;
             }
 
-            context.TerminalOutput.WriteLine($">> Opening {driveTarget}...", TerminalMessageKind.Success);
+            driveTarget = message;
+
 
             List<FileSystemItem> folders = fileSystemService.LoadFolders(driveTarget);
             List<FileSystemItem> files = fileSystemService.LoadFiles(driveTarget);
+            List<FileSystemItem> fileSystemItems = [.. folders, .. files];
 
             switch (extraOperation)
             {
                 case "":
                     context.DataDisplay.Clear();
-                    context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
-
-                    foreach (DataDisplayItem folder in folders.Select(DriveCommandUi.CreateFileSystemItem))
+                    foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(DriveCommandUi.CreateFileSystemItem))
                     {
-                        await DriveCommandUi.ConfigureFileSystemDataItem(folder);
-                        context.DataDisplay.Add(folder);
-                    }
-
-                    foreach (DataDisplayItem file in files.Select(DriveCommandUi.CreateFileSystemItem))
-                    {
-                        await DriveCommandUi.ConfigureFileSystemDataItem(file);
-                        context.DataDisplay.Add(file);
+                        await DriveCommandUi.ConfigureFileSystemDataItem(dataDisplay);
+                        context.DataDisplay.Add(dataDisplay);
                     }
                     break;
                 case "Print":
-                    List<FileSystemItem> fileSystemItems = [.. folders, .. files];
-                    string[] lines = printService.PrintFolderContents(fileSystemItems);
+
+                    string[] lines = printService.PrintFolderContents(fileSystemItems, driveTarget);
                     await PrintOutput(context, lines);
                     break;
+            }
+        }
+
+        private async Task HandleOpenMultipleDrives(TerminalCommandContext context, List<string> drives, string extraOperation)
+        {
+            List<string> resolvedDrivePaths = [];
+            foreach (string drive in drives)
+            {
+                (int returnValue, string message) = ConvertIndexToDrivePath(drive);
+                if (returnValue == -1)
+                {
+                    context.TerminalOutput.WriteLine($">> {message}", TerminalMessageKind.Error);
+                    return;
+                }
+
+                resolvedDrivePaths.Add(message);
+            }
+
+            context.DataDisplay.BeginGrouped();
+
+            foreach (string resolvedDrivePath in resolvedDrivePaths)
+            {
+                List<FileSystemItem> folders = fileSystemService.LoadFolders(resolvedDrivePath);
+                List<FileSystemItem> files = fileSystemService.LoadFiles(resolvedDrivePath);
+                List<FileSystemItem> fileSystemItems = [.. folders, .. files];
+
+                switch (extraOperation)
+                {
+                    case "":
+                        context.DataDisplay.Clear();
+                        DataDisplayGroup dataDisplayGroup = new()
+                        {
+                            Header = resolvedDrivePath
+                        };
+
+                        context.DataDisplay.AddGroup(dataDisplayGroup);
+
+                        int i = 0;
+                        foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(DriveCommandUi.CreateFileSystemItem))
+                        {
+                            await DriveCommandUi.ConfigureFileSystemDataItem(dataDisplay);
+                            dataDisplayGroup.Items.Add(dataDisplay);
+
+                            if (++i % 200 == 0)
+                            {
+                                await Task.Yield();
+                            }
+                        }
+                        break;
+                    case "Print":
+                        string[] allLines = printService.PrintFolderContents(fileSystemItems, resolvedDrivePath);
+                        await PrintOutput(context, allLines);
+                        break;
+                }
             }
         }
 

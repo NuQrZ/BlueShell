@@ -11,15 +11,6 @@ namespace BlueShell.Services.FileSystem
 {
     public sealed class DriveService : IDriveService
     {
-        private static DriveInfo? GetDrive(string filePath)
-        {
-            return DriveInfo.GetDrives()
-                .FirstOrDefault(d => string.Equals(
-                    d.RootDirectory.FullName,
-                    filePath,
-                    StringComparison.OrdinalIgnoreCase));
-        }
-
         private static string NormalizeDriveKey(string? drivePath)
         {
             drivePath = (drivePath ?? "").Trim();
@@ -67,6 +58,15 @@ namespace BlueShell.Services.FileSystem
                 IsSystemDrive = isSystemDrive,
                 UsedPrecent = usedPrecent,
             };
+        }
+
+        public DriveInfo? GetDrive(string filePath)
+        {
+            return DriveInfo.GetDrives()
+                .FirstOrDefault(d => string.Equals(
+                    d.RootDirectory.FullName,
+                    filePath,
+                    StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<string> GetDriveDisplayName(string driveFilePath)

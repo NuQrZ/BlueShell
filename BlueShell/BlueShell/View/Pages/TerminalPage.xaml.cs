@@ -30,7 +30,7 @@ namespace BlueShell.View.Pages
         private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
         private GridLength _savedDisplayWidth = new(3, GridUnitType.Star);
 
-        private DispatcherTimer? _highlightDebouncer;
+        private DispatcherTimer? _highlightDebounce;
 
         public TerminalPage()
         {
@@ -107,17 +107,17 @@ namespace BlueShell.View.Pages
             InitializeInput();
             Terminal.Focus(FocusState.Programmatic);
 
-            _highlightDebouncer = new DispatcherTimer()
+            _highlightDebounce = new DispatcherTimer()
             {
                 Interval = TimeSpan.FromMilliseconds(30)
             };
 
-            _highlightDebouncer.Tick += HighlightDebouncer_Tick;
+            _highlightDebounce.Tick += HighlightDebounce_Tick;
         }
 
-        private void HighlightDebouncer_Tick(object? sender, object e)
+        private void HighlightDebounce_Tick(object? sender, object e)
         {
-            _highlightDebouncer?.Stop();
+            _highlightDebounce?.Stop();
             TerminalUtilities.HighlightCurrentInput(
                 Terminal.Document,
                 _inputStart,
@@ -236,8 +236,8 @@ namespace BlueShell.View.Pages
 
         private void Terminal_TextChanging(RichEditBox sender, RichEditBoxTextChangingEventArgs args)
         {
-            _highlightDebouncer?.Stop();
-            _highlightDebouncer?.Start();
+            _highlightDebounce?.Stop();
+            _highlightDebounce?.Start();
         }
     }
 }

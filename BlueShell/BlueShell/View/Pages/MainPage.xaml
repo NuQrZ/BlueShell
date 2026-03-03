@@ -192,6 +192,56 @@
                             PlaceholderText="Search System..."
                             VerticalContentAlignment="Center"
                             QueryIcon="Find"/>
+
+            <Button Grid.Row="1"
+                            Grid.Column="3"
+                            Margin="0, -8, 10, 0"
+                            Height="34">
+                <Button.Content>
+                    <FontIcon Glyph="&#xE70D;"
+                              FontSize="16"></FontIcon>
+                </Button.Content>
+                <Button.Flyout>
+                    <Flyout>
+                        <StackPanel Spacing="6" Padding="8">
+
+                            <RadioButton x:Name="RbFolders"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15">
+                                Folders
+                            </RadioButton>
+
+                            <RadioButton x:Name="RbFiles"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15">
+                                Files
+                            </RadioButton>
+
+                            <RadioButton x:Name="RbAll"
+                                         IsChecked="True"
+                                         FontFamily="Cascadia Mono"
+                                         FontSize="15">
+                                All
+                            </RadioButton>
+
+                            <CheckBox x:Name="CurrentFolder"
+                                      FontFamily="Cascadia Mono"
+                                      FontSize="15">
+                                This Folder
+                            </CheckBox>
+
+                            <AutoSuggestBox x:Name="ExtensionSearch"
+                                            Height="35"
+                                            Width="160"
+                                            PlaceholderText="Extension..."
+                                            FontFamily="Cascadia Mono"
+                                            FontSize="16"
+                                            VerticalContentAlignment="Center"/>
+
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
         </Grid>
 
         <NavigationView x:Name="NavigationViewControl"

@@ -149,7 +149,7 @@ namespace BlueShell.Terminal.WinUI
         {
             OutputSegment outputSegment = new()
             {
-                Text = "\n" + text,
+                Text = text + "\n",
                 Color = new SolidColorBrush(GetColor(messageKind)),
                 FontStyle = fontStyle,
                 FontWeight = fontWeight ?? FontWeights.Normal

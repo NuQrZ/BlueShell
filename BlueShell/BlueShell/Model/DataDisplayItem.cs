@@ -1,16 +1,19 @@
-﻿using Microsoft.UI.Xaml;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.IO;
 
 namespace BlueShell.Model
 {
-    public sealed class DataDisplayItem
+    public sealed partial class DataDisplayItem : ObservableObject
     {
         public string? ItemName { get; init; }
         public string? ItemType { get; init; }
         public string? ItemSizeType { get; init; }
-        public string? Color { get; set; }
-        public BitmapImage? ItemIcon { get; set; }
+        [ObservableProperty]
+        public partial string? Color { get; set; }
+        [ObservableProperty]
+        public partial BitmapImage? ItemIcon { get; set; }
         public int ImageSize { get; set; }
         public string? DriveFilePath { get; set; }
         public DirectoryInfo? DirectoryInfo { get; set; }
