@@ -12,6 +12,7 @@ namespace BlueShell.Terminal.Infrastructure
         public static IReadOnlyList<ITerminalCommand> CreateDefault() =>
         [
             new ExitCommand(),
+            new ClearAllCommand(),
             new ClearCommand(),
             new ClearDisplayCommand(),
             new DriveCommand(new DriveService(), new FileSystemService(), new PrintService()),

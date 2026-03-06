@@ -30,7 +30,9 @@
                          FontFamily="Cascadia Code"
                          FontSize="18"
                          Grid.Row="0"
+                         IsSpellCheckEnabled="False"
                          PreviewKeyDown="Terminal_PreviewKeyDown"
+                         Paste="Terminal_Paste"
                          SelectionChanged="Terminal_SelectionChanged"
                          TextChanging="Terminal_TextChanging">
             </RichEditBox>
@@ -86,17 +88,8 @@
         <Grid Grid.Column="1"
               x:Name="DataDisplayGrid">
             <ListView x:Name="DataDisplay"
-              Background="{ThemeResource LayerOnMicaBaseAltFillColorTransparentBrush}"
-              Margin="0, 0, 0, 0"
+                      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               SelectionMode="Multiple">
-                <ListView.Resources>
-                    <RadialGradientBrush x:Key="TextControlBackgroundFocused">
-                        <GradientStop Color="{ThemeResource LayerOnMicaBaseAltFillColorTransparent}"></GradientStop>
-                    </RadialGradientBrush>
-                    <RadialGradientBrush x:Key="TextControlBackgroundPointerOver">
-                        <GradientStop Color="{ThemeResource LayerOnMicaBaseAltFillColorTransparent}"></GradientStop>
-                    </RadialGradientBrush>
-                </ListView.Resources>
                 <ListView.Header>
                     <model:DataDisplayHeader
             NameHeader=""

@@ -11,7 +11,7 @@ namespace BlueShell.Services
 {
     public sealed class PrintService : IPrintService
     {
-        private string[] PrintTable(
+        private static string[] PrintTable(
             List<string> headers,
             List<List<string>> rows,
             string? drive = null)
@@ -54,6 +54,7 @@ namespace BlueShell.Services
                 }
             }
             stringBuilder.Append(vertical);
+            stringBuilder.AppendLine();
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");
 
@@ -69,6 +70,7 @@ namespace BlueShell.Services
                     }
                 }
                 stringBuilder.Append(vertical);
+                stringBuilder.AppendLine();
             }
 
             stringBuilder.AppendLine("+" + new string('-', totalWidth - 2) + "+");

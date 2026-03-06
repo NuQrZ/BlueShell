@@ -2,7 +2,7 @@
 using BlueShell.Model;
 using BlueShell.Model.Properties;
 using BlueShell.Services.Wrappers;
-using BlueShell.View.Windows;
+using BlueShell.View.AppWindows;
 using BlueShell.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;

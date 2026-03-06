@@ -27,7 +27,7 @@
 	<ItemGroup>
 	  <None Remove="View\Pages\SettingsPage.xaml" />
 	  <None Remove="View\Pages\TerminalPage.xaml" />
-	  <None Remove="View\Windows\PropertiesWindow.xaml" />
+	  <None Remove="View\AppWindows\PropertiesWindow.xaml" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="View\Pages\MainPage.xaml" />

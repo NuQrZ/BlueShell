@@ -17,6 +17,11 @@ namespace BlueShell.Terminal.Commands
                     .Info($"{i} ")
                     .PrintOutput("/ 100.000\n", extraColor: Colors.Purple)
                     .Commit();
+
+                if (i % 500 == 0)
+                {
+                    await Task.Yield();
+                }
             }
 
             context.TerminalOutput.Line()

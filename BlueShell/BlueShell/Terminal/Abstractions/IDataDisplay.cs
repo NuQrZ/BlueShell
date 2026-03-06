@@ -4,7 +4,6 @@
     {
         void Add(object item);
         void SetHeader(object header);
-        void SetGrouped(object groups);
         void BeginGrouped();
         void AddGroup(object group);
         void Clear();

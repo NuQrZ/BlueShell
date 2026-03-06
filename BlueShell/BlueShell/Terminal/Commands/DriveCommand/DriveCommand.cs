@@ -7,7 +7,6 @@ using BlueShell.Services.Wrappers;
 using BlueShell.Terminal.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,17 +33,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
 
             await HandleOperation(context, drives, operation, extraOperation);
-        }
-
-        private static (int, string) ConvertIndexToDrivePath(string driveIndex)
-        {
-            driveIndex = driveIndex.Replace("[", "").Replace("]", "");
-
-            bool ok = int.TryParse(driveIndex, out int index);
-
-            DriveInfo[] drives = DriveInfo.GetDrives();
-
-            return ok ? (0, drives[index].RootDirectory.FullName) : (0, driveIndex);
         }
 
         private async Task HandleOperation(TerminalCommandContext context, List<string> drives, string operation, string extraOperation)
@@ -104,11 +92,9 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private async Task HandleOpenOperation(TerminalCommandContext context, List<string> drives, string extraOperation)
         {
-            context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
-
             if (drives.Count == 1)
             {
-                context.TerminalOutput.WriteLine($">> Opening {drives[0]}...", TerminalMessageKind.Success);
+                context.TerminalOutput.WriteLine($">> Opening \"{drives[0]}\"...", TerminalMessageKind.Success);
                 await HandleOpenSingleDrive(context, drives[0], extraOperation);
             }
             else
@@ -132,17 +118,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private async Task HandleOpenSingleDrive(TerminalCommandContext context, string driveTarget, string extraOperation)
         {
-            (int returnValue, string message) = ConvertIndexToDrivePath(driveTarget);
-
-            if (returnValue == -1)
-            {
-                context.TerminalOutput.WriteLine($">> {message}", TerminalMessageKind.Error);
-                return;
-            }
-
-            driveTarget = message;
-
-
             List<FileSystemItem> folders = fileSystemService.LoadFolders(driveTarget);
             List<FileSystemItem> files = fileSystemService.LoadFiles(driveTarget);
             List<FileSystemItem> fileSystemItems = [.. folders, .. files];
@@ -151,6 +126,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 case "":
                     context.DataDisplay.Clear();
+                    context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
                     foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(DriveCommandUi.CreateFileSystemItem))
                     {
                         await DriveCommandUi.ConfigureFileSystemDataItem(dataDisplay);
@@ -158,7 +134,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                     }
                     break;
                 case "Print":
-
                     string[] lines = printService.PrintFolderContents(fileSystemItems, driveTarget);
                     await PrintOutput(context, lines);
                     break;
@@ -167,22 +142,15 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private async Task HandleOpenMultipleDrives(TerminalCommandContext context, List<string> drives, string extraOperation)
         {
-            List<string> resolvedDrivePaths = [];
-            foreach (string drive in drives)
+            if (extraOperation == "")
             {
-                (int returnValue, string message) = ConvertIndexToDrivePath(drive);
-                if (returnValue == -1)
-                {
-                    context.TerminalOutput.WriteLine($">> {message}", TerminalMessageKind.Error);
-                    return;
-                }
-
-                resolvedDrivePaths.Add(message);
+                context.DataDisplay.Clear();
+                context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
             }
 
             context.DataDisplay.BeginGrouped();
 
-            foreach (string resolvedDrivePath in resolvedDrivePaths)
+            foreach (string resolvedDrivePath in drives)
             {
                 List<FileSystemItem> folders = fileSystemService.LoadFolders(resolvedDrivePath);
                 List<FileSystemItem> files = fileSystemService.LoadFiles(resolvedDrivePath);
@@ -191,7 +159,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                 switch (extraOperation)
                 {
                     case "":
-                        context.DataDisplay.Clear();
                         DataDisplayGroup dataDisplayGroup = new()
                         {
                             Header = resolvedDrivePath
@@ -221,19 +188,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private async Task HandlePropertiesOperation(TerminalCommandContext context, string operation, List<string> drives, string extraOperation)
         {
-            foreach (string drive in drives)
-            {
-                (int returnValue, string message) = ConvertIndexToDrivePath(drive);
-
-                if (returnValue != -1)
-                {
-                    continue;
-                }
-
-                context.TerminalOutput.WriteLine($">> {message}", TerminalMessageKind.Error);
-                return;
-            }
-
             Dictionary<string, object> properties;
 
             List<PropertyItem> propertyItems = [];
@@ -246,7 +200,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         string displayName = await driveService.GetDriveDisplayName(drive);
 
                         properties = driveService.GetDriveProperties(drive);
-                        context.TerminalOutput.WriteLine($">> Displaying properties for drive: {drive}\n", TerminalMessageKind.Success);
+                        context.TerminalOutput.WriteLine($">> Displaying properties for drive: \"{drive}\"\n", TerminalMessageKind.Success);
 
                         PropertyItem propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
                             displayName, drive, properties, false);
@@ -260,7 +214,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         string displayName = await driveService.GetDriveDisplayName(drive);
 
                         properties = driveService.GetAdvancedDriveProperties(drive);
-                        context.TerminalOutput.WriteLine($">> Displaying advanced properties for drive: {drive}\n", TerminalMessageKind.Success);
+                        context.TerminalOutput.WriteLine($">> Displaying advanced properties for drive: \"{drive}\"\n", TerminalMessageKind.Success);
 
                         PropertyItem propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
                             displayName, drive, properties, true);

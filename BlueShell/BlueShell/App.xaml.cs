@@ -1,4 +1,4 @@
-﻿using BlueShell.View.Windows;
+﻿using BlueShell.View.AppWindows;
 using BlueShell.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;

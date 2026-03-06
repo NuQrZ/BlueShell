@@ -10,7 +10,7 @@ namespace BlueShell.Terminal.Commands
         public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             context.TerminalOutput.WriteLine("Exiting BlueShell...", TerminalMessageKind.Error);
-            await Task.Delay(500);
+            await Task.Delay(50);
             Environment.Exit(0);
         }
     }

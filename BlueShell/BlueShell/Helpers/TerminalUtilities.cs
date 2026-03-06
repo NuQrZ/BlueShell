@@ -53,15 +53,19 @@ namespace BlueShell.Helpers
         {
             int end = textDocument.GetRange(0, int.MaxValue).EndPosition;
 
-            if (end <= inputStart)
-            {
-                return;
-            }
-
             ITextRange inputRange = textDocument.GetRange(inputStart, end);
 
             inputRange.GetText(TextGetOptions.None, out string inputText);
             inputText = inputText.TrimEnd('\r', '\n');
+
+            if (end <= inputStart)
+            {
+                ITextSelection textSelection = textDocument.Selection;
+                textSelection.CharacterFormat.ForegroundColor = GetDefaultColor(elementTheme);
+                textSelection.CharacterFormat.Bold = FormatEffect.Off;
+                return;
+            }
+
 
             if (string.IsNullOrEmpty(inputText))
             {

@@ -3,6 +3,7 @@ using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using BlueShell.Terminal.WinUI;
 using BlueShell.ViewModel;
+using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,7 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI.Core;
 
@@ -22,9 +24,10 @@ namespace BlueShell.View.Pages
         private readonly int _inputStart = Prompt.Length;
 
         private bool _splitView = true;
+        private bool _isCtrlAllPressed;
 
-        private TerminalOutput? _terminalOutput;
-        private DataDisplay? _dataDisplay;
+        private ITerminalOutput? _terminalOutput;
+        private IDataDisplay? _dataDisplay;
         private TerminalViewModel? _terminalViewModel;
 
         private GridLength _savedTerminalWidth = new(2, GridUnitType.Star);
@@ -128,6 +131,11 @@ namespace BlueShell.View.Pages
         {
             try
             {
+                if (e.Key != VirtualKey.Left)
+                {
+                    _isCtrlAllPressed = false;
+                }
+
                 ITextSelection textSelection = Terminal.Document.Selection;
 
                 int start = textSelection.StartPosition;
@@ -147,19 +155,54 @@ namespace BlueShell.View.Pages
                 if (e.Key == VirtualKey.Home)
                 {
                     e.Handled = true;
-                    textSelection.SetRange(_inputStart, _inputStart);
+
+                    if (start != _inputStart || end != _inputStart)
+                    {
+                        textSelection.SetRange(_inputStart, _inputStart);
+                    }
+
+                    return;
                 }
 
-                if (e.Key is VirtualKey.Left or VirtualKey.Right && start <= _inputStart)
+                if (e.Key == VirtualKey.Left)
                 {
-                    e.Handled = true;
-                    textSelection.SetRange(_inputStart, _inputStart);
+                    if (start <= _inputStart)
+                    {
+                        if (_isCtrlAllPressed)
+                        {
+                            return;
+                        }
+
+                        e.Handled = true;
+
+                        if (start < _inputStart || end < _inputStart)
+                        {
+                            textSelection.SetRange(_inputStart, _inputStart);
+                        }
+
+                        return;
+                    }
+                }
+                else if (e.Key == VirtualKey.Right)
+                {
+                    if (start < _inputStart)
+                    {
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                    }
                 }
 
                 if (e.Key is VirtualKey.Back)
                 {
                     if (textSelection.Length > 0)
                     {
+                        textSelection.CharacterFormat.ForegroundColor =
+                            ActualTheme == ElementTheme.Light ?
+                                Colors.Black :
+                                Colors.White;
+                        textSelection.CharacterFormat.Bold = FormatEffect.Off;
+
                         if (start < _inputStart)
                         {
                             textSelection.SetRange(_inputStart, _inputStart);
@@ -174,14 +217,18 @@ namespace BlueShell.View.Pages
                     }
 
                     e.Handled = true;
-                    textSelection.SetRange(_inputStart, _inputStart);
+
+                    if (start != _inputStart || end != _inputStart)
+                    {
+                        textSelection.SetRange(_inputStart, _inputStart);
+                    }
 
                     return;
                 }
 
                 if (e.Key is VirtualKey.Delete)
                 {
-                    if (start <= _inputStart)
+                    if (start < _inputStart)
                     {
                         e.Handled = true;
                         textSelection.SetRange(_inputStart, _inputStart);
@@ -210,7 +257,8 @@ namespace BlueShell.View.Pages
                     {
                         case VirtualKey.A:
                             e.Handled = true;
-                            textSelection.SetRange(_inputStart, end);
+                            _isCtrlAllPressed = true;
+                            textSelection.SetRange(_inputStart, Terminal.Document.GetRange(0, int.MaxValue).EndPosition);
                             return;
                         case VirtualKey.Q:
                             _terminalViewModel?.Cancel();
@@ -228,7 +276,12 @@ namespace BlueShell.View.Pages
         {
             ITextSelection textSelection = Terminal.Document.Selection;
 
-            if (textSelection.StartPosition < _inputStart)
+            if (textSelection.StartPosition >= _inputStart)
+            {
+                return;
+            }
+
+            if (textSelection.StartPosition != _inputStart || textSelection.EndPosition != _inputStart)
             {
                 textSelection.SetRange(_inputStart, _inputStart);
             }
@@ -238,6 +291,35 @@ namespace BlueShell.View.Pages
         {
             _highlightDebounce?.Stop();
             _highlightDebounce?.Start();
+        }
+
+        private async void Terminal_Paste(object sender, TextControlPasteEventArgs e)
+        {
+            try
+            {
+                e.Handled = true;
+
+                DataPackageView dataPackageView = Clipboard.GetContent();
+
+                if (!dataPackageView.Contains(StandardDataFormats.Text))
+                {
+                    return;
+                }
+
+                string text = await dataPackageView.GetTextAsync();
+
+                text = text.Replace("\r", "").Replace("\n", "");
+
+                ITextSelection selection = Terminal.Document.Selection;
+
+                selection.Text = text;
+                int caret = selection.EndPosition;
+                selection.SetRange(caret, caret);
+            }
+            catch (Exception exception)
+            {
+                _terminalOutput?.WriteLine(exception.Message, TerminalMessageKind.Error);
+            }
         }
     }
 }

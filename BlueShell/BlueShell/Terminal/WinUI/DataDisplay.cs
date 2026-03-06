@@ -47,14 +47,6 @@ namespace BlueShell.Terminal.WinUI
             _groupCollection.Add(group);
         }
 
-        public void SetGrouped(object groups)
-        {
-            Clear();
-            _isGrouped = true;
-            _groupedSource.Source = groups;
-            listView.ItemsSource = _groupedSource.View;
-        }
-
         public void Clear()
         {
             _isGrouped = false;
@@ -63,6 +55,7 @@ namespace BlueShell.Terminal.WinUI
             _groupCollection.Clear();
             _groupedSource.Source = null;
 
+            listView.Header = null;
             listView.ItemsSource = _flatItems;
         }
     }

@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace BlueShell.View.Windows
+namespace BlueShell.View.AppWindows
 {
     public sealed partial class PropertiesWindow : Window
     {

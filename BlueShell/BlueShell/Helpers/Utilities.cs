@@ -15,6 +15,7 @@ namespace BlueShell.Helpers
         public static Dictionary<string, Color> DarkThemeKeywordColors { get; } = new()
         {
             { "Exit", Color.FromArgb(255, 255, 95, 115) },
+            { "ClearAll", Color.FromArgb(255, 120, 210, 255) },
             { "Clear", Color.FromArgb(255, 0, 210, 200) },
             { "ClearDisplay", Color.FromArgb(255, 170, 170, 170)},
             { "--Version", Color.FromArgb(255, 255, 170, 70) },
@@ -29,6 +30,7 @@ namespace BlueShell.Helpers
         public static Dictionary<string, Color> LightThemeKeywordColors { get; } = new()
         {
             { "Exit", Color.FromArgb(255, 200, 40, 75) },
+            { "ClearAll", Color.FromArgb(255, 0, 120, 190) },
             { "Clear", Color.FromArgb(255, 0, 150, 145) },
             { "ClearDisplay", Color.FromArgb(255, 95, 95, 95) },
             { "--Version", Color.FromArgb(255, 180, 110, 25) },
