@@ -9,6 +9,7 @@ namespace BlueShell.Terminal.Commands
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             context.DataDisplay.Clear();
+            context.TabModel?.ClearPath();
             return Task.CompletedTask;
         }
     }

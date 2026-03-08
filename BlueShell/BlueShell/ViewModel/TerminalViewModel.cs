@@ -46,7 +46,7 @@ namespace BlueShell.ViewModel
             try
             {
                 Task task = commandDispatcher.ExecuteAsync(
-                    new TerminalCommandContext(commandContext.TerminalOutput, commandContext.DataDisplay, _cancellationTokenSource.Token),
+                    new TerminalCommandContext(commandContext.TerminalOutput, commandContext.DataDisplay, commandContext.TabModel, _cancellationTokenSource.Token),
                     commandLine);
                 await task;
             }

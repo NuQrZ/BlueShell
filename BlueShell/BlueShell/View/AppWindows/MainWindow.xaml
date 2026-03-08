@@ -11,19 +11,19 @@
 
     <Grid Background="Transparent">
         <Grid.RowDefinitions>
-            <RowDefinition Height="42"/>
+            <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <Grid x:Name="AppTitleBar"
-              Grid.Row="0"
-              Height="50">
+              Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="56"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="260"/>
             </Grid.ColumnDefinitions>
-            <ToggleButton Name="SettingsButton" Grid.Column="0"
+
+            <ToggleButton Name="SettingsButton"
+                          Grid.Column="0"
                           Command="{x:Bind _mainWindowViewModel.ToggleSettingsPageCommand}"
                           Background="Transparent"
                           BorderThickness="0"
@@ -68,30 +68,30 @@
                                                 <VisualState x:Name="Selected">
                                                     <Storyboard>
                                                         <ObjectAnimationUsingKeyFrames
-                                                                        Storyboard.TargetProperty="Background"
-                                                                        Storyboard.TargetName="RootGrid">
+                                                            Storyboard.TargetProperty="Background"
+                                                            Storyboard.TargetName="RootGrid">
                                                             <DiscreteObjectKeyFrame KeyTime="0"
-                                                                            Value="{ThemeResource LayerOnMicaBaseAltFillColorDefault}"/>
+                                                                Value="{ThemeResource LayerOnMicaBaseAltFillColorDefault}"/>
                                                         </ObjectAnimationUsingKeyFrames>
                                                     </Storyboard>
                                                 </VisualState>
                                                 <VisualState x:Name="Normal">
                                                     <Storyboard>
                                                         <ObjectAnimationUsingKeyFrames
-                                                                        Storyboard.TargetProperty="Background"
-                                                                        Storyboard.TargetName="RootGrid">
+                                                            Storyboard.TargetProperty="Background"
+                                                            Storyboard.TargetName="RootGrid">
                                                             <DiscreteObjectKeyFrame KeyTime="0"
-                                                                            Value="{ThemeResource ControlAltFillColorTransparent}"/>
+                                                                Value="{ThemeResource ControlAltFillColorTransparent}"/>
                                                         </ObjectAnimationUsingKeyFrames>
                                                     </Storyboard>
                                                 </VisualState>
                                                 <VisualState x:Name="PointerOver">
                                                     <Storyboard>
                                                         <ObjectAnimationUsingKeyFrames
-                                                                        Storyboard.TargetProperty="Background"
-                                                                        Storyboard.TargetName="RootGrid">
+                                                            Storyboard.TargetProperty="Background"
+                                                            Storyboard.TargetName="RootGrid">
                                                             <DiscreteObjectKeyFrame KeyTime="0"
-                                                                            Value="{ThemeResource LayerOnMicaBaseAltFillColorSecondaryBrush}"/>
+                                                                Value="{ThemeResource LayerOnMicaBaseAltFillColorSecondaryBrush}"/>
                                                         </ObjectAnimationUsingKeyFrames>
                                                     </Storyboard>
                                                 </VisualState>
@@ -145,6 +145,7 @@
                         </Setter>
                     </Style>
                 </TabView.Resources>
+
                 <TabView.TabItemTemplate>
                     <DataTemplate x:DataType="model:TabModel">
                         <TabViewItem>
@@ -155,13 +156,14 @@
                                 <Binding Path="TabHeader" Mode="TwoWay"/>
                             </TabViewItem.Header>
                             <TabViewItem.Transitions>
-                                <EdgeUIThemeTransition Edge="Left"></EdgeUIThemeTransition>
+                                <EdgeUIThemeTransition Edge="Left"/>
                             </TabViewItem.Transitions>
                         </TabViewItem>
                     </DataTemplate>
                 </TabView.TabItemTemplate>
             </TabView>
         </Grid>
+
         <Grid Grid.Row="1">
             <Frame Content="{x:Bind _mainWindowViewModel.SelectedTab.TabFrame, Mode=OneWay}"
                    DataContext="{x:Bind _mainWindowViewModel.SelectedTab, Mode=TwoWay}"/>

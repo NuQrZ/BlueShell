@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="using:BlueShell.Model"
     mc:Ignorable="d"
     Loaded="MainPage_Loaded">
 
@@ -91,7 +92,6 @@
                     </ToolTipService.ToolTip>
                     <Button.ContentTemplate>
                         <DataTemplate>
-                            <!-- “two panes” style icon -->
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7F8;" FontSize="15"/>
                         </DataTemplate>
                     </Button.ContentTemplate>
@@ -175,7 +175,17 @@
                   Background="{ThemeResource ControlFillColorSecondary}"
                   Height="35"
                   CornerRadius="4">
-                <BreadcrumbBar x:Name="AddressBar" Margin="10, 2.5, 0, 0"/>
+                <BreadcrumbBar x:Name="AddressBar"
+                               Margin="10, 2.5, 0, 0"
+                               ItemsSource="{x:Bind _tabModel.AddressBarItems, FallbackValue=null, Mode=TwoWay}">
+                    <BreadcrumbBar.ItemTemplate>
+                        <DataTemplate x:DataType="model:AddressBarItem">
+                            <TextBlock Text="{x:Bind Text}"
+                                       FontFamily="{x:Bind FontFamily}"
+                                       FontSize="{x:Bind FontSize}"/>
+                        </DataTemplate>
+                    </BreadcrumbBar.ItemTemplate>
+                </BreadcrumbBar>
             </Grid>
 
             <AutoSuggestBox x:Name="SearchBox"
@@ -246,9 +256,11 @@
 
         <NavigationView x:Name="NavigationViewControl"
                         Grid.Row="1"
+                        AlwaysShowHeader="False"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="False"
-                        PaneDisplayMode="Auto"
+                        IsPaneVisible="True"
+                        PaneDisplayMode="LeftCompact"
                         SelectionChanged="NavigationViewControl_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="TerminalItem"
@@ -353,8 +365,9 @@
                     </NavigationViewItem.MenuItems>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
-            <Frame x:Name="MainFrame"/>
+            <NavigationView.Content>
+                <Frame x:Name="MainFrame"/>
+            </NavigationView.Content>
         </NavigationView>
-
     </Grid>
 </Page>

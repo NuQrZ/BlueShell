@@ -10,6 +10,7 @@ namespace BlueShell.Terminal.Commands
         {
             context.DataDisplay.Clear();
             context.TerminalOutput.Clear();
+            context.TabModel?.ClearPath();
             return Task.CompletedTask;
         }
     }

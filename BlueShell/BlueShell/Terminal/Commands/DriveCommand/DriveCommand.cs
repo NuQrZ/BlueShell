@@ -68,6 +68,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
         private async Task HandleGetDrivesOperation(TerminalCommandContext context, string extraOperation)
         {
+            context.TabModel?.ClearPath();
+            context.TabModel?.SetPath("System", false);
             context.TerminalOutput.WriteLine(">> Displaying all available drives!", TerminalMessageKind.Success);
             List<DriveItem> drives = await driveService.GetDrives();
 
@@ -94,23 +96,31 @@ namespace BlueShell.Terminal.Commands.DriveCommand
         {
             if (drives.Count == 1)
             {
+                context.TabModel?.ClearPath();
+                context.TabModel?.SetPath(drives[0], false);
                 context.TerminalOutput.WriteLine($">> Opening \"{drives[0]}\"...", TerminalMessageKind.Success);
                 await HandleOpenSingleDrive(context, drives[0], extraOperation);
             }
             else
             {
                 string message = ">> Opening: [";
+                string address = "[";
                 for (int i = 0; i < drives.Count; i++)
                 {
                     if (i == drives.Count - 1)
                     {
                         message += $"{drives[i]}]...";
+                        address += $"{drives[i]}]";
                     }
                     else
                     {
                         message += $"{drives[i]}, ";
+                        address += $"{drives[i]}, ";
                     }
                 }
+
+                context.TabModel?.ClearPath();
+                context.TabModel?.SetPath(address, true);
                 context.TerminalOutput.WriteLine(message, TerminalMessageKind.Success);
                 await HandleOpenMultipleDrives(context, drives, extraOperation);
             }
@@ -191,16 +201,32 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             Dictionary<string, object> properties;
 
             List<PropertyItem> propertyItems = [];
+            string message;
 
             switch (operation)
             {
                 case "Properties":
+
+                    message = ">> Displaying general properties for: [";
+                    for (int i = 0; i < drives.Count; i++)
+                    {
+                        if (i == drives.Count - 1)
+                        {
+                            message += $"{drives[i]}]...";
+                        }
+                        else
+                        {
+                            message += $"{drives[i]}, ";
+                        }
+                    }
+
+                    context.TerminalOutput.WriteLine(message, TerminalMessageKind.Success);
+
                     foreach (string drive in drives)
                     {
                         string displayName = await driveService.GetDriveDisplayName(drive);
 
                         properties = driveService.GetDriveProperties(drive);
-                        context.TerminalOutput.WriteLine($">> Displaying properties for drive: \"{drive}\"\n", TerminalMessageKind.Success);
 
                         PropertyItem propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
                             displayName, drive, properties, false);
@@ -209,12 +235,26 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                     }
                     break;
                 case "Advanced":
+                    message = ">> Displaying advanced properties for: [";
+                    for (int i = 0; i < drives.Count; i++)
+                    {
+                        if (i == drives.Count - 1)
+                        {
+                            message += $"{drives[i]}]...";
+                        }
+                        else
+                        {
+                            message += $"{drives[i]}, ";
+                        }
+                    }
+
+                    context.TerminalOutput.WriteLine(message, TerminalMessageKind.Success);
+
                     foreach (string drive in drives)
                     {
                         string displayName = await driveService.GetDriveDisplayName(drive);
 
                         properties = driveService.GetAdvancedDriveProperties(drive);
-                        context.TerminalOutput.WriteLine($">> Displaying advanced properties for drive: \"{drive}\"\n", TerminalMessageKind.Success);
 
                         PropertyItem propertyItem = await DrivePropertiesBuilder.BuildDrivePropertyItem(
                             displayName, drive, properties, true);

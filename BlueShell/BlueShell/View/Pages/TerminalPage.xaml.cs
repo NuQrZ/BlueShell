@@ -1,4 +1,5 @@
 using BlueShell.Helpers;
+using BlueShell.Model;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using BlueShell.Terminal.WinUI;
@@ -9,6 +10,7 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +36,8 @@ namespace BlueShell.View.Pages
         private GridLength _savedDisplayWidth = new(3, GridUnitType.Star);
 
         private DispatcherTimer? _highlightDebounce;
+
+        private TabModel? _tabModel;
 
         public TerminalPage()
         {
@@ -92,6 +96,15 @@ namespace BlueShell.View.Pages
             await _terminalViewModel!.SubmitAsync(command);
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            if (e.Parameter is TabModel tabModel)
+            {
+                _tabModel = tabModel;
+            }
+        }
+
         private void TerminalPage_Loaded(object sender, RoutedEventArgs e)
         {
             _terminalOutput = new TerminalOutput(
@@ -105,7 +118,7 @@ namespace BlueShell.View.Pages
                 TerminalCommandRegistry.CreateDefault());
 
             _terminalViewModel = new TerminalViewModel(dispatcher,
-                () => new TerminalCommandContext(_terminalOutput, _dataDisplay, CancellationToken.None));
+                () => new TerminalCommandContext(_terminalOutput, _dataDisplay, _tabModel, CancellationToken.None));
 
             InitializeInput();
             Terminal.Focus(FocusState.Programmatic);

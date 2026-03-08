@@ -12,16 +12,17 @@ namespace BlueShell.Terminal.Commands
         {
             for (int i = 0; i <= 100_000; i++)
             {
+                await Task.Delay(1, context.CancellationToken);
                 context.TerminalOutput.Line()
                     .PrintOutput($"Simulating long-running operation: ")
                     .Info($"{i} ")
                     .PrintOutput("/ 100.000\n", extraColor: Colors.Purple)
                     .Commit();
 
-                if (i % 500 == 0)
-                {
-                    await Task.Yield();
-                }
+                //if (i % 500 == 0)
+                //{
+                //    await Task.Yield();
+                //}
             }
 
             context.TerminalOutput.Line()
