@@ -77,10 +77,10 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 case "":
                     context.DataDisplay.Clear();
-                    context.DataDisplay.SetHeader(DriveCommandUi.CreateDriveHeader());
-                    foreach (DataDisplayItem dataDisplayItem in drives.Select(DriveCommandUi.CreateDriveDisplayItem))
+                    context.DataDisplay.SetHeader(UiClass.CreateDriveHeader());
+                    foreach (DataDisplayItem dataDisplayItem in drives.Select(UiClass.CreateDriveDisplayItem))
                     {
-                        await DriveCommandUi.ConfigureDriveDisplayItem(dataDisplayItem);
+                        await UiClass.ConfigureDriveDisplayItem(dataDisplayItem);
                         context.DataDisplay.Add(dataDisplayItem);
                     }
 
@@ -136,10 +136,10 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 case "":
                     context.DataDisplay.Clear();
-                    context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
-                    foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(DriveCommandUi.CreateFileSystemItem))
+                    context.DataDisplay.SetHeader(UiClass.CreateFileSystemHeader());
+                    foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(UiClass.CreateFileSystemItem))
                     {
-                        await DriveCommandUi.ConfigureFileSystemDataItem(dataDisplay);
+                        await UiClass.ConfigureFileSystemDataItem(dataDisplay);
                         context.DataDisplay.Add(dataDisplay);
                     }
                     break;
@@ -155,7 +155,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             if (extraOperation == "")
             {
                 context.DataDisplay.Clear();
-                context.DataDisplay.SetHeader(DriveCommandUi.CreateFileSystemHeader());
+                context.DataDisplay.SetHeader(UiClass.CreateFileSystemHeader());
             }
 
             context.DataDisplay.BeginGrouped();
@@ -177,9 +177,9 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         context.DataDisplay.AddGroup(dataDisplayGroup);
 
                         int i = 0;
-                        foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(DriveCommandUi.CreateFileSystemItem))
+                        foreach (DataDisplayItem dataDisplay in fileSystemItems.Select(UiClass.CreateFileSystemItem))
                         {
-                            await DriveCommandUi.ConfigureFileSystemDataItem(dataDisplay);
+                            await UiClass.ConfigureFileSystemDataItem(dataDisplay);
                             dataDisplayGroup.Items.Add(dataDisplay);
 
                             if (++i % 200 == 0)
@@ -267,7 +267,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             switch (extraOperation)
             {
                 case "":
-                    DriveCommandUi.InitializeDriveProperties(propertyItems);
+                    UiClass.InitializeDriveProperties(propertyItems);
                     break;
                 case "Print":
                     foreach (PropertyItem propertyItem in propertyItems)

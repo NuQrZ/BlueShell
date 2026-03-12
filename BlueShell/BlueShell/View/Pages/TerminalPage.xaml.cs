@@ -158,125 +158,109 @@ namespace BlueShell.View.Pages
                     InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
                     & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
 
-                if (e.Key == VirtualKey.Enter)
+                switch (e.Key)
                 {
-                    e.Handled = true;
-                    await HandleInput();
-                    return;
-                }
-
-                if (e.Key == VirtualKey.Home)
-                {
-                    e.Handled = true;
-
-                    if (start != _inputStart || end != _inputStart)
-                    {
-                        textSelection.SetRange(_inputStart, _inputStart);
-                    }
-
-                    return;
-                }
-
-                if (e.Key == VirtualKey.Left)
-                {
-                    if (start <= _inputStart)
-                    {
-                        if (_isCtrlAllPressed)
-                        {
-                            return;
-                        }
-
+                    case VirtualKey.Enter:
                         e.Handled = true;
-
-                        if (start < _inputStart || end < _inputStart)
+                        await HandleInput();
+                        return;
+                    case VirtualKey.Home:
                         {
-                            textSelection.SetRange(_inputStart, _inputStart);
-                        }
-
-                        return;
-                    }
-                }
-                else if (e.Key == VirtualKey.Right)
-                {
-                    if (start < _inputStart)
-                    {
-                        e.Handled = true;
-                        textSelection.SetRange(_inputStart, _inputStart);
-                        return;
-                    }
-                }
-
-                if (e.Key is VirtualKey.Back)
-                {
-                    if (textSelection.Length > 0)
-                    {
-                        textSelection.CharacterFormat.ForegroundColor =
-                            ActualTheme == ElementTheme.Light ?
-                                Colors.Black :
-                                Colors.White;
-                        textSelection.CharacterFormat.Bold = FormatEffect.Off;
-
-                        if (start < _inputStart)
-                        {
-                            textSelection.SetRange(_inputStart, _inputStart);
-                        }
-
-                        return;
-                    }
-
-                    if (start > _inputStart)
-                    {
-                        return;
-                    }
-
-                    e.Handled = true;
-
-                    if (start != _inputStart || end != _inputStart)
-                    {
-                        textSelection.SetRange(_inputStart, _inputStart);
-                    }
-
-                    return;
-                }
-
-                if (e.Key is VirtualKey.Delete)
-                {
-                    if (start < _inputStart)
-                    {
-                        e.Handled = true;
-                        textSelection.SetRange(_inputStart, _inputStart);
-                        return;
-                    }
-
-                    if (start == _inputStart)
-                    {
-                        e.Handled = true;
-
-                        RichEditTextDocument textDocument = Terminal.Document;
-                        ITextRange range = textDocument.GetRange(_inputStart, _inputStart + 1);
-
-                        if (range.EndPosition > range.StartPosition)
-                        {
-                            range.Text = string.Empty;
-                        }
-
-                        return;
-                    }
-                }
-
-                if (isCtrl)
-                {
-                    switch (e.Key)
-                    {
-                        case VirtualKey.A:
                             e.Handled = true;
-                            _isCtrlAllPressed = true;
-                            textSelection.SetRange(_inputStart, Terminal.Document.GetRange(0, int.MaxValue).EndPosition);
+
+                            if (start != _inputStart || end != _inputStart)
+                            {
+                                textSelection.SetRange(_inputStart, _inputStart);
+                            }
+
                             return;
-                        case VirtualKey.Q:
-                            _terminalViewModel?.Cancel();
+                        }
+                    case VirtualKey.Left when start <= _inputStart:
+                        {
+                            if (_isCtrlAllPressed)
+                            {
+                                return;
+                            }
+
+                            e.Handled = true;
+
+                            if (start < _inputStart || end < _inputStart)
+                            {
+                                textSelection.SetRange(_inputStart, _inputStart);
+                            }
+
                             return;
-                    }
+                        }
+                    case VirtualKey.Right when start < _inputStart:
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                }
+
+                switch (e.Key)
+                {
+                    case VirtualKey.Back when textSelection.Length > 0:
+                        {
+                            textSelection.CharacterFormat.ForegroundColor =
+                                ActualTheme == ElementTheme.Light ? Colors.Black : Colors.White;
+                            textSelection.CharacterFormat.Bold = FormatEffect.Off;
+
+                            if (start < _inputStart)
+                            {
+                                textSelection.SetRange(_inputStart, _inputStart);
+                            }
+
+                            return;
+                        }
+                    case VirtualKey.Back when start > _inputStart:
+                        return;
+                    case VirtualKey.Back:
+                        {
+                            e.Handled = true;
+
+                            if (start != _inputStart || end != _inputStart)
+                            {
+                                textSelection.SetRange(_inputStart, _inputStart);
+                            }
+
+                            return;
+                        }
+                    case VirtualKey.Delete when start < _inputStart:
+                        e.Handled = true;
+                        textSelection.SetRange(_inputStart, _inputStart);
+                        return;
+                    case VirtualKey.Delete when start == _inputStart:
+                        {
+                            e.Handled = true;
+
+                            RichEditTextDocument textDocument = Terminal.Document;
+                            ITextRange range = textDocument.GetRange(_inputStart, _inputStart + 1);
+
+                            if (range.EndPosition > range.StartPosition)
+                            {
+                                range.Text = string.Empty;
+                            }
+
+                            return;
+                        }
+                }
+
+                if (!isCtrl)
+                {
+                    return;
+                }
+
+                switch (e.Key)
+                {
+                    case VirtualKey.A:
+                        e.Handled = true;
+                        _isCtrlAllPressed = true;
+                        textSelection.SetRange(_inputStart,
+                            Terminal.Document.GetRange(0, int.MaxValue).EndPosition);
+                        return;
+                    case VirtualKey.Q:
+                        _terminalViewModel?.Cancel();
+                        return;
                 }
             }
             catch (Exception exception)

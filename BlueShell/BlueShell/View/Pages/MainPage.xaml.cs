@@ -38,7 +38,6 @@ namespace BlueShell.View.Pages
 
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            _tabModel = DataContext as TabModel;
             string? itemTag = _tabModel?.SelectedNavTag;
 
             if (itemTag == null || _navItemsByTag is null)

@@ -90,12 +90,6 @@
             <ListView x:Name="DataDisplay"
                       Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               SelectionMode="Multiple">
-                <ListView.Header>
-                    <model:DataDisplayHeader
-            NameHeader=""
-            TypeHeader=""
-            SizeHeader="" />
-                </ListView.Header>
                 <ListView.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.HeaderTemplate>

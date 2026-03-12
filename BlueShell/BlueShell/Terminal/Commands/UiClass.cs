@@ -11,9 +11,9 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BlueShell.Terminal.Commands.DriveCommand
+namespace BlueShell.Terminal.Commands
 {
-    public static class DriveCommandUi
+    public static class UiClass
     {
         public static DataDisplayHeader CreateDriveHeader()
         {
