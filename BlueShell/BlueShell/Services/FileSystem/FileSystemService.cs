@@ -2,12 +2,13 @@
 using BlueShell.Services.Wrappers;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace BlueShell.Services.FileSystem
 {
     public sealed class FileSystemService : IFileSystemService
     {
-        public List<FileSystemItem> LoadFiles(string filePath)
+        public List<FileSystemItem> LoadFiles(string filePath, CancellationToken cancellationToken = default)
         {
             if (!Directory.Exists(filePath))
             {
@@ -18,21 +19,19 @@ namespace BlueShell.Services.FileSystem
 
             DirectoryInfo directory = new(filePath);
 
-            foreach (FileInfo fileInfo in directory.GetFiles("*", new EnumerationOptions()
+            foreach (FileInfo fileInfo in directory.EnumerateFiles("*"))
             {
-                IgnoreInaccessible = true
-            }))
-            {
-                string fileName = fileInfo.Name;
-                string fileType = fileInfo.Extension.ToUpper() + " File";
-                string fileSizeType = Utilities.ReturnSize(fileInfo.Length, true);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string unit = Utilities.ReturnSizeUnit(fileInfo.Length, true);
+                double size = Utilities.ReturnSize(fileInfo.Length, unit);
 
                 FileSystemItem fileSystemItem = new()
                 {
-                    ItemName = fileName,
-                    ItemType = fileType,
-                    ItemSizeType = fileSizeType,
-                    ItemSize = fileInfo.Length,
+                    ItemName = fileInfo.Name,
+                    ItemType = fileInfo.Extension.ToUpperInvariant() + " File",
+                    ItemSizeType = unit,
+                    ItemSize = size,
                     DirectoryInfo = null,
                     FileInfo = fileInfo,
                 };
@@ -43,7 +42,7 @@ namespace BlueShell.Services.FileSystem
             return files;
         }
 
-        public List<FileSystemItem> LoadFolders(string filePath)
+        public List<FileSystemItem> LoadFolders(string filePath, CancellationToken cancellationToken = default)
         {
             if (!Directory.Exists(filePath))
             {
@@ -54,19 +53,15 @@ namespace BlueShell.Services.FileSystem
 
             DirectoryInfo directory = new(filePath);
 
-            foreach (DirectoryInfo directoryInfo in directory.GetDirectories("*", new EnumerationOptions()
+            foreach (DirectoryInfo directoryInfo in directory.EnumerateDirectories("*"))
             {
-                IgnoreInaccessible = true
-            }))
-            {
-                string fileName = directoryInfo.Name;
-                string fileSizeType = "";
+                cancellationToken.ThrowIfCancellationRequested();
 
                 FileSystemItem fileSystemItem = new()
                 {
-                    ItemName = fileName,
+                    ItemName = directoryInfo.Name,
                     ItemType = "Folder",
-                    ItemSizeType = fileSizeType,
+                    ItemSizeType = string.Empty,
                     ItemSize = null,
                     DirectoryInfo = directoryInfo,
                     FileInfo = null

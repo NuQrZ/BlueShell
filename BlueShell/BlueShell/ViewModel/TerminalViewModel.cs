@@ -17,47 +17,77 @@ namespace BlueShell.ViewModel
 
         public async Task SubmitAsync(string commandLine)
         {
-            if (IsExiting)
+            if (string.IsNullOrWhiteSpace(commandLine) || IsExiting)
             {
                 return;
             }
 
-            if (commandLine.Trim() == "Exit")
+            if (commandDispatcher.IsExitCommand(commandLine))
             {
                 IsExiting = true;
             }
 
+            TerminalCommandContext commandContext = contextFactory();
+
             if (IsRunning)
             {
+                if (!commandDispatcher.IsInterruptCommand(commandLine))
+                {
+                    return;
+                }
+
+                Cancel();
+
+                try
+                {
+                    await commandDispatcher.ExecuteAsync(
+                        new TerminalCommandContext(
+                            commandContext.TerminalOutput,
+                            commandContext.DataDisplay,
+                            commandContext.TabModel,
+                            CancellationToken.None),
+                        commandLine);
+                }
+                catch (Exception exception)
+                {
+                    commandContext.TerminalOutput.WriteLine(
+                        $">> Error: {exception.Message}\n",
+                        TerminalMessageKind.Error);
+                }
+
                 return;
             }
-
-            IsRunning = true;
 
             if (_cancellationTokenSource != null)
             {
                 await _cancellationTokenSource.CancelAsync();
             }
-
+            _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
 
-            TerminalCommandContext commandContext = contextFactory();
+            IsRunning = true;
 
             try
             {
-                Task task = commandDispatcher.ExecuteAsync(
-                    new TerminalCommandContext(commandContext.TerminalOutput, commandContext.DataDisplay, commandContext.TabModel, _cancellationTokenSource.Token),
+                await commandDispatcher.ExecuteAsync(
+                    new TerminalCommandContext(
+                        commandContext.TerminalOutput,
+                        commandContext.DataDisplay,
+                        commandContext.TabModel,
+                        _cancellationTokenSource.Token),
                     commandLine);
-                await task;
             }
             catch (OperationCanceledException)
             {
-                commandContext.TerminalOutput.WriteLine(">> Operation Canceled.\n", TerminalMessageKind.Info);
-
+                commandContext.TerminalOutput.WriteLine(
+                    ">> Operation Canceled.\n",
+                    TerminalMessageKind.Info);
             }
             catch (Exception exception)
             {
-                commandContext.TerminalOutput.WriteLine($">> Error: {exception.Message}\n", TerminalMessageKind.Error);
+                commandContext.TerminalOutput.WriteLine(
+                    $">> Error: {exception.Message}\n",
+                    TerminalMessageKind.Error);
             }
             finally
             {
@@ -68,7 +98,6 @@ namespace BlueShell.ViewModel
         public void Cancel()
         {
             _cancellationTokenSource?.Cancel();
-            IsRunning = false;
         }
     }
 }

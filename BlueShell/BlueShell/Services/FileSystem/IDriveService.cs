@@ -1,6 +1,5 @@
 ﻿using BlueShell.Services.Wrappers;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace BlueShell.Services.FileSystem
@@ -9,7 +8,7 @@ namespace BlueShell.Services.FileSystem
     {
         Task<string> GetDriveDisplayName(string driveFilePath);
         Task<List<DriveItem>> GetDrives();
-        DriveInfo? GetDrive(string filePath);
+        int GetDriveCount();
         Dictionary<string, object> GetDriveProperties(string driveLetter);
         Dictionary<string, object> GetAdvancedDriveProperties(string driveLetter);
     }

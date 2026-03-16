@@ -54,7 +54,7 @@
                                    FontFamily="Cascadia Code"
                                    FontSize="18"
                                    IsTextSelectionEnabled="False"
-                                   TextWrapping="NoWrap"
+                                   TextWrapping="Wrap"
                                    TextTrimming="CharacterEllipsis"
                                    MaxWidth="{Binding ElementName=OutputScrollViewer, Path=ViewportWidth}"/>
                             <ItemsControl Visibility="{x:Bind IsRich, Converter={StaticResource BoolToVisible}}"
@@ -133,39 +133,43 @@
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="model:DataDisplayItem">
                         <Grid>
-                            <Image Source="{x:Bind ItemIcon, Mode=OneWay}" 
-                       Width="{x:Bind ImageSize}"        
-                       Height="{x:Bind ImageSize}"
-                       HorizontalAlignment="Left"
-                       Margin="{x:Bind ImageMargin}"/>
-                            <TextBlock Text="{x:Bind ItemName, Converter={StaticResource TextTrimmer}, ConverterParameter = 60}"
+                            <Grid Width="{x:Bind ImageSize, Mode=OneWay}"
+                                  Height="{x:Bind ImageSize, Mode=OneWay}"
+                                  HorizontalAlignment="Left"
+                                  Margin="{x:Bind ImageMargin, Mode=OneWay}">
+                                <Image Source="{x:Bind ItemIcon, Mode=OneWay}"
+                                       Stretch="Uniform"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch" />
+                            </Grid>
+                            <TextBlock Text="{x:Bind ItemName, Mode=OneWay, Converter={StaticResource TextTrimmer}, ConverterParameter = 60}"
                            FontFamily="Cascadia Mono"
                            FontSize="14"
-                           Padding="{x:Bind TextPadding}"
+                           Padding="{x:Bind TextPadding, Mode=OneWay}"
                            VerticalAlignment="Center"
                            Margin="14, 0, 0, 0"/>
-                            <ProgressBar Value="{x:Bind TakenSpace}"
+                            <ProgressBar Value="{x:Bind TakenSpace, Mode=OneWay}"
                              Width="260"
                              Minimum="0"
-                             Maximum="{x:Bind TotalSize}"
-                             Visibility="{x:Bind IsTakenSpaceVisible}"
+                             Maximum="{x:Bind TotalSize, Mode=OneWay}"
+                             Visibility="{x:Bind IsTakenSpaceVisible, Mode=OneWay}"
                              Foreground="{x:Bind Color, Mode=OneWay}"
-                             Margin="{x:Bind ProgressMargin}"
+                             Margin="{x:Bind ProgressMargin, Mode=OneWay}"
                              HorizontalAlignment="Left"/>
-                            <TextBlock Text="{x:Bind ItemType}"
+                            <TextBlock Text="{x:Bind ItemType, Mode=OneWay}"
                            FontFamily="Cascadia Mono"
                            FontSize="14"
                            VerticalAlignment="Center"
                            Padding="0, 0, 0, 0"
-                           Margin="{x:Bind ItemTypeMargin}"/>
-                            <TextBlock Text="{x:Bind ItemSize}"
+                           Margin="{x:Bind ItemTypeMargin, Mode=OneWay}"/>
+                            <TextBlock Text="{x:Bind ItemSize, Mode=OneWay}"
                            FontFamily="Cascadia Mono"
                            FontSize="14"
                            VerticalAlignment="Center"
-                           Visibility="{x:Bind IsSizeVisible}"
+                           Visibility="{x:Bind IsSizeVisible, Mode=OneWay}"
                            Padding="0, 0, 0, 0"
                            Margin="542, 0, 0, 0"/>
-                            <TextBlock Text="{x:Bind ItemSizeType}"
+                            <TextBlock Text="{x:Bind ItemSizeType, Mode=OneWay}"
                            FontFamily="Cascadia Mono"
                            FontSize="14"
                            VerticalAlignment="Center"

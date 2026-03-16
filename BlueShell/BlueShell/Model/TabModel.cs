@@ -1,8 +1,10 @@
 ﻿using BlueShell.Terminal.Abstractions;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace BlueShell.Model
@@ -10,6 +12,8 @@ namespace BlueShell.Model
     public sealed partial class TabModel : INotifyPropertyChanged, IAddressBarNavigator
     {
         public ObservableCollection<AddressBarItem> AddressBarItems { get; set; } = [];
+        public ObservableCollection<string> FilePathCollection { get; set; } = [];
+
         public IconSource? TabIcon
         {
             get;
@@ -76,6 +80,26 @@ namespace BlueShell.Model
             _ => "Terminal.ico",
         };
 
+        public bool IsMultipleTarget
+        {
+            get;
+            set
+            {
+                field = value;
+                OnPropertyChanged();
+            }
+        } = false;
+
+        public string SearchLocation
+        {
+            get;
+            set
+            {
+                field = value;
+                OnPropertyChanged();
+            }
+        } = "Search System...";
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -83,27 +107,33 @@ namespace BlueShell.Model
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public void SetPath(string path, bool isMultiple)
+        private static List<AddressBarItem> ReturnPath(string filePath)
         {
-            if (isMultiple)
+            List<AddressBarItem> result = [];
+
+            bool pathExists = File.Exists(filePath) && Directory.Exists(filePath);
+
+            if (filePath == "All" || !pathExists)
             {
-                AddressBarItems.Add(new AddressBarItem()
+                result.Add(new AddressBarItem()
                 {
-                    Text = path,
+                    Text = filePath,
                     FontFamily = "Cascadia Code",
                     FontSize = 16
                 });
-                return;
+
+                return result;
             }
 
-            string[] pathSegments = path.Replace("\"", "").Trim().Split('\\', StringSplitOptions.RemoveEmptyEntries);
+            string[] pathSegments =
+                filePath.Replace("\"", "").Trim().Split('\\', StringSplitOptions.RemoveEmptyEntries);
 
             for (int i = 0; i < pathSegments.Length; i++)
             {
                 if (i == 0)
                 {
                     string rootSegment = pathSegments[i] + '\\';
-                    AddressBarItems.Add(new AddressBarItem()
+                    result.Add(new AddressBarItem()
                     {
                         Text = rootSegment,
                         FontFamily = "Cascadia Code",
@@ -112,7 +142,7 @@ namespace BlueShell.Model
                 }
                 else
                 {
-                    AddressBarItems.Add(new AddressBarItem()
+                    result.Add(new AddressBarItem()
                     {
                         Text = pathSegments[i],
                         FontFamily = "Cascadia Code",
@@ -121,7 +151,32 @@ namespace BlueShell.Model
                 }
             }
 
+            return result;
+        }
+
+        public void SetPath(string filePath, bool isMultiple)
+        {
+            IsMultipleTarget = isMultiple;
+            List<AddressBarItem> items = ReturnPath(filePath);
+
+            foreach (AddressBarItem addressBarItem in items)
+            {
+                AddressBarItems.Add(addressBarItem);
+            }
+
             OnPropertyChanged(nameof(AddressBarItems));
+        }
+
+        public void AddFilePaths(List<string> filePaths)
+        {
+            FilePathCollection.Clear();
+
+            FilePathCollection.Add("All");
+
+            foreach (string filePath in filePaths)
+            {
+                FilePathCollection.Add(filePath);
+            }
         }
 
         public void ClearPath()

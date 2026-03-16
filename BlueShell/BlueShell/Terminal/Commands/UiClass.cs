@@ -5,11 +5,15 @@ using BlueShell.Services.Wrappers;
 using BlueShell.View.AppWindows;
 using BlueShell.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace BlueShell.Terminal.Commands
 {
@@ -70,8 +74,11 @@ namespace BlueShell.Terminal.Commands
             };
         }
 
-        public static async Task ConfigureDriveDisplayItem(DataDisplayItem dataDisplayItem)
+        public static async Task ConfigureDriveDisplayItem(DataDisplayItem dataDisplayItem,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             dataDisplayItem.TextPadding = new Thickness(50, 0, 0, 0);
             dataDisplayItem.ImageMargin = new Thickness(0, 10, 0, 5);
             dataDisplayItem.ProgressMargin = new Thickness(400, 0, 0, 0);
@@ -85,11 +92,16 @@ namespace BlueShell.Terminal.Commands
             dataDisplayItem.ImageSize = 40;
             dataDisplayItem.IsTakenSpaceVisible = true;
             dataDisplayItem.IsSizeVisible = false;
-            dataDisplayItem.Color = takenSpace < 34359738368 ? "Red" : "CornflowerBlue";
+
+            Color color = takenSpace < 34359738368 ? Colors.Red : Colors.CornflowerBlue;
+            dataDisplayItem.Color = new SolidColorBrush(color);
         }
 
-        public static async Task ConfigureFileSystemDataItem(DataDisplayItem dataDisplayItem)
+        public static async Task ConfigureFileSystemDataItem(DataDisplayItem dataDisplayItem,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             dataDisplayItem.TextPadding = new Thickness(50, 0, 0, 0);
             dataDisplayItem.ImageMargin = new Thickness(0, 10, 0, 5);
             dataDisplayItem.ProgressMargin = new Thickness(400, 0, 0, 0);
@@ -104,7 +116,7 @@ namespace BlueShell.Terminal.Commands
             dataDisplayItem.ImageSize = 40;
             dataDisplayItem.IsTakenSpaceVisible = false;
             dataDisplayItem.IsSizeVisible = true;
-            dataDisplayItem.Color = "Transparent";
+            dataDisplayItem.Color = new SolidColorBrush(Colors.Transparent);
         }
 
         public static void InitializeDriveProperties(List<PropertyItem> propertyItems)
@@ -120,6 +132,7 @@ namespace BlueShell.Terminal.Commands
                 {
                     propertiesWindowViewModel.AddItem(propertyItem);
                 }
+
                 propertiesWindowViewModel.SelectedItem = propertyItems[0];
 
                 PropertiesWindow propertiesWindow = new(propertiesWindowViewModel);

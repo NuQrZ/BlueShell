@@ -33,7 +33,8 @@ namespace BlueShell.Services.Properties
             return CreatePropertyItem(displayName, icon, groups);
         }
 
-        private static void AddGeneral(Dictionary<string, List<PropertyRow>> groups, Dictionary<string, object> properties)
+        private static void AddGeneral(Dictionary<string, List<PropertyRow>> groups,
+            Dictionary<string, object> properties)
         {
             AddIfNonEmpty(groups, "General", "Label",
                 GetString(properties, "Logical.VolumeName") ?? GetString(properties, "Volume.Label"));
@@ -65,12 +66,12 @@ namespace BlueShell.Services.Properties
 
             if (size is not null)
             {
-                Add(groups, "Capacity", "Total size", Utilities.ReturnSize((long)size.Value));
+                Add(groups, "Capacity", "Total size", Utilities.ReturnSizeUnit((long)size.Value));
             }
 
             if (free is not null)
             {
-                Add(groups, "Capacity", "Free space", Utilities.ReturnSize((long)free.Value));
+                Add(groups, "Capacity", "Free space", Utilities.ReturnSizeUnit((long)free.Value));
             }
 
             if (size is null || free is null)
@@ -79,7 +80,7 @@ namespace BlueShell.Services.Properties
             }
 
             ulong used = size.Value - free.Value;
-            Add(groups, "Capacity", "Used space", Utilities.ReturnSize((long)used));
+            Add(groups, "Capacity", "Used space", Utilities.ReturnSizeUnit((long)used));
 
             double percent = size.Value > 0 ? (double)used / size.Value * 100.0 : 0.0;
             Add(groups, "Capacity", "Used (%)", percent.ToString("0.##", CultureInfo.InvariantCulture) + "%");
@@ -89,17 +90,25 @@ namespace BlueShell.Services.Properties
             Dictionary<string, List<PropertyRow>> groups,
             Dictionary<string, object> properties)
         {
-            AddIfNonEmpty(groups, "Hardware", "Model", GetString(properties, "DiskDrive.Model") ?? GetString(properties, "MSFT_Disk.Model") ?? GetString(properties, "MSFT_Disk.FriendlyName"));
-            AddIfNonEmpty(groups, "Hardware", "Manufacturer", GetString(properties, "DiskDrive.Manufacturer") ?? GetString(properties, "MSFT_Disk.Manufacturer"));
+            AddIfNonEmpty(groups, "Hardware", "Model",
+                GetString(properties, "DiskDrive.Model") ?? GetString(properties, "MSFT_Disk.Model") ??
+                GetString(properties, "MSFT_Disk.FriendlyName"));
+            AddIfNonEmpty(groups, "Hardware", "Manufacturer",
+                GetString(properties, "DiskDrive.Manufacturer") ?? GetString(properties, "MSFT_Disk.Manufacturer"));
             AddIfNonEmpty(groups, "Hardware", "Interface", GetString(properties, "DiskDrive.InterfaceType"));
             AddIfNonEmpty(groups, "Hardware", "Media type", GetString(properties, "DiskDrive.MediaType"));
-            AddIfNonEmpty(groups, "Hardware", "Serial", GetString(properties, "DiskDrive.SerialNumber") ?? GetString(properties, "PhysicalMedia.SerialNumber") ?? GetString(properties, "MSFT_Disk.SerialNumber"));
+            AddIfNonEmpty(groups, "Hardware", "Serial",
+                GetString(properties, "DiskDrive.SerialNumber") ??
+                GetString(properties, "PhysicalMedia.SerialNumber") ?? GetString(properties, "MSFT_Disk.SerialNumber"));
             AddIfNonEmpty(groups, "Hardware", "PNP Device ID", GetString(properties, "DiskDrive.PNPDeviceID"));
-            AddIfNonEmpty(groups, "Hardware", "Firmware", GetString(properties, "DiskDrive.FirmwareRevision") ?? GetString(properties, "MSFT_Disk.FirmwareVersion"));
+            AddIfNonEmpty(groups, "Hardware", "Firmware",
+                GetString(properties, "DiskDrive.FirmwareRevision") ??
+                GetString(properties, "MSFT_Disk.FirmwareVersion"));
             AddIfNonEmpty(groups, "Hardware", "Bus type", GetString(properties, "MSFT_Disk.BusType"));
             AddIfNonEmpty(groups, "Hardware", "Partition style", GetString(properties, "MSFT_Disk.PartitionStyle"));
             AddIfNonEmpty(groups, "Hardware", "Health Status", GetString(properties, "MSFT_Disk.HealthStatus"));
-            AddIfNonEmpty(groups, "Hardware", "Operational Status", GetString(properties, "MSFT_Disk.OperationalStatus"));
+            AddIfNonEmpty(groups, "Hardware", "Operational Status",
+                GetString(properties, "MSFT_Disk.OperationalStatus"));
         }
 
         private static void AddAdvanced(
@@ -135,13 +144,16 @@ namespace BlueShell.Services.Properties
             BitmapImage? icon,
             Dictionary<string, List<PropertyRow>> groups)
         {
-            List<PropertyGroup> propertyGroups = [.. groups
-                .Where(group => group.Value.Count > 0)
-                .Select(group => new PropertyGroup
-                {
-                    GroupName = group.Key,
-                    PropertyRows = group.Value
-                })];
+            List<PropertyGroup> propertyGroups =
+            [
+                .. groups
+                    .Where(group => group.Value.Count > 0)
+                    .Select(group => new PropertyGroup
+                    {
+                        GroupName = group.Key,
+                        PropertyRows = group.Value
+                    })
+            ];
 
             return new PropertyItem
             {
@@ -209,7 +221,8 @@ namespace BlueShell.Services.Properties
                     ulong u => u,
                     long l when l >= 0 => (ulong)l,
                     int i when i >= 0 => (ulong)i,
-                    string s when ulong.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) => parsed,
+                    string s when ulong.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) =>
+                        parsed,
                     _ => Convert.ToUInt64(v, CultureInfo.InvariantCulture)
                 };
             }

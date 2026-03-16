@@ -3,6 +3,7 @@ using BlueShell.Services.FileSystem;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Commands;
 using BlueShell.Terminal.Commands.DriveCommand;
+using BlueShell.Terminal.Commands.FolderCommand;
 using System.Collections.Generic;
 
 namespace BlueShell.Terminal.Infrastructure
@@ -11,11 +12,12 @@ namespace BlueShell.Terminal.Infrastructure
     {
         public static IReadOnlyList<ITerminalCommand> CreateDefault() =>
         [
-            new ExitCommand(),
             new ClearAllCommand(),
             new ClearCommand(),
             new ClearDisplayCommand(),
             new DriveCommand(new DriveService(), new FileSystemService(), new PrintService()),
+            new ExitCommand(),
+            new FolderCommand(new FileSystemService(), new PrintService()),
             new SimulateCommand(),
             new VersionCommand()
         ];

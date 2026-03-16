@@ -6,6 +6,8 @@ namespace BlueShell.Terminal.Commands
     public sealed class ClearDisplayCommand : ITerminalCommand
     {
         public string CommandName => "ClearDisplay";
+        public bool IsCancelling => true;
+
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             context.DataDisplay.Clear();

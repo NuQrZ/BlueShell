@@ -23,14 +23,7 @@
 	  <Content Include="Assets\Web.ico" />
 	  <Content Include="Assets\Wifi.ico" />
 	  <Content Include="Assets\Windows 11.ico" />
-	</ItemGroup>
-	<ItemGroup>
-	  <None Remove="View\Pages\SettingsPage.xaml" />
-	  <None Remove="View\Pages\TerminalPage.xaml" />
-	  <None Remove="View\AppWindows\PropertiesWindow.xaml" />
-	</ItemGroup>
-	<ItemGroup>
-		<None Include="View\Pages\MainPage.xaml" />
+	  <Content Include="Assets\Folder.png" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -60,7 +60,7 @@ namespace BlueShell.Services.FileSystem
             };
         }
 
-        public DriveInfo? GetDrive(string filePath)
+        private static DriveInfo? GetDrive(string filePath)
         {
             return DriveInfo.GetDrives()
                 .FirstOrDefault(d => string.Equals(
@@ -100,6 +100,11 @@ namespace BlueShell.Services.FileSystem
             }
 
             return driveEntries;
+        }
+
+        public int GetDriveCount()
+        {
+            return DriveInfo.GetDrives().Length;
         }
 
         public Dictionary<string, object> GetDriveProperties(string driveLetter)

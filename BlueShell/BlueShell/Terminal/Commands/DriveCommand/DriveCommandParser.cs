@@ -10,7 +10,6 @@ namespace BlueShell.Terminal.Commands.DriveCommand
     public static partial class DriveCommandParser
     {
         private static readonly Regex Full = FullRegex();
-        private static readonly Regex FullQuoted = FullQuotedRegex();
         private static readonly Regex QuotedArray = QuotedArrayRegex();
         private static readonly Regex IndexExact = IndexExactRegex();
         private static readonly Regex EmptyIndex = EmptyIndexRegex();
@@ -59,7 +58,9 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
             if (string.IsNullOrEmpty(operation))
             {
-                errorMessages.Add(Tuple.Create("\n>> Operation is required.\n\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n", TerminalMessageKind.Error));
+                errorMessages.Add(Tuple.Create(
+                    "\n>> Operation is required.\n\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n",
+                    TerminalMessageKind.Error));
                 returnValue = false;
             }
             else
@@ -69,13 +70,17 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                 if (!isKnownOperation)
                 {
-                    errorMessages.Add(Tuple.Create($"\n>> Unknown drive operation: \"{operation}\".\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n", TerminalMessageKind.Warning));
+                    errorMessages.Add(Tuple.Create(
+                        $"\n>> Unknown drive operation: \"{operation}\".\nAllowed operations are: \n-GetDrives\n-Open\n-Properties\n-Advanced\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
 
                 if (!isKnownExtraOperation)
                 {
-                    errorMessages.Add(Tuple.Create($"\n>> Unknown extra operation: \"{extraOperation}\".\nAllowed extra operations are: \n-Print\n", TerminalMessageKind.Warning));
+                    errorMessages.Add(Tuple.Create(
+                        $"\n>> Unknown extra operation: \"{extraOperation}\".\nAllowed extra operations are: \n-Print\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
             }
@@ -84,14 +89,17 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 if (!string.IsNullOrWhiteSpace(driveTarget))
                 {
-                    errorMessages.Add(Tuple.Create("\n>> This operation does not take any drive target!\n", TerminalMessageKind.Warning));
+                    errorMessages.Add(Tuple.Create("\n>> This operation does not take any drive target!\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
 
                 if (!string.IsNullOrWhiteSpace(extraOperation) &&
                     !extraOperation.Equals("Print", StringComparison.OrdinalIgnoreCase))
                 {
-                    errorMessages.Add(Tuple.Create($"\n>> Unknown option: \"{extraOperation}\".\nAllowed options are:\n-Print\n", TerminalMessageKind.Error));
+                    errorMessages.Add(Tuple.Create(
+                        $"\n>> Unknown option: \"{extraOperation}\".\nAllowed options are:\n-Print\n",
+                        TerminalMessageKind.Error));
                     returnValue = false;
                 }
             }
@@ -99,17 +107,18 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             {
                 if (string.IsNullOrWhiteSpace(driveTarget))
                 {
-                    errorMessages.Add(Tuple.Create("\n>> Missing drive target! Use \"C:\\\" or an index like [0].\n", TerminalMessageKind.Error));
+                    errorMessages.Add(Tuple.Create("\n>> Missing drive target! Use \"C:\\\" or an index like [0].\n",
+                        TerminalMessageKind.Error));
                     returnValue = false;
                 }
                 else if (EmptyIndex.IsMatch(driveTarget))
                 {
-                    errorMessages.Add(Tuple.Create("\n>> Index cannot be empty! Use [0], [1], ...\n", TerminalMessageKind.Warning));
+                    errorMessages.Add(Tuple.Create("\n>> Index cannot be empty! Use [0], [1], ...\n",
+                        TerminalMessageKind.Warning));
                     returnValue = false;
                 }
                 else
                 {
-
                     Match match = IndexExact.Match(driveTarget);
                     if (match.Success)
                     {
@@ -117,7 +126,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                         if (index < 0 || index >= DriveInfo.GetDrives().Length)
                         {
-                            errorMessages.Add(Tuple.Create($"\n>> Drive with index: {index} does not exist!\n", TerminalMessageKind.Error));
+                            errorMessages.Add(Tuple.Create($"\n>> Drive with index: {index} does not exist!\n",
+                                TerminalMessageKind.Error));
                             returnValue = false;
                         }
                         else
@@ -145,7 +155,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         }
                         else if (driveInfo == null)
                         {
-                            errorMessages.Add(Tuple.Create($"\n>> Drive: \"{path}\" does not exist!\n", TerminalMessageKind.Error));
+                            errorMessages.Add(Tuple.Create($"\n>> Drive: \"{path}\" does not exist!\n",
+                                TerminalMessageKind.Error));
                             returnValue = false;
                         }
                         else
@@ -155,7 +166,9 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                     }
                     else
                     {
-                        errorMessages.Add(Tuple.Create("\n>> Drive target must be quoted. Use \"C:\\\" or an index like [0].\n", TerminalMessageKind.Warning));
+                        errorMessages.Add(Tuple.Create(
+                            "\n>> Drive target must be quoted. Use \"C:\\\" or an index like [0].\n",
+                            TerminalMessageKind.Warning));
                         returnValue = false;
                     }
                 }
@@ -199,7 +212,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
             if (!IsIntArray(inner) && !QuotedArray.IsMatch(driveInput))
             {
-                errorMessages.Add(Tuple.Create("\n>> Drive array is not properly formatted!\n", TerminalMessageKind.Error));
+                errorMessages.Add(Tuple.Create("\n>> Drive array is not properly formatted!\n",
+                    TerminalMessageKind.Error));
                 return false;
             }
 
@@ -208,7 +222,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
             if (items.Length == 0 || items.Any(string.IsNullOrWhiteSpace))
             {
-                errorMessages.Add(Tuple.Create("\n>> Drive array contains empty elements or trailing comma!\n", TerminalMessageKind.Error));
+                errorMessages.Add(Tuple.Create("\n>> Drive array contains empty elements or trailing comma!\n",
+                    TerminalMessageKind.Error));
                 return false;
             }
 
@@ -225,7 +240,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                     if (index < 0 || index >= drives.Length)
                     {
-                        errorMessages.Add(Tuple.Create($"\n>> Drive with index: {index} does not exist!\n", TerminalMessageKind.Error));
+                        errorMessages.Add(Tuple.Create($"\n>> Drive with index: {index} does not exist!\n",
+                            TerminalMessageKind.Error));
                         return false;
                     }
 
@@ -241,7 +257,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                 if (driveInfo == null)
                 {
-                    errorMessages.Add(Tuple.Create($"\n>> Drive: \"{path}\" does not exist!\n", TerminalMessageKind.Error));
+                    errorMessages.Add(Tuple.Create($"\n>> Drive: \"{path}\" does not exist!\n",
+                        TerminalMessageKind.Error));
                     return false;
                 }
 
@@ -271,11 +288,10 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                    || extraOperation.Equals("Print", StringComparison.OrdinalIgnoreCase);
         }
 
-        [GeneratedRegex("""^\s*Drive(?:\s+(?<Target>("[^"]*"|\[[^\]]*\]))\s*)?(?:\s+(?<Operation>-\S+))?(?:\s+(?<Extra>-\S+))?(?<Rest>(?:\s+.+)?)\s*$""", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        [GeneratedRegex(
+            """^\s*Drive(?:\s+(?<Target>("[^"]*"|\[[^\]]*\]))\s*)?(?:\s+(?<Operation>-\S+))?(?:\s+(?<Extra>-\S+))?(?<Rest>(?:\s+.+)?)\s*$""",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
         private static partial Regex FullRegex();
-
-        [GeneratedRegex("^\"[^\"]*\"$")]
-        private static partial Regex FullQuotedRegex();
 
         [GeneratedRegex(
             """^\[\s*"[^"]*"\s*(?:,\s*"[^"]*"\s*)*\]$""",

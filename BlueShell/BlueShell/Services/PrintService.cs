@@ -53,6 +53,7 @@ namespace BlueShell.Services
                     stringBuilder.Append(separator);
                 }
             }
+
             stringBuilder.Append(vertical);
             stringBuilder.AppendLine();
 
@@ -69,6 +70,7 @@ namespace BlueShell.Services
                         stringBuilder.Append(separator);
                     }
                 }
+
                 stringBuilder.Append(vertical);
                 stringBuilder.AppendLine();
             }
@@ -100,9 +102,9 @@ namespace BlueShell.Services
                 d.RootPath ?? "",
                 d.DriveType ?? "",
                 d.DriveFormat ?? "",
-                Utilities.ReturnSize(d.TotalBytes),
-                Utilities.ReturnSize(d.UsedBytes),
-                Utilities.ReturnSize(d.FreeBytes),
+                Utilities.ReturnSizeUnit(d.TotalBytes),
+                Utilities.ReturnSizeUnit(d.UsedBytes),
+                Utilities.ReturnSizeUnit(d.FreeBytes),
                 Math.Round(d.UsedPrecent).ToString(CultureInfo.InvariantCulture) + " %"
             }).ToList();
 
@@ -118,7 +120,9 @@ namespace BlueShell.Services
                 "Item Type"
             ];
 
-            List<List<string>> rows = [.. (folders ?? [])
+            List<List<string>> rows =
+            [
+                .. (folders ?? [])
                 .Select(folder => new List<string>
                 {
                     folder.ItemName ?? "",

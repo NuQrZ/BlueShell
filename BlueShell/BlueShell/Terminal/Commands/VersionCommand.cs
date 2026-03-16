@@ -6,9 +6,11 @@ namespace BlueShell.Terminal.Commands
     public sealed class VersionCommand : ITerminalCommand
     {
         public string CommandName => "--Version";
+        public bool IsCancelling => false;
+
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
-            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.1.2].", TerminalMessageKind.Info);
+            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.1.3].", TerminalMessageKind.Info);
             return Task.CompletedTask;
         }
     }

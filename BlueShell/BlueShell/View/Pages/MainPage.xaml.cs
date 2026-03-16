@@ -10,6 +10,7 @@ namespace BlueShell.View.Pages
     {
         private TabModel? _tabModel;
         private Dictionary<string, NavigationViewItem>? _navItemsByTag;
+
         public MainPage()
         {
             InitializeComponent();
@@ -52,7 +53,8 @@ namespace BlueShell.View.Pages
 
             NavigationViewControl.SelectedItem = item;
 
-            if (item == SystemInfoItem || item == GraphicsCardInfoItem || item == MotherboardInfoItem || item == NetworkInfoItem || item == OperatingSystemInfoItem || item == ProcessorInfoItem)
+            if (item == SystemInfoItem || item == GraphicsCardInfoItem || item == MotherboardInfoItem ||
+                item == NetworkInfoItem || item == OperatingSystemInfoItem || item == ProcessorInfoItem)
             {
                 SystemInfoItem.IsExpanded = true;
             }
@@ -66,8 +68,8 @@ namespace BlueShell.View.Pages
             _tabModel!.SelectedNavTag ??= "Terminal";
         }
 
-
-        private void NavigationViewControl_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+        private void NavigationViewControl_SelectionChanged(NavigationView sender,
+            NavigationViewSelectionChangedEventArgs args)
         {
             if (sender.SelectedItem is not NavigationViewItem selectedItem)
             {
@@ -99,6 +101,25 @@ namespace BlueShell.View.Pages
             {
                 terminalPage.ToggleLayout();
             }
+        }
+
+        private void FilePathsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FilePathsList.SelectedItem is not string selectedFilePath)
+            {
+                return;
+            }
+
+            _tabModel?.ClearPath();
+
+            if (selectedFilePath == "All")
+            {
+                selectedFilePath = $"{FilePathsList.Items.Count - 1} folders";
+            }
+
+            _tabModel?.SetPath(selectedFilePath, false);
+
+            _tabModel?.SearchLocation = $"Search {selectedFilePath}...";
         }
     }
 }
