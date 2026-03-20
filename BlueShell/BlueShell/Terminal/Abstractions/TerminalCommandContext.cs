@@ -11,7 +11,7 @@ namespace BlueShell.Terminal.Abstractions
     {
         public readonly ITerminalOutput TerminalOutput = terminalOutput;
         public readonly IDataDisplay DataDisplay = dataDisplay;
-        public TabModel? TabModel = tabModel;
+        public readonly TabModel? TabModel = tabModel;
         public CancellationToken CancellationToken = cancellationToken;
     }
 }

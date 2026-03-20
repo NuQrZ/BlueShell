@@ -8,6 +8,8 @@ namespace BlueShell.Terminal.Commands
     public sealed class SimulateCommand : ITerminalCommand
     {
         public string CommandName => "Simulate";
+        public bool IsInterrupting => false;
+
         public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             for (int i = 0; i <= 100_000; i++)

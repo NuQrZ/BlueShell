@@ -10,17 +10,15 @@ namespace BlueShell.Model
         public string? ItemName { get; init; }
         public string? ItemType { get; init; }
         public string? ItemSizeType { get; init; }
-        [ObservableProperty]
-        public partial string? Color { get; set; }
-        [ObservableProperty]
-        public partial BitmapImage? ItemIcon { get; set; }
+        [ObservableProperty] public partial string? Color { get; set; }
+        [ObservableProperty] public partial BitmapImage? ItemIcon { get; set; }
         public int ImageSize { get; set; }
         public string? DriveFilePath { get; set; }
         public DirectoryInfo? DirectoryInfo { get; set; }
         public FileInfo? FileInfo { get; set; }
         public double TakenSpace { get; init; }
         public double TotalSize { get; set; }
-        public long? ItemSize { get; set; }
+        public double? ItemSize { get; set; }
         public bool IsTakenSpaceVisible { get; set; }
         public bool IsSizeVisible { get; set; }
         public Thickness TextPadding { get; set; }

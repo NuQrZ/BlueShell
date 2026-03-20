@@ -12,13 +12,19 @@ using System.Threading.Tasks;
 
 namespace BlueShell.Terminal.Commands.DriveCommand
 {
-    public sealed class DriveCommand(IDriveService driveService, IFileSystemService fileSystemService, IPrintService printService) : ITerminalCommand
+    public sealed class DriveCommand(
+        IDriveService driveService,
+        IFileSystemService fileSystemService,
+        IPrintService printService) : ITerminalCommand
     {
         public string CommandName => "Drive";
+        public bool IsInterrupting => false;
+
         public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             bool isParsed = DriveCommandParser.TryParse(commandLine, out List<string> drives,
-                out string operation, out string extraOperation, out List<Tuple<string, TerminalMessageKind>> errorMessages);
+                out string operation, out string extraOperation,
+                out List<Tuple<string, TerminalMessageKind>> errorMessages);
 
             if (!isParsed)
             {
@@ -35,7 +41,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             await HandleOperation(context, drives, operation, extraOperation);
         }
 
-        private async Task HandleOperation(TerminalCommandContext context, List<string> drives, string operation, string extraOperation)
+        private async Task HandleOperation(TerminalCommandContext context, List<string> drives, string operation,
+            string extraOperation)
         {
             switch (operation)
             {
@@ -92,7 +99,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private async Task HandleOpenOperation(TerminalCommandContext context, List<string> drives, string extraOperation)
+        private async Task HandleOpenOperation(TerminalCommandContext context, List<string> drives,
+            string extraOperation)
         {
             if (drives.Count == 1)
             {
@@ -126,7 +134,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private async Task HandleOpenSingleDrive(TerminalCommandContext context, string driveTarget, string extraOperation)
+        private async Task HandleOpenSingleDrive(TerminalCommandContext context, string driveTarget,
+            string extraOperation)
         {
             List<FileSystemItem> folders = fileSystemService.LoadFolders(driveTarget);
             List<FileSystemItem> files = fileSystemService.LoadFiles(driveTarget);
@@ -142,6 +151,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         await UiClass.ConfigureFileSystemDataItem(dataDisplay);
                         context.DataDisplay.Add(dataDisplay);
                     }
+
                     break;
                 case "Print":
                     string[] lines = printService.PrintFolderContents(fileSystemItems, driveTarget);
@@ -150,7 +160,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private async Task HandleOpenMultipleDrives(TerminalCommandContext context, List<string> drives, string extraOperation)
+        private async Task HandleOpenMultipleDrives(TerminalCommandContext context, List<string> drives,
+            string extraOperation)
         {
             if (extraOperation == "")
             {
@@ -187,6 +198,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                                 await Task.Yield();
                             }
                         }
+
                         break;
                     case "Print":
                         string[] allLines = printService.PrintFolderContents(fileSystemItems, resolvedDrivePath);
@@ -196,7 +208,8 @@ namespace BlueShell.Terminal.Commands.DriveCommand
             }
         }
 
-        private async Task HandlePropertiesOperation(TerminalCommandContext context, string operation, List<string> drives, string extraOperation)
+        private async Task HandlePropertiesOperation(TerminalCommandContext context, string operation,
+            List<string> drives, string extraOperation)
         {
             Dictionary<string, object> properties;
 
@@ -233,6 +246,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                         propertyItems.Add(propertyItem);
                     }
+
                     break;
                 case "Advanced":
                     message = ">> Displaying advanced properties for: [";
@@ -261,6 +275,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
 
                         propertyItems.Add(propertyItem);
                     }
+
                     break;
             }
 
@@ -275,6 +290,7 @@ namespace BlueShell.Terminal.Commands.DriveCommand
                         string[] lines = printService.PrintGeneralProperties(propertyItem);
                         await PrintOutput(context, lines);
                     }
+
                     break;
             }
         }

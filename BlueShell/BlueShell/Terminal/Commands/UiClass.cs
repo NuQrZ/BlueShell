@@ -78,7 +78,7 @@ namespace BlueShell.Terminal.Commands
             dataDisplayItem.ItemTypeMargin = new Thickness(710, 0, 0, 0);
 
             string? filePath = dataDisplayItem.DriveFilePath;
-            BitmapImage? itemIcon = await Utilities.GetItemIcon(filePath);
+            BitmapImage? itemIcon = await IconUtilities.GetShellThumbnailAsync(filePath, 256, 256);
             double takenSpace = dataDisplayItem.TakenSpace;
 
             dataDisplayItem.ItemIcon = itemIcon;
@@ -98,7 +98,8 @@ namespace BlueShell.Terminal.Commands
             string? filePath = dataDisplayItem.DirectoryInfo != null
                 ? dataDisplayItem.DirectoryInfo?.FullName
                 : dataDisplayItem.FileInfo?.FullName;
-            BitmapImage? itemIcon = await Utilities.GetItemIcon(filePath);
+            BitmapImage? itemIcon = await IconUtilities.GetCachedShellImageAsync(filePath, 256, 256)
+                                    ?? await IconUtilities.GetShellIconOnlyAsync(filePath, 256, 256);
 
             dataDisplayItem.ItemIcon = itemIcon;
             dataDisplayItem.ImageSize = 40;
@@ -120,6 +121,7 @@ namespace BlueShell.Terminal.Commands
                 {
                     propertiesWindowViewModel.AddItem(propertyItem);
                 }
+
                 propertiesWindowViewModel.SelectedItem = propertyItems[0];
 
                 PropertiesWindow propertiesWindow = new(propertiesWindowViewModel);

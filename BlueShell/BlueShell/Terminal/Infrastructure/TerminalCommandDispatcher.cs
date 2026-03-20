@@ -12,13 +12,13 @@ namespace BlueShell.Terminal.Infrastructure
         private readonly Dictionary<string, ITerminalCommand> _commands =
             commands.ToDictionary(command => command.CommandName, command => command);
 
-        public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
+        private ITerminalCommand? ResolveCommand(string commandLine)
         {
             commandLine = commandLine.Trim();
 
             if (string.IsNullOrEmpty(commandLine))
             {
-                return;
+                return null;
             }
 
             commandLine = commandLine.Replace("Shell > ", "", StringComparison.OrdinalIgnoreCase);
@@ -26,12 +26,38 @@ namespace BlueShell.Terminal.Infrastructure
             Match match = Regex.Match(commandLine, @"^(\S+)");
             if (!match.Success)
             {
-                return;
+                return null;
             }
 
             string commandName = match.Groups[1].Value;
 
-            if (!_commands.TryGetValue(commandName, out ITerminalCommand? terminalCommand))
+            return _commands.GetValueOrDefault(commandName);
+        }
+
+        public bool IsInterruptCommand(string commandLine)
+        {
+            ITerminalCommand? terminalCommand = ResolveCommand(commandLine);
+
+            return terminalCommand?.IsInterrupting ?? false;
+        }
+
+        public bool IsExitCommand(string commandLine)
+        {
+            ITerminalCommand? terminalCommand = ResolveCommand(commandLine);
+
+            if (terminalCommand == null)
+            {
+                return false;
+            }
+
+            return terminalCommand.CommandName == "Exit";
+        }
+
+        public async Task ExecuteAsync(TerminalCommandContext context, string commandLine)
+        {
+            ITerminalCommand? terminalCommand = ResolveCommand(commandLine);
+
+            if (terminalCommand == null)
             {
                 context.TerminalOutput.WriteLine($">> Unknown command: {commandLine}!",
                     TerminalMessageKind.Error);

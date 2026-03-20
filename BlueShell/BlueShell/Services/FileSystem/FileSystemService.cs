@@ -2,6 +2,7 @@
 using BlueShell.Services.Wrappers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace BlueShell.Services.FileSystem
 {
@@ -18,27 +19,20 @@ namespace BlueShell.Services.FileSystem
 
             DirectoryInfo directory = new(filePath);
 
-            foreach (FileInfo fileInfo in directory.GetFiles("*", new EnumerationOptions()
-            {
-                IgnoreInaccessible = true
-            }))
-            {
-                string fileName = fileInfo.Name;
-                string fileType = fileInfo.Extension.ToUpper() + " File";
-                string fileSizeType = Utilities.ReturnSize(fileInfo.Length, true);
-
-                FileSystemItem fileSystemItem = new()
-                {
-                    ItemName = fileName,
-                    ItemType = fileType,
-                    ItemSizeType = fileSizeType,
-                    ItemSize = fileInfo.Length,
-                    DirectoryInfo = null,
-                    FileInfo = fileInfo,
-                };
-
-                files.Add(fileSystemItem);
-            }
+            files.AddRange(from fileInfo in directory.EnumerateFiles("*")
+                           let fileType = fileInfo.Extension.ToUpper()
+                           let sizeUnit = Utilities.ReturnSizeUnit(fileInfo.Length, true)
+                           let itemSize = Utilities.ReturnSize(fileInfo.Length, sizeUnit)
+                           select new FileSystemItem()
+                           {
+                               ItemName = fileInfo.Name,
+                               DirectoryInfo = null,
+                               DriveInfo = null,
+                               FileInfo = fileInfo,
+                               ItemSize = itemSize,
+                               ItemSizeType = sizeUnit,
+                               ItemType = fileType
+                           });
 
             return files;
         }
@@ -54,26 +48,17 @@ namespace BlueShell.Services.FileSystem
 
             DirectoryInfo directory = new(filePath);
 
-            foreach (DirectoryInfo directoryInfo in directory.GetDirectories("*", new EnumerationOptions()
-            {
-                IgnoreInaccessible = true
-            }))
-            {
-                string fileName = directoryInfo.Name;
-                string fileSizeType = "";
-
-                FileSystemItem fileSystemItem = new()
-                {
-                    ItemName = fileName,
-                    ItemType = "Folder",
-                    ItemSizeType = fileSizeType,
-                    ItemSize = null,
-                    DirectoryInfo = directoryInfo,
-                    FileInfo = null
-                };
-
-                folders.Add(fileSystemItem);
-            }
+            folders.AddRange(from directoryInfo in directory.EnumerateDirectories("*")
+                             select new FileSystemItem()
+                             {
+                                 ItemName = directoryInfo.FullName,
+                                 DirectoryInfo = directoryInfo,
+                                 DriveInfo = null,
+                                 FileInfo = null,
+                                 ItemSize = null,
+                                 ItemSizeType = null,
+                                 ItemType = "Folder"
+                             });
 
             return folders;
         }

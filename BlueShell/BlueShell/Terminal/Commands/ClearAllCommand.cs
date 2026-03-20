@@ -6,6 +6,8 @@ namespace BlueShell.Terminal.Commands
     public sealed class ClearAllCommand : ITerminalCommand
     {
         public string CommandName => "ClearAll";
+        public bool IsInterrupting => true;
+
         public Task ExecuteAsync(TerminalCommandContext context, string commandLine)
         {
             context.DataDisplay.Clear();
