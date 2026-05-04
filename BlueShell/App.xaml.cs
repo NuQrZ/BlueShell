@@ -8,6 +8,7 @@ namespace BlueShell
 {
     public partial class App : Application
     {
+        public static MainWindow? MainWindow { get; private set; }
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         public App()
@@ -24,6 +25,7 @@ namespace BlueShell
             serviceCollection.AddSingleton<INavigationService, NavigationService>();
             serviceCollection.AddSingleton<MainWindow>();
 
+            serviceCollection.AddSingleton<SettingsViewModel>();
             serviceCollection.AddSingleton<TabViewModel>();
 
             return serviceCollection.BuildServiceProvider();
@@ -31,8 +33,8 @@ namespace BlueShell
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            MainWindow mainWindow = ServiceProvider!.GetRequiredService<MainWindow>();
-            mainWindow.Activate();
+            MainWindow = ServiceProvider!.GetRequiredService<MainWindow>();
+            MainWindow.Activate();
         }
     }
 }

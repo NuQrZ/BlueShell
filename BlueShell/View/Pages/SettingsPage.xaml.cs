@@ -1,31 +1,167 @@
+using BlueShell.Helpers;
+using BlueShell.ViewModel;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using System.ComponentModel;
+using Windows.UI;
+using Windows.UI.ViewManagement;
 
 namespace BlueShell.View.Pages
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class SettingsPage : Page
     {
+        private readonly SettingsViewModel? _settingsViewModel;
+
         public SettingsPage()
         {
             InitializeComponent();
+
+            _settingsViewModel = App.ServiceProvider!.GetRequiredService<SettingsViewModel>();
+
+            _settingsViewModel.PropertyChanged += SettingsViewModel_PropertyChanged;
+        }
+
+        private void SettingsViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (App.MainWindow!.Content is FrameworkElement frameworkElement)
+            {
+                SetBackground(frameworkElement, _settingsViewModel!.SelectedTheme, _settingsViewModel.SelectedBackdrop);
+            }
+        }
+
+        private static void SetBackground(FrameworkElement frameworkElement, string theme, string backdrop)
+        {
+            if (backdrop != "None")
+            {
+                return;
+            }
+
+            if (frameworkElement is Grid rootGrid)
+            {
+                Brush brush;
+                if (theme == "Light")
+                {
+                    brush = new SolidColorBrush(Colors.White);
+                }
+                else
+                {
+                    brush = new SolidColorBrush(Colors.Black);
+                }
+
+                rootGrid.Background = brush;
+            }
+        }
+
+        private static void RemoveBackground(FrameworkElement frameworkElement)
+        {
+            if (frameworkElement is Grid rootGrid)
+            {
+                rootGrid.Background = new SolidColorBrush(Colors.Transparent);
+            }
+        }
+
+        private void MicaAltBackdrop_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.SystemBackdrop is MicaBackdrop micaBackdrop && micaBackdrop.Kind == MicaKind.BaseAlt)
+            {
+                return;
+            }
+
+            if (App.MainWindow.Content is FrameworkElement frameworkElement)
+            {
+                RemoveBackground(frameworkElement);
+            }
+
+            App.MainWindow!.SystemBackdrop = new MicaBackdrop()
+            {
+                Kind = MicaKind.BaseAlt
+            };
+        }
+
+        private void MicaBackdrop_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.SystemBackdrop is MicaBackdrop micaBackdrop && micaBackdrop.Kind == MicaKind.Base)
+            {
+                return;
+            }
+
+            if (App.MainWindow.Content is FrameworkElement frameworkElement)
+            {
+                RemoveBackground(frameworkElement);
+            }
+
+            App.MainWindow!.SystemBackdrop = new MicaBackdrop()
+            {
+                Kind = MicaKind.Base
+            };
+        }
+
+        private void AcrylicDefaultBackdrop_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.SystemBackdrop is DesktopAcrylicBackdrop)
+            {
+                return;
+            }
+
+            if (App.MainWindow.Content is FrameworkElement frameworkElement)
+            {
+                RemoveBackground(frameworkElement);
+            }
+
+            App.MainWindow!.SystemBackdrop = new DesktopAcrylicBackdrop();
+        }
+
+        private void AcrylicThinBackdrop_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.SystemBackdrop is ThinAcrylicBackdrop)
+            {
+                return;
+            }
+
+            if (App.MainWindow.Content is FrameworkElement frameworkElement)
+            {
+                RemoveBackground(frameworkElement);
+            }
+
+            App.MainWindow!.SystemBackdrop = new ThinAcrylicBackdrop();
+        }
+
+        private void NullBackdrop_Checked(object sender, RoutedEventArgs e)
+        {
+            App.MainWindow!.SystemBackdrop = null;
+        }
+
+        private void DefaultColor_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.Content is FrameworkElement frameworkElement)
+            {
+                frameworkElement.RequestedTheme = ElementTheme.Default;
+
+                UISettings uiSettings = new();
+                Color color = uiSettings.GetColorValue(UIColorType.Background);
+                string theme = color == Colors.White ? "Light" : "Dark";
+                SetBackground(frameworkElement, theme, _settingsViewModel!.SelectedBackdrop);
+            }
+        }
+
+        private void DarkColor_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.Content is FrameworkElement frameworkElement)
+            {
+                frameworkElement.RequestedTheme = ElementTheme.Dark;
+            }
+        }
+
+        private void LightColor_Checked(object sender, RoutedEventArgs e)
+        {
+            if (App.MainWindow!.Content is FrameworkElement frameworkElement)
+            {
+                frameworkElement.RequestedTheme = ElementTheme.Light;
+            }
         }
     }
 }
