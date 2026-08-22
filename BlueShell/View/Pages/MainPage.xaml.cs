@@ -10,35 +10,40 @@ namespace BlueShell.View.Pages;
 public sealed partial class MainPage : Page
 {
     private MainWindowViewModel? _mainWindowViewModel;
-    private Dictionary<string, string> itemTagsFilePaths = [];
-    private Dictionary<string, NavigationViewItem> navItemTags = [];
+    private readonly Dictionary<string, string> _itemTagsFilePaths = [];
+    private readonly Dictionary<string, NavigationViewItem> _navItemTagsNavViewItems = [];
+    private readonly Dictionary<string, Type> _navItemTagsPageTypes = [];
+
     public MainPage()
     {
         InitializeComponent();
 
         NavigationViewControl.IsPaneOpen = false;
 
-        itemTagsFilePaths["Terminal"] = "ms-appx:///Assets/Icons/Terminal.ico";
-        itemTagsFilePaths["Help"] = "ms-appx:///Assets/Icons/Help.ico";
-        itemTagsFilePaths["SystemProcesses"] = "ms-appx:///Assets/Icons/Processes.ico";
-        itemTagsFilePaths["WebSearch"] = "ms-appx:///Assets/Icons/Web.ico";
-        itemTagsFilePaths["SystemInfo"] = "ms-appx:///Assets/Icons/System Info.ico";
-        itemTagsFilePaths["GraphicsCard"] = "ms-appx:///Assets/Icons/Graphics Card.ico";
-        itemTagsFilePaths["Motherboard"] = "ms-appx:///Assets/Icons/Motherboard.ico";
-        itemTagsFilePaths["NetworkInterface"] = "ms-appx:///Assets/Icons/Wifi.ico";
-        itemTagsFilePaths["OperatingSystem"] = "ms-appx:///Assets/Icons/Windows 11.ico";
-        itemTagsFilePaths["Processor"] = "ms-appx:///Assets/Icons/CPU.ico";
+        _itemTagsFilePaths["Terminal"] = "ms-appx:///Assets/Icons/Terminal.ico";
+        _itemTagsFilePaths["Help"] = "ms-appx:///Assets/Icons/Help.ico";
+        _itemTagsFilePaths["SystemProcesses"] = "ms-appx:///Assets/Icons/Processes.ico";
+        _itemTagsFilePaths["WebSearch"] = "ms-appx:///Assets/Icons/Web.ico";
+        _itemTagsFilePaths["SystemInfo"] = "ms-appx:///Assets/Icons/System Info.ico";
+        _itemTagsFilePaths["GraphicsCard"] = "ms-appx:///Assets/Icons/Graphics Card.ico";
+        _itemTagsFilePaths["Motherboard"] = "ms-appx:///Assets/Icons/Motherboard.ico";
+        _itemTagsFilePaths["NetworkInterface"] = "ms-appx:///Assets/Icons/Wifi.ico";
+        _itemTagsFilePaths["OperatingSystem"] = "ms-appx:///Assets/Icons/Windows 11.ico";
+        _itemTagsFilePaths["Processor"] = "ms-appx:///Assets/Icons/CPU.ico";
 
-        navItemTags["Terminal"] = TerminalItem;
-        navItemTags["Help"] = HelpItem;
-        navItemTags["SystemProcesses"] = SystemProcessesItem;
-        navItemTags["WebSearch"] = WebSearchItem;
-        navItemTags["SystemInfo"] = SystemInfoItem;
-        navItemTags["GraphicsCard"] = GraphicsCardInfoItem;
-        navItemTags["Motherboard"] = MotherboardInfoItem;
-        navItemTags["NetworkInterface"] = NetworkInfoItem;
-        navItemTags["OperatingSystem"] = OperatingSystemInfoItem;
-        navItemTags["Processor"] = ProcessorInfoItem;
+        _navItemTagsNavViewItems["Terminal"] = TerminalItem;
+        _navItemTagsNavViewItems["Help"] = HelpItem;
+        _navItemTagsNavViewItems["SystemProcesses"] = SystemProcessesItem;
+        _navItemTagsNavViewItems["WebSearch"] = WebSearchItem;
+        _navItemTagsNavViewItems["SystemInfo"] = SystemInfoItem;
+        _navItemTagsNavViewItems["GraphicsCard"] = GraphicsCardInfoItem;
+        _navItemTagsNavViewItems["Motherboard"] = MotherboardInfoItem;
+        _navItemTagsNavViewItems["NetworkInterface"] = NetworkInfoItem;
+        _navItemTagsNavViewItems["OperatingSystem"] = OperatingSystemInfoItem;
+        _navItemTagsNavViewItems["Processor"] = ProcessorInfoItem;
+
+        _navItemTagsPageTypes["Terminal"] = typeof(TerminalPage);
+        _navItemTagsPageTypes["Help"] = typeof(HelpPage);
     }
 
     private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -46,7 +51,7 @@ public sealed partial class MainPage : Page
         if (e.PropertyName == nameof(MainWindowViewModel.SelectedTab))
         {
             TabViewModel? currentTab = _mainWindowViewModel?.SelectedTab;
-            NavigationViewItem navigationViewItem = navItemTags[currentTab!.SelectedNavItemTag];
+            NavigationViewItem navigationViewItem = _navItemTagsNavViewItems[currentTab!.SelectedNavItemTag];
             NavigationViewControl.SelectedItem = navigationViewItem;
         }
     }
@@ -78,7 +83,7 @@ public sealed partial class MainPage : Page
 
         string navTag = _mainWindowViewModel.SelectedTab.SelectedNavItemTag;
 
-        if (navItemTags.TryGetValue(navTag, out var item))
+        if (_navItemTagsNavViewItems.TryGetValue(navTag, out var item))
         {
             NavigationViewControl.SelectedItem = item;
         }
@@ -111,8 +116,12 @@ public sealed partial class MainPage : Page
             int tabIndex = Convert.ToInt32(headerParts[1]);
 
             _mainWindowViewModel.SelectedTab.TabHeader = $"{itemTag} {tabIndex}";
-            _mainWindowViewModel.SelectedTab.IconPath = itemTagsFilePaths[itemTag];
+            _mainWindowViewModel.SelectedTab.IconPath = _itemTagsFilePaths[itemTag];
             _mainWindowViewModel.SelectedTab.SelectedNavItemTag = itemTag;
+
+            _navItemTagsPageTypes.TryGetValue(itemTag, out Type? pageType);
+
+            MainFrame.Navigate(pageType);
         }
     }
 }
