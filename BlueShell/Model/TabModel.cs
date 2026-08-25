@@ -2,7 +2,7 @@
 
 namespace BlueShell.Model
 {
-    public class TabModel
+    public sealed class TabModel
     {
         public Guid Guid { get; set; } = Guid.NewGuid();
         public string TabHeader { get; set; } = "Terminal";

@@ -11,6 +11,7 @@
 
     <Grid>
         <userControls:CanvasTerminal
+            x:Name="TerminalControl"
             IsTabStop="True"/>
     </Grid>
 </Page>

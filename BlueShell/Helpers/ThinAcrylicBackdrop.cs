@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Media;
 
 namespace BlueShell.Helpers
 {
-    public sealed class ThinAcrylicBackdrop : SystemBackdrop
+    public sealed partial class ThinAcrylicBackdrop : SystemBackdrop
     {
         private DesktopAcrylicController? _controller;
         private ICompositionSupportsSystemBackdrop? _target;

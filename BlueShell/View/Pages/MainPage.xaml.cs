@@ -121,7 +121,7 @@ public sealed partial class MainPage : Page
 
             _navItemTagsPageTypes.TryGetValue(itemTag, out Type? pageType);
 
-            MainFrame.Navigate(pageType);
+            MainFrame.Navigate(pageType, _mainWindowViewModel.SelectedTab);
         }
     }
 }

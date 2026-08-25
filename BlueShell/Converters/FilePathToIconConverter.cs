@@ -4,7 +4,7 @@ using System;
 
 namespace BlueShell.Converters
 {
-    public class FilePathToIconConverter : IValueConverter
+    public sealed partial class FilePathToIconConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {

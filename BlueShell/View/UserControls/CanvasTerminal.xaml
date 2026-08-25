@@ -21,9 +21,9 @@
         <ScrollViewer x:Name="TerminalScrollView"
                       VerticalScrollMode="Auto"
                     VerticalScrollBarVisibility="Auto">
-            <graphicsControls:CanvasControl
+            <graphicsControls:CanvasVirtualControl
             x:Name="Terminal"
-            Draw="Terminal_Draw"/>
+            RegionsInvalidated="Terminal_RegionsInvalidated"/>
         </ScrollViewer>
     </Grid>
 </UserControl>
