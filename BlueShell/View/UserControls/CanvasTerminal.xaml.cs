@@ -1,3 +1,4 @@
+using BlueShell.Helpers;
 using BlueShell.Model;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Implementations;
@@ -25,9 +26,6 @@ namespace BlueShell.View.UserControls
     {
         private const string Prompt = "Shell > ";
 
-        private const VirtualKey OemPlus = (VirtualKey)0xBB;
-        private const VirtualKey OemMinus = (VirtualKey)0xBD;
-
         private const float PaddingLeft = 8;
         private const float PaddingTop = 8;
         private const float PaddingBottom = 8;
@@ -37,15 +35,10 @@ namespace BlueShell.View.UserControls
 
         private const int MaxHistorySize = 100_000;
 
-        private readonly List<TerminalLine> _completedLines = [];
-        private readonly StringBuilder _currentLine = new();
+        private const VirtualKey OemPlus = (VirtualKey)0xBB;
+        private const VirtualKey OemMinus = (VirtualKey)0xBD;
 
-        private readonly CanvasTextFormat _textFormat = new()
-        {
-            FontFamily = "Cascadia Code",
-            FontSize = 18,
-            WordWrapping = CanvasWordWrapping.NoWrap,
-        };
+        private int _caretPosition = 0;
 
         private bool _caretVisible = true;
         private bool _isCommandRunning;
@@ -53,10 +46,19 @@ namespace BlueShell.View.UserControls
         private bool _refreshPending;
         private bool _scrollToBottomPending;
 
+        private readonly CanvasTextFormat _textFormat = new()
+        {
+            FontFamily = "Cascadia Code",
+            FontSize = 18,
+            WordWrapping = CanvasWordWrapping.NoWrap,
+        };
         private readonly DispatcherTimer _dispatcherTimer = new()
         {
             Interval = TimeSpan.FromMilliseconds(400)
         };
+
+        private readonly List<TerminalLine> _completedLines = [];
+        private readonly StringBuilder _currentLine = new();
 
         private TabModel? _tabModel;
         private ITerminalOutput? _terminalOutput;
@@ -84,6 +86,23 @@ namespace BlueShell.View.UserControls
         public void BuildTabModel(TabModel? tabModel)
         {
             _tabModel = tabModel;
+        }
+
+        private Color GetCommandColor(string command)
+        {
+            Dictionary<string, Color> colors = [];
+            if (ActualTheme == ElementTheme.Light)
+            {
+                colors = TerminalUtilities.LightThemeKeywordColors;
+            }
+            else
+            {
+                colors = TerminalUtilities.DarkThemeKeywordColors;
+            }
+
+            bool found = colors.TryGetValue(command, out Color color);
+
+            return found == true ? color : DefaultColor;
         }
 
         private static bool IsKeyDown(VirtualKey key)
@@ -295,8 +314,8 @@ namespace BlueShell.View.UserControls
                             0);
 
                         float segmentWidth = (float)segmentLayout
-                                .LayoutBoundsIncludingTrailingWhitespace
-                                .Width;
+                            .LayoutBoundsIncludingTrailingWhitespace
+                            .Width;
 
                         currentX += segmentWidth;
                     }
@@ -319,27 +338,47 @@ namespace BlueShell.View.UserControls
                 _textFormat.FontWeight = FontWeights.Normal;
                 _textFormat.FontStyle = FontStyle.Normal;
 
-                string currentLine = Prompt + _currentLine;
-
                 drawingSession.DrawText(
-                    currentLine,
+                    Prompt,
                     PaddingLeft,
                     promptY,
                     DefaultColor,
                     _textFormat);
 
-                using CanvasTextLayout currentLineLayout = new(
+                using CanvasTextLayout promptLayout = new(
                     sender.Device,
-                    currentLine,
+                    Prompt,
                     _textFormat,
                     0,
                     0);
 
-                float currentLineWidth = (float)currentLineLayout
+                float promptWidth = (float)promptLayout
+                    .LayoutBoundsIncludingTrailingWhitespace
+                    .Width;
+
+                string currentInput = _currentLine.ToString();
+
+                drawingSession.DrawText(
+                    currentInput,
+                    PaddingLeft + promptWidth,
+                    promptY,
+                    GetCommandColor(currentInput),
+                    _textFormat);
+
+                string textBeforeCaret = currentInput[.._caretPosition];
+
+                using CanvasTextLayout textBeforeCaretLayout = new(
+                    sender.Device,
+                    textBeforeCaret,
+                    _textFormat,
+                    0,
+                    0);
+
+                float textBeforeCaretWidth = (float)textBeforeCaretLayout
                         .LayoutBoundsIncludingTrailingWhitespace
                         .Width;
 
-                float caretX = PaddingLeft + currentLineWidth;
+                float caretX = PaddingLeft + promptWidth + textBeforeCaretWidth;
 
                 if (_caretVisible)
                 {
@@ -369,7 +408,8 @@ namespace BlueShell.View.UserControls
 
             string text = char.ConvertFromUtf32(intChar);
 
-            _currentLine.Append(text);
+            _currentLine.Insert(_caretPosition, text);
+            _caretPosition++;
 
             Terminal.Invalidate();
             eventArgs.Handled = true;
@@ -449,7 +489,7 @@ namespace BlueShell.View.UserControls
                     return;
                 }
 
-                if (eventArgs.Key == VirtualKey.C)
+                if (eventArgs.Key == VirtualKey.Q)
                 {
                     _terminalViewModel?.Cancel();
                     eventArgs.Handled = true;
@@ -465,19 +505,56 @@ namespace BlueShell.View.UserControls
 
             switch (eventArgs.Key)
             {
+                case VirtualKey.Left:
+                    if (_caretPosition > 0)
+                    {
+                        _caretPosition--;
+                    }
+
+                    Terminal.Invalidate();
+                    eventArgs.Handled = true;
+                    break;
+                case VirtualKey.Right:
+                    if (_caretPosition < _currentLine.Length)
+                    {
+                        _caretPosition++;
+                    }
+                    Terminal.Invalidate();
+                    eventArgs.Handled = true;
+                    break;
+                case VirtualKey.Home:
+                    _caretPosition = 0;
+                    Terminal.Invalidate();
+                    eventArgs.Handled = true;
+                    break;
+                case VirtualKey.End:
+                    _caretPosition = _currentLine.Length;
+                    Terminal.Invalidate();
+                    eventArgs.Handled = true;
+                    break;
+            }
+
+            switch (eventArgs.Key)
+            {
                 case VirtualKey.Enter:
                     {
                         string currentLine = _currentLine.ToString();
-                        string completeLine = Prompt + currentLine;
-
-                        TerminalLineSegment segment = new(
-                            completeLine,
-                            DefaultColor,
-                            FontWeights.Normal,
-                            FontStyle.Normal);
 
                         TerminalLine terminalLine = new();
-                        terminalLine.AddSegment(segment);
+
+                        terminalLine.AddSegment(
+                            new TerminalLineSegment(
+                                Prompt,
+                                DefaultColor,
+                                FontWeights.Normal,
+                                FontStyle.Normal));
+
+                        terminalLine.AddSegment(
+                            new TerminalLineSegment(
+                                currentLine,
+                                GetCommandColor(currentLine),
+                                FontWeights.Normal,
+                                FontStyle.Normal));
 
                         _completedLines.Add(terminalLine);
 
@@ -488,6 +565,7 @@ namespace BlueShell.View.UserControls
                         _currentLine.Clear();
                         _isCommandRunning = true;
                         _caretVisible = false;
+                        _caretPosition = 0;
 
                         RefreshTerminal(true);
 
@@ -509,13 +587,14 @@ namespace BlueShell.View.UserControls
 
                 case VirtualKey.Back:
                     {
-                        if (_currentLine.Length == 0)
+                        if (_currentLine.Length == 0 || _caretPosition == 0)
                         {
                             eventArgs.Handled = true;
                             return;
                         }
 
-                        _currentLine.Remove(_currentLine.Length - 1, 1);
+                        _currentLine.Remove(_caretPosition - 1, 1);
+                        _caretPosition--;
 
                         Terminal.Invalidate();
                         eventArgs.Handled = true;
