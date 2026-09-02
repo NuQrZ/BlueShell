@@ -1,6 +1,7 @@
 ﻿using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,9 +12,106 @@ namespace BlueShell.ViewModel
         Func<TerminalCommandContext> contextFactory)
     {
         private CancellationTokenSource? _cancellationTokenSource = new();
+        private readonly StringBuilder _currentLine = new();
 
-        private bool IsRunning { get; set; }
-        private bool IsExiting { get; set; }
+        private bool IsExiting { get; set; } = false;
+
+        public int CaretPosition { get; private set; } = 0;
+        public bool IsCommandRunning { get; private set; } = false;
+        public string CurrentLine => _currentLine.ToString();
+
+        public void InsertText(string text)
+        {
+            _currentLine.Insert(CaretPosition, text);
+            CaretPosition += text.Length;
+        }
+
+        public void ClearCurrentLine()
+        {
+            _currentLine.Clear();
+            CaretPosition = 0;
+        }
+
+        public void MoveCaretLeft()
+        {
+            if (CaretPosition > 0)
+            {
+                CaretPosition--;
+            }
+        }
+
+        public void MoveCaretRight()
+        {
+            if (CaretPosition < _currentLine.Length)
+            {
+                CaretPosition++;
+            }
+        }
+
+        public void MoveCaretWordLeft()
+        {
+            if (CaretPosition == 0)
+            {
+                return;
+            }
+
+            while (CaretPosition > 0 && char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+            {
+                CaretPosition--;
+            }
+
+            while (CaretPosition > 0 && !char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+            {
+                CaretPosition--;
+            }
+        }
+
+        public void MoveCaretWordRight()
+        {
+            if (CaretPosition >= _currentLine.Length)
+            {
+                return;
+            }
+
+            while (CaretPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
+            {
+                CaretPosition++;
+            }
+
+            while (CaretPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
+            {
+                CaretPosition++;
+            }
+        }
+
+        public void Backspace()
+        {
+            if (CaretPosition > 0)
+            {
+                _currentLine.Remove(CaretPosition - 1, 1);
+                CaretPosition--;
+            }
+        }
+
+        public void GoToHome()
+        {
+            CaretPosition = 0;
+        }
+
+        public void GoToEnd()
+        {
+            CaretPosition = _currentLine.Length;
+        }
+
+        public string TakeCurrentLine()
+        {
+            string currentLine = _currentLine.ToString();
+
+            _currentLine.Clear();
+            CaretPosition = 0;
+
+            return currentLine;
+        }
 
         public async Task SubmitAsync(string commandLine)
         {
@@ -29,36 +127,6 @@ namespace BlueShell.ViewModel
 
             TerminalCommandContext commandContext = contextFactory();
 
-            if (IsRunning)
-            {
-                if (!commandDispatcher.IsInterruptCommand(commandLine))
-                {
-                    return;
-                }
-
-                Cancel();
-
-                try
-                {
-                    await commandDispatcher.ExecuteAsync(
-                        new TerminalCommandContext(
-                            commandContext.TerminalOutput,
-                            commandContext.TabModel,
-                            CancellationToken.None),
-                        commandLine);
-                }
-                catch (Exception exception)
-                {
-                    commandContext.TerminalOutput.WriteLine("");
-                    commandContext.TerminalOutput.WriteLine(
-                        $">> Error: {exception.Message}",
-                        TerminalMessageKind.Error);
-                    commandContext.TerminalOutput.WriteLine("");
-                }
-
-                return;
-            }
-
             if (_cancellationTokenSource != null)
             {
                 await _cancellationTokenSource.CancelAsync();
@@ -67,7 +135,7 @@ namespace BlueShell.ViewModel
             _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
 
-            IsRunning = true;
+            IsCommandRunning = true;
 
             try
             {
@@ -96,7 +164,7 @@ namespace BlueShell.ViewModel
             }
             finally
             {
-                IsRunning = false;
+                IsCommandRunning = false;
             }
         }
 

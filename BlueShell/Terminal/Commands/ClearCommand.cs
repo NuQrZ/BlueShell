@@ -7,7 +7,6 @@ namespace BlueShell.Terminal.Commands
     {
         public string CommandName => "Clear";
         public bool NoArguments => true;
-        public bool IsInterrupting => true;
 
         public Task Execute(TerminalCommandContext context, string? commandArguments = null)
         {

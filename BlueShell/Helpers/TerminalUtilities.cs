@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.UI.Xaml;
+using System.Collections.Generic;
 using Windows.UI;
 
 namespace BlueShell.Helpers
@@ -18,5 +19,19 @@ namespace BlueShell.Helpers
             { "Clear", Color.FromArgb(255, 0, 170, 140) },
             { "--Version", Color.FromArgb(255, 190, 125, 0) },
         };
+
+        public static Color GetCommandColor(string command, ElementTheme elementTheme, Color defaultColor)
+        {
+            Dictionary<string, Color> colors =
+                elementTheme == ElementTheme.Light
+                    ? LightThemeKeywordColors
+                    : DarkThemeKeywordColors;
+
+            return colors.TryGetValue(
+                command,
+                out Color color)
+                    ? color
+                    : defaultColor;
+        }
     }
 }

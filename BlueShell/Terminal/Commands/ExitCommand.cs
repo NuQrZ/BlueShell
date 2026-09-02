@@ -8,7 +8,6 @@ namespace BlueShell.Terminal.Commands
     {
         public string CommandName => "Exit";
         public bool NoArguments => true;
-        public bool IsInterrupting => true;
 
         public async Task Execute(TerminalCommandContext context, string? commandArguments = null)
         {

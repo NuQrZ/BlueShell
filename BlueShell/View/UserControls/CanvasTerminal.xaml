@@ -20,7 +20,9 @@
     <Grid>
         <ScrollViewer x:Name="TerminalScrollView"
                       VerticalScrollMode="Auto"
-                    VerticalScrollBarVisibility="Auto">
+                      VerticalScrollBarVisibility="Auto"
+                      SizeChanged="TerminalScrollView_SizeChanged"
+                      ViewChanged="TerminalScrollView_ViewChanged">
             <graphicsControls:CanvasVirtualControl
             x:Name="Terminal"
             RegionsInvalidated="Terminal_RegionsInvalidated"/>

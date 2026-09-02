@@ -12,7 +12,7 @@ namespace BlueShell.Terminal.Infrastructure
         private readonly Dictionary<string, ITerminalCommand> _allCommands =
             allCommands.ToDictionary(command => command.CommandName, command => command);
 
-        private ITerminalCommand? ResolveCommand(string commandLine)
+        public ITerminalCommand? ResolveCommand(string commandLine)
         {
             commandLine = commandLine.Trim();
 
@@ -30,13 +30,6 @@ namespace BlueShell.Terminal.Infrastructure
             string commandName = match.Groups[1].Value;
 
             return _allCommands.GetValueOrDefault(commandName);
-        }
-
-        public bool IsInterruptCommand(string commandLine)
-        {
-            ITerminalCommand? terminalCommand = ResolveCommand(commandLine);
-
-            return terminalCommand?.IsInterrupting ?? true;
         }
 
         public bool IsExitCommand(string commandLine)

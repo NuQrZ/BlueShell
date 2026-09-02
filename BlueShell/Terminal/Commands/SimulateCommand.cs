@@ -10,14 +10,14 @@ namespace BlueShell.Terminal.Commands
 
         public bool NoArguments => true;
 
-        public bool IsInterrupting => true;
-
         public async Task Execute(TerminalCommandContext context, string? commandArguments = null)
         {
-            const int totalLines = 200_000;
+            const int totalLines = 100_000;
             const int linesPerFrame = 777;
 
             List<string> batch = [with(linesPerFrame)];
+
+            context.TerminalOutput.WriteLine("");
 
             for (int i = 0; i <= totalLines; i++)
             {

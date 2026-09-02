@@ -1,5 +1,6 @@
 using BlueShell.Helpers;
 using BlueShell.Model;
+using BlueShell.Terminal;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Implementations;
 using BlueShell.Terminal.Infrastructure;
@@ -13,8 +14,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using Windows.System;
 using Windows.UI;
@@ -24,27 +23,27 @@ namespace BlueShell.View.UserControls
 {
     public sealed partial class CanvasTerminal : UserControl
     {
-        private const string Prompt = "Shell > ";
-
         private const float PaddingLeft = 8;
         private const float PaddingTop = 8;
-        private const float PaddingBottom = 8;
 
         private const float MinFontSize = 8;
         private const float MaxFontSize = 48;
 
-        private const int MaxHistorySize = 100_000;
+        private const string Prompt = "Shell > ";
 
         private const VirtualKey OemPlus = (VirtualKey)0xBB;
         private const VirtualKey OemMinus = (VirtualKey)0xBD;
 
-        private int _caretPosition = 0;
-
         private bool _caretVisible = true;
-        private bool _isCommandRunning;
-        private bool _startNewOutputLine = true;
+
         private bool _refreshPending;
         private bool _scrollToBottomPending;
+
+        private bool _followingOutput = true;
+
+        // Sprečava da programske promene ScrollViewer-a
+        // izgledaju kao korisničko skrolovanje.
+        private bool _updatingScrollView;
 
         private readonly CanvasTextFormat _textFormat = new()
         {
@@ -52,57 +51,48 @@ namespace BlueShell.View.UserControls
             FontSize = 18,
             WordWrapping = CanvasWordWrapping.NoWrap,
         };
+
         private readonly DispatcherTimer _dispatcherTimer = new()
         {
             Interval = TimeSpan.FromMilliseconds(400)
         };
-
-        private readonly List<TerminalLine> _completedLines = [];
-        private readonly StringBuilder _currentLine = new();
-
-        private TabModel? _tabModel;
-        private ITerminalOutput? _terminalOutput;
-        private TerminalViewModel? _terminalViewModel;
 
         private Color DefaultColor =>
             ActualTheme == ElementTheme.Light
                 ? Colors.Black
                 : Colors.White;
 
+        private TabModel? _tabModel;
+
+        private readonly ITerminalOutput? _terminalOutput;
+        private readonly TerminalViewModel? _terminalViewModel;
+        private readonly TerminalBuffer _terminalBuffer = new();
+
         public CanvasTerminal()
         {
             InitializeComponent();
 
-            TerminalScrollView.SizeChanged += TerminalScrollView_SizeChanged;
+            _terminalOutput = new TerminalOutput(
+                _terminalBuffer,
+                () => ActualTheme);
+
+            TerminalCommandDispatcher dispatcher = new(
+                TerminalCommandRegistry.CreateDefault());
+
+            _terminalViewModel = new TerminalViewModel(
+                dispatcher,
+                () => new TerminalCommandContext(
+                    _terminalOutput,
+                    _tabModel,
+                    CancellationToken.None));
+
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
+            _terminalBuffer.Changed += TerminalBuffer_Changed;
         }
 
-        private void TerminalScrollView_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            RefreshTerminal(true);
-        }
-
-        #region HelperMethods
         public void BuildTabModel(TabModel? tabModel)
         {
             _tabModel = tabModel;
-        }
-
-        private Color GetCommandColor(string command)
-        {
-            Dictionary<string, Color> colors = [];
-            if (ActualTheme == ElementTheme.Light)
-            {
-                colors = TerminalUtilities.LightThemeKeywordColors;
-            }
-            else
-            {
-                colors = TerminalUtilities.DarkThemeKeywordColors;
-            }
-
-            bool found = colors.TryGetValue(command, out Color color);
-
-            return found == true ? color : DefaultColor;
         }
 
         private static bool IsKeyDown(VirtualKey key)
@@ -111,134 +101,80 @@ namespace BlueShell.View.UserControls
                     & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
         }
 
-        private void UpdateScrollView()
+        public void UpdateScrollView(bool isCommandRunning)
         {
             float lineHeight = _textFormat.FontSize + 4;
 
-            int visibleLineCount = _completedLines.Count + (_isCommandRunning ? 0 : 1);
+            int visibleLineCount =
+                _terminalBuffer.Count +
+                (isCommandRunning ? 0 : 1);
 
-            double contentHeight = PaddingTop + visibleLineCount * lineHeight + PaddingBottom;
+            double contentHeight =
+                PaddingTop +
+                visibleLineCount * lineHeight +
+                PaddingTop;
 
-            Terminal.Height = Math.Max(TerminalScrollView.ViewportHeight, contentHeight);
+            Terminal.Height = Math.Max(
+                TerminalScrollView.ViewportHeight,
+                contentHeight);
         }
 
-        private TerminalLine GetCurrentOutputLine()
+        public void RefreshTerminal(bool scrollToBottom)
         {
-            if (_startNewOutputLine || _completedLines.Count == 0)
+            /*
+             * Mora da se zapamti PRE promene Height-a.
+             *
+             * UpdateScrollView može da promeni ScrollableHeight,
+             * što može da izazove ViewChanged.
+             */
+            bool shouldScrollToBottom =
+                scrollToBottom && _followingOutput;
+
+            _updatingScrollView = true;
+
+            try
             {
-                TerminalLine line = new();
+                UpdateScrollView(
+                    _terminalViewModel!.IsCommandRunning);
 
-                _completedLines.Add(line);
-                _startNewOutputLine = false;
+                Terminal.Invalidate();
 
-                return line;
-            }
-
-            return _completedLines[^1];
-        }
-
-        public void Write(string text, Color? textColor, FontWeight fontWeight, FontStyle fontStyle)
-        {
-            TerminalLine line = GetCurrentOutputLine();
-
-            TerminalLineSegment segment = new(
-                text,
-                textColor ?? DefaultColor,
-                fontWeight,
-                fontStyle);
-
-            line.AddSegment(segment);
-
-            TrimHistory();
-
-            RequestRefresh(true);
-        }
-
-        public void WriteLine(string text, Color? textColor, FontWeight fontWeight, FontStyle fontStyle)
-        {
-            TerminalLine line = GetCurrentOutputLine();
-
-            TerminalLineSegment segment = new(
-                text,
-                textColor ?? DefaultColor,
-                fontWeight,
-                fontStyle);
-
-            line.AddSegment(segment);
-            _startNewOutputLine = true;
-
-            TrimHistory();
-
-            RequestRefresh(true);
-        }
-
-        public void WriteLines(IEnumerable<string> lines, Color? textColor, FontWeight fontWeight, FontStyle fontStyle)
-        {
-            foreach (string text in lines)
-            {
-                TerminalLine line = new();
-
-                line.AddSegment(
-                    new TerminalLineSegment(
-                        text,
-                        textColor ?? DefaultColor,
-                        fontWeight,
-                        fontStyle));
-
-                _completedLines.Add(line);
-            }
-
-            _startNewOutputLine = true;
-
-            TrimHistory();
-
-            RefreshTerminal(true);
-        }
-
-        public void Clear()
-        {
-            _completedLines.Clear();
-            _currentLine.Clear();
-            _startNewOutputLine = true;
-
-            RequestRefresh(true);
-        }
-
-        private void TrimHistory()
-        {
-            int totalCount = _completedLines.Count;
-            int overflow = totalCount - MaxHistorySize;
-
-            if (totalCount > MaxHistorySize)
-            {
-                _completedLines.RemoveRange(0, overflow);
-            }
-        }
-
-        private void RefreshTerminal(bool scrollToBottom)
-        {
-            UpdateScrollView();
-            Terminal.Invalidate();
-
-            if (!scrollToBottom)
-            {
-                return;
-            }
-
-            DispatcherQueue.TryEnqueue(() =>
-            {
+                /*
+                 * Potreban nam je novi ScrollableHeight pre ChangeView.
+                 */
                 TerminalScrollView.UpdateLayout();
+
+                if (!shouldScrollToBottom)
+                {
+                    return;
+                }
 
                 TerminalScrollView.ChangeView(
                     null,
                     TerminalScrollView.ScrollableHeight,
                     null,
                     true);
-            });
+
+                /*
+                 * Još uvek smo u follow režimu.
+                 *
+                 * ViewChanged izazvan programskim promenama
+                 * se ignoriše dok je _updatingScrollView == true.
+                 */
+                _followingOutput = true;
+            }
+            finally
+            {
+                _updatingScrollView = false;
+            }
         }
 
-        private void RequestRefresh(bool scrollToBottom)
+        public void RequestRefresh(bool scrollToBottom)
         {
+            /*
+             * Ako je makar jedan zahtev tražio scroll na dno,
+             * ne želimo da ga kasniji Refresh(false) poništi.
+             */
             _scrollToBottomPending |= scrollToBottom;
 
             if (_refreshPending)
@@ -252,58 +188,111 @@ namespace BlueShell.View.UserControls
             {
                 _refreshPending = false;
 
-                bool shouldScrollToBottom = _scrollToBottomPending;
+                bool shouldScrollToBottom =
+                    _scrollToBottomPending;
+
                 _scrollToBottomPending = false;
 
                 RefreshTerminal(shouldScrollToBottom);
             });
         }
-        #endregion
 
-        private void DispatcherTimer_Tick(object? sender, object e)
+        private void DispatcherTimer_Tick(
+            object? sender,
+            object e)
         {
-            if (_isCommandRunning)
+            if (_terminalViewModel!.IsCommandRunning)
             {
                 return;
             }
 
             _caretVisible = !_caretVisible;
+
             Terminal.Invalidate();
         }
 
-        private void Terminal_RegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs eventArgs)
+        private void TerminalBuffer_Changed(
+            object? sender,
+            EventArgs e)
         {
-            float lineHeight = _textFormat.FontSize + 4;
+            RequestRefresh(true);
+        }
 
-            float caretHeight = _textFormat.FontSize;
-            float caretOffsetY = (lineHeight - caretHeight) / 2;
+        private void TerminalScrollView_SizeChanged(
+            object sender,
+            SizeChangedEventArgs e)
+        {
+            /*
+             * Ako smo pratili output, ostani na dnu.
+             *
+             * Ako je korisnik otišao gore,
+             * RefreshTerminal neće ga vratiti dole jer je
+             * _followingOutput == false.
+             */
+            RefreshTerminal(true);
+        }
+
+        private void Terminal_RegionsInvalidated(
+            CanvasVirtualControl sender,
+            CanvasRegionsInvalidatedEventArgs eventArgs)
+        {
+            int completedLinesCount =
+                _terminalBuffer.Count;
+
+            float lineHeight =
+                _textFormat.FontSize + 4;
+
+            float caretHeight =
+                _textFormat.FontSize;
+
+            float caretOffsetY =
+                (lineHeight - caretHeight) / 2;
 
             foreach (var region in eventArgs.InvalidatedRegions)
             {
-                using var drawingSession = sender.CreateDrawingSession(region);
+                using var drawingSession =
+                    sender.CreateDrawingSession(region);
 
-                int firstVisibleLine = Math.Max(0, (int)Math.Floor((region.Top - PaddingTop) / lineHeight) - 1);
+                int firstVisibleLine = Math.Max(
+                    0,
+                    (int)Math.Floor(
+                        (region.Top - PaddingTop) /
+                        lineHeight) - 1);
 
-                int lastVisibleLine = Math.Min(_completedLines.Count - 1, (int)Math.Ceiling((region.Bottom - PaddingTop) / lineHeight) + 1);
+                int lastVisibleLine = Math.Min(
+                    completedLinesCount - 1,
+                    (int)Math.Ceiling(
+                        (region.Bottom - PaddingTop) /
+                        lineHeight) + 1);
 
-                for (int i = firstVisibleLine; i <= lastVisibleLine; i++)
+                for (int i = firstVisibleLine;
+                     i <= lastVisibleLine;
+                     i++)
                 {
-                    TerminalLine line = _completedLines[i];
+                    TerminalLine line =
+                        _terminalBuffer.Lines[i];
 
-                    float lineY = PaddingTop + i * lineHeight;
+                    float lineY =
+                        PaddingTop +
+                        i * lineHeight;
 
-                    float currentX = PaddingLeft;
+                    float currentX =
+                        PaddingLeft;
 
-                    foreach (TerminalLineSegment segment in line.Segments)
+                    foreach (TerminalLineSegment segment
+                             in line.Segments)
                     {
-                        _textFormat.FontWeight = segment.FontWeight;
-                        _textFormat.FontStyle = segment.FontStyle;
+                        _textFormat.FontWeight =
+                            segment.FontWeight;
+
+                        _textFormat.FontStyle =
+                            segment.FontStyle;
 
                         drawingSession.DrawText(
                             segment.Text,
                             currentX,
                             lineY,
-                            segment.Color,
+                            segment.Color ?? DefaultColor,
                             _textFormat);
 
                         using CanvasTextLayout segmentLayout = new(
@@ -313,30 +302,38 @@ namespace BlueShell.View.UserControls
                             0,
                             0);
 
-                        float segmentWidth = (float)segmentLayout
-                            .LayoutBoundsIncludingTrailingWhitespace
-                            .Width;
+                        float segmentWidth =
+                            (float)segmentLayout
+                                .LayoutBoundsIncludingTrailingWhitespace
+                                .Width;
 
                         currentX += segmentWidth;
                     }
                 }
 
-                if (_isCommandRunning)
+                if (_terminalViewModel!.IsCommandRunning)
                 {
                     continue;
                 }
 
-                float promptY = PaddingTop + _completedLines.Count * lineHeight;
+                float promptY =
+                    PaddingTop +
+                    completedLinesCount * lineHeight;
 
-                bool promptIntersectsRegion = promptY + lineHeight >= region.Top && promptY <= region.Bottom;
+                bool promptIntersectsRegion =
+                    promptY + lineHeight >= region.Top &&
+                    promptY <= region.Bottom;
 
                 if (!promptIntersectsRegion)
                 {
                     continue;
                 }
 
-                _textFormat.FontWeight = FontWeights.Normal;
-                _textFormat.FontStyle = FontStyle.Normal;
+                _textFormat.FontWeight =
+                    FontWeights.Normal;
+
+                _textFormat.FontStyle =
+                    FontStyle.Normal;
 
                 drawingSession.DrawText(
                     Prompt,
@@ -352,20 +349,27 @@ namespace BlueShell.View.UserControls
                     0,
                     0);
 
-                float promptWidth = (float)promptLayout
-                    .LayoutBoundsIncludingTrailingWhitespace
-                    .Width;
+                float promptWidth =
+                    (float)promptLayout
+                        .LayoutBoundsIncludingTrailingWhitespace
+                        .Width;
 
-                string currentInput = _currentLine.ToString();
+                string currentInput =
+                    _terminalViewModel.CurrentLine;
 
                 drawingSession.DrawText(
                     currentInput,
                     PaddingLeft + promptWidth,
                     promptY,
-                    GetCommandColor(currentInput),
+                    TerminalUtilities.GetCommandColor(
+                        currentInput,
+                        ActualTheme,
+                        DefaultColor),
                     _textFormat);
 
-                string textBeforeCaret = currentInput[.._caretPosition];
+                string textBeforeCaret =
+                    currentInput[
+                        .._terminalViewModel.CaretPosition];
 
                 using CanvasTextLayout textBeforeCaretLayout = new(
                     sender.Device,
@@ -374,11 +378,15 @@ namespace BlueShell.View.UserControls
                     0,
                     0);
 
-                float textBeforeCaretWidth = (float)textBeforeCaretLayout
+                float textBeforeCaretWidth =
+                    (float)textBeforeCaretLayout
                         .LayoutBoundsIncludingTrailingWhitespace
                         .Width;
 
-                float caretX = PaddingLeft + promptWidth + textBeforeCaretWidth;
+                float caretX =
+                    PaddingLeft +
+                    promptWidth +
+                    textBeforeCaretWidth;
 
                 if (_caretVisible)
                 {
@@ -386,69 +394,75 @@ namespace BlueShell.View.UserControls
                         caretX,
                         promptY + caretOffsetY,
                         caretX,
-                        promptY + caretOffsetY + caretHeight,
+                        promptY +
+                        caretOffsetY +
+                        caretHeight,
                         DefaultColor);
                 }
             }
         }
 
-        private void TerminalUserControl_CharacterReceived(UIElement sender, CharacterReceivedRoutedEventArgs eventArgs)
+        private void TerminalUserControl_CharacterReceived(
+            UIElement sender,
+            CharacterReceivedRoutedEventArgs eventArgs)
         {
-            if (_isCommandRunning || IsKeyDown(VirtualKey.Control))
+            if (_terminalViewModel!.IsCommandRunning ||
+                IsKeyDown(VirtualKey.Control))
             {
                 return;
             }
 
-            int intChar = (int)eventArgs.Character;
+            int intChar =
+                (int)eventArgs.Character;
 
-            if (intChar < 32 || intChar == 127)
+            if (intChar < 32 ||
+                intChar == 127)
             {
                 return;
             }
 
-            string text = char.ConvertFromUtf32(intChar);
+            string text =
+                char.ConvertFromUtf32(intChar);
 
-            _currentLine.Insert(_caretPosition, text);
-            _caretPosition++;
+            _terminalViewModel.InsertText(text);
 
             Terminal.Invalidate();
+
             eventArgs.Handled = true;
         }
 
-        private void TerminalUserControl_Loaded(object sender, RoutedEventArgs eventArgs)
+        private void TerminalUserControl_Loaded(
+            object sender,
+            RoutedEventArgs eventArgs)
         {
-            _terminalOutput = new TerminalOutput(
-                this,
-                () => ActualTheme);
-
-            TerminalCommandDispatcher dispatcher = new(
-                TerminalCommandRegistry.CreateDefault());
-
-            _terminalViewModel = new TerminalViewModel(
-                dispatcher,
-                () => new TerminalCommandContext(
-                    _terminalOutput,
-                    _tabModel,
-                    CancellationToken.None));
-
             Focus(FocusState.Programmatic);
 
             _caretVisible = true;
+
             _dispatcherTimer.Start();
 
-            RefreshTerminal(false);
+            /*
+             * Ako već postoji history pri ponovnom otvaranju
+             * terminala, idi na dno samo ako ga pratimo.
+             */
+            RefreshTerminal(true);
         }
 
-        private void TerminalUserControl_Unloaded(object sender, RoutedEventArgs e)
+        private void TerminalUserControl_Unloaded(
+            object sender,
+            RoutedEventArgs e)
         {
             _dispatcherTimer.Stop();
         }
 
-        private void TerminalUserControl_PointerPressed(object sender, PointerRoutedEventArgs eventArgs)
+        private void TerminalUserControl_PointerPressed(
+            object sender,
+            PointerRoutedEventArgs eventArgs)
         {
             Focus(FocusState.Pointer);
 
             _caretVisible = true;
+
             _dispatcherTimer.Start();
 
             Terminal.Invalidate();
@@ -456,25 +470,42 @@ namespace BlueShell.View.UserControls
             eventArgs.Handled = true;
         }
 
-        private void TerminalUserControl_LostFocus(object sender, RoutedEventArgs e)
+        private void TerminalUserControl_LostFocus(
+            object sender,
+            RoutedEventArgs e)
         {
             _dispatcherTimer.Stop();
+
             _caretVisible = false;
+
             Terminal.Invalidate();
         }
 
-        private async void TerminalUserControl_KeyDown(object sender, KeyRoutedEventArgs eventArgs)
+        private async void TerminalUserControl_KeyDown(
+            object sender,
+            KeyRoutedEventArgs eventArgs)
         {
-            bool isCtrlPressed = IsKeyDown(VirtualKey.Control);
+            bool isCtrlPressed =
+                IsKeyDown(VirtualKey.Control);
 
             if (isCtrlPressed)
             {
                 if (eventArgs.OriginalKey == OemPlus ||
                     eventArgs.Key == VirtualKey.Add)
                 {
-                    _textFormat.FontSize = Math.Min(_textFormat.FontSize + 1, MaxFontSize);
+                    _textFormat.FontSize = Math.Min(
+                        _textFormat.FontSize + 1,
+                        MaxFontSize);
 
-                    RefreshTerminal(false);
+                    /*
+                     * true NE znači:
+                     * "obavezno idi na dno".
+                     *
+                     * RefreshTerminal će otići na dno samo ako je
+                     * _followingOutput već true.
+                     */
+                    RefreshTerminal(true);
+
                     eventArgs.Handled = true;
                     return;
                 }
@@ -482,9 +513,12 @@ namespace BlueShell.View.UserControls
                 if (eventArgs.OriginalKey == OemMinus ||
                     eventArgs.Key == VirtualKey.Subtract)
                 {
-                    _textFormat.FontSize = Math.Max(_textFormat.FontSize - 1, MinFontSize);
+                    _textFormat.FontSize = Math.Max(
+                        _textFormat.FontSize - 1,
+                        MinFontSize);
 
-                    RefreshTerminal(false);
+                    RefreshTerminal(true);
+
                     eventArgs.Handled = true;
                     return;
                 }
@@ -492,12 +526,33 @@ namespace BlueShell.View.UserControls
                 if (eventArgs.Key == VirtualKey.Q)
                 {
                     _terminalViewModel?.Cancel();
+
+                    eventArgs.Handled = true;
+                    return;
+                }
+
+                if (eventArgs.Key == VirtualKey.Left)
+                {
+                    _terminalViewModel?.MoveCaretWordLeft();
+
+                    Terminal.Invalidate();
+
+                    eventArgs.Handled = true;
+                    return;
+                }
+
+                if (eventArgs.Key == VirtualKey.Right)
+                {
+                    _terminalViewModel?.MoveCaretWordRight();
+
+                    Terminal.Invalidate();
+
                     eventArgs.Handled = true;
                     return;
                 }
             }
 
-            if (_isCommandRunning)
+            if (_terminalViewModel!.IsCommandRunning)
             {
                 eventArgs.Handled = true;
                 return;
@@ -506,30 +561,34 @@ namespace BlueShell.View.UserControls
             switch (eventArgs.Key)
             {
                 case VirtualKey.Left:
-                    if (_caretPosition > 0)
-                    {
-                        _caretPosition--;
-                    }
+                    _terminalViewModel.MoveCaretLeft();
 
                     Terminal.Invalidate();
+
                     eventArgs.Handled = true;
                     break;
+
                 case VirtualKey.Right:
-                    if (_caretPosition < _currentLine.Length)
-                    {
-                        _caretPosition++;
-                    }
+                    _terminalViewModel.MoveCaretRight();
+
                     Terminal.Invalidate();
+
                     eventArgs.Handled = true;
                     break;
+
                 case VirtualKey.Home:
-                    _caretPosition = 0;
+                    _terminalViewModel.GoToHome();
+
                     Terminal.Invalidate();
+
                     eventArgs.Handled = true;
                     break;
+
                 case VirtualKey.End:
-                    _caretPosition = _currentLine.Length;
+                    _terminalViewModel.GoToEnd();
+
                     Terminal.Invalidate();
+
                     eventArgs.Handled = true;
                     break;
             }
@@ -538,9 +597,11 @@ namespace BlueShell.View.UserControls
             {
                 case VirtualKey.Enter:
                     {
-                        string currentLine = _currentLine.ToString();
+                        string currentLine =
+                            _terminalViewModel.TakeCurrentLine();
 
-                        TerminalLine terminalLine = new();
+                        TerminalLine terminalLine =
+                            new();
 
                         terminalLine.AddSegment(
                             new TerminalLineSegment(
@@ -552,32 +613,36 @@ namespace BlueShell.View.UserControls
                         terminalLine.AddSegment(
                             new TerminalLineSegment(
                                 currentLine,
-                                GetCommandColor(currentLine),
+                                TerminalUtilities.GetCommandColor(
+                                    currentLine,
+                                    ActualTheme,
+                                    DefaultColor),
                                 FontWeights.Normal,
                                 FontStyle.Normal));
 
-                        _completedLines.Add(terminalLine);
+                        _terminalBuffer.AddTerminalLine(
+                            terminalLine);
 
-                        TrimHistory();
-
-                        _startNewOutputLine = true;
-
-                        _currentLine.Clear();
-                        _isCommandRunning = true;
                         _caretVisible = false;
-                        _caretPosition = 0;
-
-                        RefreshTerminal(true);
 
                         try
                         {
-                            await _terminalViewModel!.SubmitAsync(currentLine);
+                            await _terminalViewModel.SubmitAsync(
+                                currentLine);
                         }
                         finally
                         {
-                            _isCommandRunning = false;
                             _caretVisible = true;
 
+                            /*
+                             * Kada se command završi, prompt se ponovo
+                             * pojavljuje i povećava sadržaj za jednu liniju.
+                             *
+                             * Ako korisnik prati output, treba da vidi
+                             * novi prompt.
+                             *
+                             * Ako je ručno otišao gore, neće ga vratiti.
+                             */
                             RefreshTerminal(true);
                         }
 
@@ -587,45 +652,64 @@ namespace BlueShell.View.UserControls
 
                 case VirtualKey.Back:
                     {
-                        if (_currentLine.Length == 0 || _caretPosition == 0)
-                        {
-                            eventArgs.Handled = true;
-                            return;
-                        }
-
-                        _currentLine.Remove(_caretPosition - 1, 1);
-                        _caretPosition--;
+                        _terminalViewModel.Backspace();
 
                         Terminal.Invalidate();
+
                         eventArgs.Handled = true;
                         break;
                     }
             }
         }
 
-        private void TerminalUserControl_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        private void TerminalUserControl_PointerWheelChanged(
+            object sender,
+            PointerRoutedEventArgs e)
         {
             if (!IsKeyDown(VirtualKey.Control))
             {
                 return;
             }
 
-            PointerPoint pointerPoint = e.GetCurrentPoint(Terminal);
-            PointerPointProperties pointerPointProperties = pointerPoint.Properties;
+            PointerPoint pointerPoint =
+                e.GetCurrentPoint(Terminal);
 
-            int mouseWheelDelta = pointerPointProperties.MouseWheelDelta;
+            PointerPointProperties pointerPointProperties =
+                pointerPoint.Properties;
+
+            int mouseWheelDelta =
+                pointerPointProperties.MouseWheelDelta;
 
             if (mouseWheelDelta > 0)
             {
-                _textFormat.FontSize = Math.Min(_textFormat.FontSize + 1, MaxFontSize);
+                _textFormat.FontSize = Math.Min(
+                    _textFormat.FontSize + 1,
+                    MaxFontSize);
             }
             else if (mouseWheelDelta < 0)
             {
-                _textFormat.FontSize = Math.Max(_textFormat.FontSize - 1, MinFontSize);
+                _textFormat.FontSize = Math.Max(
+                    _textFormat.FontSize - 1,
+                    MinFontSize);
             }
 
-            RefreshTerminal(false);
+            RefreshTerminal(true);
+
             e.Handled = true;
+        }
+
+        private void TerminalScrollView_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+            if (_updatingScrollView)
+            {
+                return;
+            }
+
+            const double tolerance = 2;
+
+            double distanceFromBottom = TerminalScrollView.ScrollableHeight - TerminalScrollView.VerticalOffset;
+
+            _followingOutput = distanceFromBottom <= tolerance;
         }
     }
 }

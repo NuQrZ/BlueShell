@@ -1,5 +1,4 @@
 ﻿using BlueShell.Terminal.Abstractions;
-using BlueShell.View.UserControls;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -10,11 +9,11 @@ using Windows.UI.Text;
 
 namespace BlueShell.Terminal.Implementations
 {
-    public sealed class TerminalOutput(CanvasTerminal canvasTerminal, Func<ElementTheme> themeProvider) : ITerminalOutput
+    public sealed class TerminalOutput(TerminalBuffer terminalBuffer, Func<ElementTheme> themeProvider) : ITerminalOutput
     {
         public void Write(string text, TerminalMessageKind terminalMessageKind, FontWeight? fontWeight = null, FontStyle fontStyle = FontStyle.Normal)
         {
-            canvasTerminal.Write(text,
+            terminalBuffer.Write(text,
                                   GetColor(terminalMessageKind),
                                   fontWeight ?? FontWeights.Normal,
                                   fontStyle);
@@ -22,7 +21,7 @@ namespace BlueShell.Terminal.Implementations
 
         public void WriteLine(string text, TerminalMessageKind terminalMessageKind, FontWeight? fontWeight = null, FontStyle fontStyle = FontStyle.Normal)
         {
-            canvasTerminal.WriteLine(text,
+            terminalBuffer.WriteLine(text,
                                       GetColor(terminalMessageKind),
                                       fontWeight ?? FontWeights.Normal,
                                       fontStyle);
@@ -30,7 +29,7 @@ namespace BlueShell.Terminal.Implementations
 
         public void WriteLines(IEnumerable<string> lines, TerminalMessageKind terminalMessageKind = TerminalMessageKind.Output, FontWeight? fontWeight = null, FontStyle fontStyle = FontStyle.Normal)
         {
-            canvasTerminal.WriteLines(lines,
+            terminalBuffer.WriteLines(lines,
                                       GetColor(terminalMessageKind),
                                       fontWeight ?? FontWeights.Normal,
                                       fontStyle);
@@ -38,7 +37,7 @@ namespace BlueShell.Terminal.Implementations
 
         public void Clear()
         {
-            canvasTerminal.Clear();
+            terminalBuffer.Clear();
         }
 
         private Color GetColor(TerminalMessageKind kind)
