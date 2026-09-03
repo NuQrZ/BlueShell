@@ -12,7 +12,7 @@ namespace BlueShell.Terminal.Commands
 
         public async Task Execute(TerminalCommandContext context, string? commandArguments = null)
         {
-            const int totalLines = 100_000;
+            const int totalLines = 10_000;
             const int linesPerFrame = 777;
 
             List<string> batch = [with(linesPerFrame)];
