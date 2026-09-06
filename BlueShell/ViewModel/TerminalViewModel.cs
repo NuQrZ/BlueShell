@@ -193,10 +193,51 @@ namespace BlueShell.ViewModel
             }
         }
 
+        public void ControlBackspace()
+        {
+            if (HasSelection)
+            {
+                DeleteSelection();
+                return;
+            }
+
+            SelectionAnchor = null;
+
+            if (CaretPosition == 0)
+            {
+                return;
+            }
+
+            int endPosition = CaretPosition;
+
+            if (char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+            {
+                while (CaretPosition > 0 && char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+                {
+                    CaretPosition--;
+                }
+            }
+            else
+            {
+                while (CaretPosition > 0 && !char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+                {
+                    CaretPosition--;
+                }
+            }
+
+            int length = endPosition - CaretPosition;
+            _currentLine.Remove(CaretPosition, length);
+        }
+
         public void GoToHome()
         {
             SelectionAnchor = null;
             CaretPosition = 0;
+        }
+
+        public void SelectHome()
+        {
+
         }
 
         public void GoToEnd()

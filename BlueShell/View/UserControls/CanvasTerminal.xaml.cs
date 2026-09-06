@@ -235,6 +235,11 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.ControlBackspace:
+                    _terminalViewModel.ControlBackspace();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.Submit:
                     await SubmitLineAsync();
                     return true;

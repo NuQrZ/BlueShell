@@ -18,6 +18,7 @@
         PageUp,
         PageDown,
         Backspace,
+        ControlBackspace,
         Submit
     }
 }

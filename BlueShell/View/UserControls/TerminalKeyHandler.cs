@@ -60,6 +60,10 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.MoveCaretWordRight;
                 }
+                if (key == VirtualKey.Back)
+                {
+                    return TerminalKeyAction.ControlBackspace;
+                }
             }
 
             if (isShiftPressed)
