@@ -18,6 +18,7 @@ namespace BlueShell.View.UserControls
         public static TerminalKeyAction HandleKey(VirtualKey originalKey, VirtualKey key, bool isCommandRunning)
         {
             bool isCtrlPressed = IsKeyDown(VirtualKey.Control);
+            bool isShiftPressed = IsKeyDown(VirtualKey.Shift);
 
             if (isCtrlPressed)
             {
@@ -58,6 +59,18 @@ namespace BlueShell.View.UserControls
                 if (key == VirtualKey.Right)
                 {
                     return TerminalKeyAction.MoveCaretWordRight;
+                }
+            }
+
+            if (isShiftPressed)
+            {
+                if (key == VirtualKey.Left)
+                {
+                    return TerminalKeyAction.SelectWordLeft;
+                }
+                if (key == VirtualKey.Right)
+                {
+                    return TerminalKeyAction.SelectWordRight;
                 }
             }
 

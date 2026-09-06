@@ -11,6 +11,8 @@
         MoveCaretRight,
         MoveCaretWordLeft,
         MoveCaretWordRight,
+        SelectWordLeft,
+        SelectWordRight,
         GoToHome,
         GoToEnd,
         PageUp,

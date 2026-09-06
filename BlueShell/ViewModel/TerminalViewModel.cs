@@ -11,17 +11,48 @@ namespace BlueShell.ViewModel
         TerminalCommandDispatcher commandDispatcher,
         Func<TerminalCommandContext> contextFactory)
     {
-        private CancellationTokenSource? _cancellationTokenSource = new();
+        private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
 
-        private bool IsExiting { get; set; } = false;
+        private bool IsExiting = false;
 
+        public int? SelectionAnchor { get; private set; }
         public int CaretPosition { get; private set; } = 0;
+        public int SelectionStart => SelectionAnchor.HasValue ? Math.Min(SelectionAnchor.Value, CaretPosition) : CaretPosition;
+        public int SelectionEnd => SelectionAnchor.HasValue ? Math.Max(SelectionAnchor.Value, CaretPosition) : CaretPosition;
+
         public bool IsCommandRunning { get; private set; } = false;
+        public bool HasSelection => SelectionAnchor.HasValue && SelectionAnchor.Value != CaretPosition;
+
         public string CurrentLine => _currentLine.ToString();
+
+        private void DeleteSelection()
+        {
+            if (!HasSelection)
+            {
+                SelectionAnchor = null;
+                return;
+            }
+
+            int selectionLength = SelectionEnd - SelectionStart;
+
+            _currentLine.Remove(SelectionStart, selectionLength);
+
+            CaretPosition = SelectionStart;
+            SelectionAnchor = null;
+        }
 
         public void InsertText(string text)
         {
+            if (HasSelection)
+            {
+                DeleteSelection();
+            }
+            else
+            {
+                SelectionAnchor = null;
+            }
+
             _currentLine.Insert(CaretPosition, text);
             CaretPosition += text.Length;
         }
@@ -29,27 +60,79 @@ namespace BlueShell.ViewModel
         public void ClearCurrentLine()
         {
             _currentLine.Clear();
+            SelectionAnchor = null;
             CaretPosition = 0;
         }
 
         public void MoveCaretLeft()
         {
+            if (HasSelection)
+            {
+                CaretPosition = SelectionStart;
+                SelectionAnchor = null;
+                return;
+            }
+
+            SelectionAnchor = null;
+
             if (CaretPosition > 0)
             {
                 CaretPosition--;
             }
         }
 
+        public void SelectWordLeft()
+        {
+            if (CaretPosition <= 0)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
+
+            CaretPosition--;
+        }
+
         public void MoveCaretRight()
         {
+            if (HasSelection)
+            {
+                CaretPosition = SelectionEnd;
+                SelectionAnchor = null;
+                return;
+            }
+
+            SelectionAnchor = null;
+
             if (CaretPosition < _currentLine.Length)
             {
                 CaretPosition++;
             }
         }
 
+        public void SelectWordRight()
+        {
+            if (CaretPosition >= _currentLine.Length)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
+
+            CaretPosition++;
+        }
+
         public void MoveCaretWordLeft()
         {
+            if (HasSelection)
+            {
+                CaretPosition = SelectionStart;
+                SelectionAnchor = null;
+                return;
+            }
+
+            SelectionAnchor = null;
+
             if (CaretPosition == 0)
             {
                 return;
@@ -68,6 +151,15 @@ namespace BlueShell.ViewModel
 
         public void MoveCaretWordRight()
         {
+            if (HasSelection)
+            {
+                CaretPosition = SelectionEnd;
+                SelectionAnchor = null;
+                return;
+            }
+
+            SelectionAnchor = null;
+
             if (CaretPosition >= _currentLine.Length)
             {
                 return;
@@ -86,6 +178,14 @@ namespace BlueShell.ViewModel
 
         public void Backspace()
         {
+            if (HasSelection)
+            {
+                DeleteSelection();
+                return;
+            }
+
+            SelectionAnchor = null;
+
             if (CaretPosition > 0)
             {
                 _currentLine.Remove(CaretPosition - 1, 1);
@@ -95,11 +195,13 @@ namespace BlueShell.ViewModel
 
         public void GoToHome()
         {
+            SelectionAnchor = null;
             CaretPosition = 0;
         }
 
         public void GoToEnd()
         {
+            SelectionAnchor = null;
             CaretPosition = _currentLine.Length;
         }
 
@@ -108,6 +210,8 @@ namespace BlueShell.ViewModel
             string currentLine = _currentLine.ToString();
 
             _currentLine.Clear();
+
+            SelectionAnchor = null;
             CaretPosition = 0;
 
             return currentLine;
@@ -115,7 +219,7 @@ namespace BlueShell.ViewModel
 
         public async Task SubmitAsync(string commandLine)
         {
-            if (string.IsNullOrWhiteSpace(commandLine) || IsExiting)
+            if (string.IsNullOrWhiteSpace(commandLine) || IsExiting || IsCommandRunning)
             {
                 return;
             }
