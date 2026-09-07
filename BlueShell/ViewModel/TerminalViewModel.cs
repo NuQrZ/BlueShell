@@ -237,12 +237,29 @@ namespace BlueShell.ViewModel
 
         public void SelectHome()
         {
+            if (CaretPosition <= 0)
+            {
+                return;
+            }
 
+            SelectionAnchor ??= CaretPosition;
+            CaretPosition = 0;
         }
 
         public void GoToEnd()
         {
             SelectionAnchor = null;
+            CaretPosition = _currentLine.Length;
+        }
+
+        public void SelectEnd()
+        {
+            if (CaretPosition > _currentLine.Length)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
             CaretPosition = _currentLine.Length;
         }
 

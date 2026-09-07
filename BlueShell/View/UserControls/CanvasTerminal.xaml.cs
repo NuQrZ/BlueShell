@@ -212,6 +212,16 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.SelectHome:
+                    _terminalViewModel.SelectHome();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.SelectEnd:
+                    _terminalViewModel.SelectEnd();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.GoToHome:
                     _terminalViewModel.GoToHome();
                     Terminal.Invalidate();

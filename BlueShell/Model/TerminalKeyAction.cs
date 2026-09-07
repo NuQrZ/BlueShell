@@ -13,6 +13,8 @@
         MoveCaretWordRight,
         SelectWordLeft,
         SelectWordRight,
+        SelectHome,
+        SelectEnd,
         GoToHome,
         GoToEnd,
         PageUp,

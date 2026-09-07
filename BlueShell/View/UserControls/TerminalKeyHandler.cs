@@ -76,6 +76,14 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.SelectWordRight;
                 }
+                if (key == VirtualKey.Home)
+                {
+                    return TerminalKeyAction.SelectHome;
+                }
+                if (key == VirtualKey.End)
+                {
+                    return TerminalKeyAction.SelectEnd;
+                }
             }
 
             return key switch
