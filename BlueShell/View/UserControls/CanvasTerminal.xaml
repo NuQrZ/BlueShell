@@ -25,7 +25,10 @@
                       ViewChanged="TerminalScrollView_ViewChanged">
             <graphicsControls:CanvasVirtualControl
             x:Name="Terminal"
-            RegionsInvalidated="Terminal_RegionsInvalidated"/>
+            RegionsInvalidated="Terminal_RegionsInvalidated"
+                PointerPressed="Terminal_PointerPressed"
+                PointerMoved="Terminal_PointerMoved"
+                PointerReleased="Terminal_PointerReleased"/>
         </ScrollViewer>
     </Grid>
 </UserControl>

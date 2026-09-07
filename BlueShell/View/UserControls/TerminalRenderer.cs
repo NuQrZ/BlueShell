@@ -86,6 +86,34 @@ namespace BlueShell.View.UserControls
             FontSize = Math.Max(FontSize - 1, MinFontSize);
         }
 
+        public int GetCaretPositionFromX(CanvasVirtualControl sender, float mouseX)
+        {
+            string currentInput = terminalViewModel.CurrentLine;
+
+            float promptWidth = MeasureTextWidth(sender, Prompt);
+            float relativeX = mouseX - (PaddingLeft + promptWidth);
+
+            if (relativeX <= 0)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < currentInput.Length; i++)
+            {
+                float left = MeasureTextWidth(sender, currentInput[..i]);
+                float right = MeasureTextWidth(sender, currentInput[..(i + 1)]);
+
+                float middle = (left + right) / 2;
+
+                if (relativeX < middle)
+                {
+                    return i;
+                }
+            }
+
+            return currentInput.Length;
+        }
+
         private void DrawTerminalLine(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, TerminalLine line, float lineY)
         {
             float currentX = PaddingLeft;

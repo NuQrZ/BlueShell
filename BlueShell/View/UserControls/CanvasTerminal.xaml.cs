@@ -27,6 +27,7 @@ namespace BlueShell.View.UserControls
         private bool _scrollToBottomPending;
         private bool _followingOutput = true;
         private bool _updatingScrollView;
+        private bool _isPointerSelecting = false;
 
         private readonly DispatcherTimer _dispatcherTimer = new()
         {
@@ -43,6 +44,8 @@ namespace BlueShell.View.UserControls
         public CanvasTerminal()
         {
             InitializeComponent();
+
+            ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.IBeam);
 
             _terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
 
@@ -413,6 +416,50 @@ namespace BlueShell.View.UserControls
             double distanceFromBottom = TerminalScrollView.ScrollableHeight - TerminalScrollView.VerticalOffset;
 
             _followingOutput = distanceFromBottom <= tolerance;
+        }
+
+        private void Terminal_PointerPressed(object sender, PointerRoutedEventArgs eventArgs)
+        {
+            PointerPoint pointerPoint = eventArgs.GetCurrentPoint(Terminal);
+
+            double mouseX = pointerPoint.Position.X;
+            int caretPosition = _terminalRenderer.GetCaretPositionFromX(Terminal, (int)mouseX);
+
+            _isPointerSelecting = pointerPoint.Properties.IsLeftButtonPressed;
+
+            if (!_isPointerSelecting)
+            {
+                return;
+            }
+
+            _terminalViewModel.StartPointerSelection(caretPosition);
+            Terminal.Invalidate();
+        }
+
+        private void Terminal_PointerMoved(object sender, PointerRoutedEventArgs eventArgs)
+        {
+            if (!_isPointerSelecting)
+            {
+                return;
+            }
+
+            double mouseX = eventArgs.GetCurrentPoint(Terminal).Position.X;
+            int caretPosition = _terminalRenderer.GetCaretPositionFromX(Terminal, (float)mouseX);
+
+            _terminalViewModel.UpdatePointerSelection(caretPosition);
+            Terminal.Invalidate();
+        }
+
+        private void Terminal_PointerReleased(object sender, PointerRoutedEventArgs eventArgs)
+        {
+            if (!_isPointerSelecting)
+            {
+                return;
+            }
+
+            _terminalViewModel.ReleasePointerSelection();
+            _isPointerSelecting = false;
+            Terminal.Invalidate();
         }
     }
 }

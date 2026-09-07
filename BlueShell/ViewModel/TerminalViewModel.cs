@@ -263,6 +263,25 @@ namespace BlueShell.ViewModel
             CaretPosition = _currentLine.Length;
         }
 
+        public void StartPointerSelection(int caretPosition)
+        {
+            CaretPosition = caretPosition;
+            SelectionAnchor = CaretPosition;
+        }
+
+        public void UpdatePointerSelection(int caretPosition)
+        {
+            CaretPosition = caretPosition;
+        }
+
+        public void ReleasePointerSelection()
+        {
+            if (!HasSelection)
+            {
+                SelectionAnchor = null;
+            }
+        }
+
         public string TakeCurrentLine()
         {
             string currentLine = _currentLine.ToString();
