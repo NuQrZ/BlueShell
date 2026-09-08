@@ -24,6 +24,10 @@
         SelectHome,
         SelectEnd,
 
+        Copy,
+        Paste,
+        Cut,
+
         GoToHome,
         GoToEnd,
 

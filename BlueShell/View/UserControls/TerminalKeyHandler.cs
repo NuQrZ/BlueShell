@@ -80,6 +80,18 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.ControlDelete;
                 }
+                if (key == VirtualKey.C)
+                {
+                    return TerminalKeyAction.Copy;
+                }
+                if (key == VirtualKey.V)
+                {
+                    return TerminalKeyAction.Paste;
+                }
+                if (key == VirtualKey.X)
+                {
+                    return TerminalKeyAction.Cut;
+                }
             }
 
             if (isShiftPressed)

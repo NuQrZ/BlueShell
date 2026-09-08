@@ -245,6 +245,19 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.Copy:
+                    _terminalViewModel.Copy();
+                    return true;
+
+                case TerminalKeyAction.Paste:
+                    _terminalViewModel.Paste();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.Cut:
+                    _terminalViewModel.Cut();
+                    return true;
+
                 case TerminalKeyAction.GoToHome:
                     _terminalViewModel.GoToHome();
                     Terminal.Invalidate();

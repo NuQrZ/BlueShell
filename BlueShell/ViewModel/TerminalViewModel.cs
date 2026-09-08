@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace BlueShell.ViewModel
 {
@@ -354,6 +355,58 @@ namespace BlueShell.ViewModel
 
             SelectionAnchor ??= CaretPosition;
             CaretPosition = Length;
+        }
+
+        public void Copy()
+        {
+            if (!HasSelection)
+            {
+                return;
+            }
+
+            string copiedText = CurrentLine[SelectionStart..SelectionEnd];
+
+            DataPackage dataPackage = new()
+            {
+                RequestedOperation = DataPackageOperation.Copy
+            };
+
+            dataPackage.SetText(copiedText);
+            Clipboard.SetContent(dataPackage);
+        }
+
+        public async Task PasteAsync()
+        {
+            DataPackageView dataPackageView = Clipboard.GetContent();
+
+            if (!dataPackageView.Contains(StandardDataFormats.Text))
+            {
+                return;
+            }
+
+            string copiedText = await dataPackageView.GetTextAsync();
+
+            InsertText(copiedText);
+        }
+
+        public void Cut()
+        {
+            if (!HasSelection)
+            {
+                return;
+            }
+
+            string copiedText = CurrentLine[SelectionStart..SelectionEnd];
+
+            DataPackage dataPackage = new()
+            {
+                RequestedOperation = DataPackageOperation.Move
+            };
+
+            dataPackage.SetText(copiedText);
+            Clipboard.SetContent(dataPackage);
+
+            DeleteSelection();
         }
 
         public void StartPointerSelection(int caretPosition)
