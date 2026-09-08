@@ -205,6 +205,16 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.Delete:
+                    _terminalViewModel.Delete();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.ControlDelete:
+                    _terminalViewModel.ControlDelete();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.SelectCaretLeft:
                     _terminalViewModel.SelectCaretLeft();
                     Terminal.Invalidate();

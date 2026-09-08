@@ -14,6 +14,9 @@
         MoveCaretWordLeft,
         MoveCaretWordRight,
 
+        Delete,
+        ControlDelete,
+
         SelectWordLeft,
         SelectWordRight,
         SelectCaretLeft,

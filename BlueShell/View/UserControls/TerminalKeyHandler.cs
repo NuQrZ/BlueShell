@@ -76,6 +76,10 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.ControlBackspace;
                 }
+                if (key == VirtualKey.Delete)
+                {
+                    return TerminalKeyAction.ControlDelete;
+                }
             }
 
             if (isShiftPressed)
@@ -106,6 +110,7 @@ namespace BlueShell.View.UserControls
                 VirtualKey.End => TerminalKeyAction.GoToEnd,
                 VirtualKey.Enter => TerminalKeyAction.Submit,
                 VirtualKey.Back => TerminalKeyAction.Backspace,
+                VirtualKey.Delete => TerminalKeyAction.Delete,
                 _ => TerminalKeyAction.None
             };
         }

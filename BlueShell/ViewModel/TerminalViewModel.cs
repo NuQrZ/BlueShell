@@ -13,13 +13,13 @@ namespace BlueShell.ViewModel
     {
         private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
-
-        private bool IsExiting = false;
+        private bool _isExiting = false;
 
         public int? SelectionAnchor { get; private set; }
         public int CaretPosition { get; private set; } = 0;
         public int SelectionStart => SelectionAnchor.HasValue ? Math.Min(SelectionAnchor.Value, CaretPosition) : CaretPosition;
         public int SelectionEnd => SelectionAnchor.HasValue ? Math.Max(SelectionAnchor.Value, CaretPosition) : CaretPosition;
+        public int Length => _currentLine.Length;
 
         public bool IsCommandRunning { get; private set; } = false;
         public bool HasSelection => SelectionAnchor.HasValue && SelectionAnchor.Value != CaretPosition;
@@ -92,7 +92,7 @@ namespace BlueShell.ViewModel
 
             SelectionAnchor = null;
 
-            if (CaretPosition < _currentLine.Length)
+            if (CaretPosition < Length)
             {
                 CaretPosition++;
             }
@@ -112,7 +112,7 @@ namespace BlueShell.ViewModel
 
         public void SelectCaretRight()
         {
-            if (CaretPosition >= _currentLine.Length)
+            if (CaretPosition >= Length)
             {
                 return;
             }
@@ -158,22 +158,75 @@ namespace BlueShell.ViewModel
                 return;
             }
 
-            if (CaretPosition >= _currentLine.Length)
+            if (CaretPosition >= Length)
             {
                 return;
             }
 
             SelectionAnchor = null;
 
-            while (CaretPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
+            while (CaretPosition < Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }
 
-            while (CaretPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
+            while (CaretPosition < Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }
+        }
+
+        public void Delete()
+        {
+            if (Length == 0 || CaretPosition >= Length)
+            {
+                return;
+            }
+
+            if (HasSelection)
+            {
+                DeleteSelection();
+                return;
+            }
+
+            SelectionAnchor = null;
+
+            _currentLine.Remove(CaretPosition, 1);
+        }
+
+        public void ControlDelete()
+        {
+            if (HasSelection)
+            {
+                DeleteSelection();
+                return;
+            }
+
+            SelectionAnchor = null;
+
+            if (CaretPosition >= _currentLine.Length)
+            {
+                return;
+            }
+
+            int endPosition = CaretPosition;
+
+            if (char.IsWhiteSpace(_currentLine[endPosition]))
+            {
+                while (endPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[endPosition]))
+                {
+                    endPosition++;
+                }
+            }
+            else
+            {
+                while (endPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[endPosition]))
+                {
+                    endPosition++;
+                }
+            }
+
+            _currentLine.Remove(CaretPosition, endPosition - CaretPosition);
         }
 
         public void SelectWordLeft()
@@ -198,19 +251,19 @@ namespace BlueShell.ViewModel
 
         public void SelectWordRight()
         {
-            if (CaretPosition >= _currentLine.Length)
+            if (CaretPosition >= Length)
             {
                 return;
             }
 
             SelectionAnchor ??= CaretPosition;
 
-            while (CaretPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
+            while (CaretPosition < Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }
 
-            while (CaretPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
+            while (CaretPosition < Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }
@@ -289,18 +342,18 @@ namespace BlueShell.ViewModel
         public void GoToEnd()
         {
             SelectionAnchor = null;
-            CaretPosition = _currentLine.Length;
+            CaretPosition = Length;
         }
 
         public void SelectEnd()
         {
-            if (CaretPosition > _currentLine.Length)
+            if (CaretPosition > Length)
             {
                 return;
             }
 
             SelectionAnchor ??= CaretPosition;
-            CaretPosition = _currentLine.Length;
+            CaretPosition = Length;
         }
 
         public void StartPointerSelection(int caretPosition)
@@ -336,14 +389,14 @@ namespace BlueShell.ViewModel
 
         public async Task SubmitAsync(string commandLine)
         {
-            if (string.IsNullOrWhiteSpace(commandLine) || IsExiting || IsCommandRunning)
+            if (string.IsNullOrWhiteSpace(commandLine) || _isExiting || IsCommandRunning)
             {
                 return;
             }
 
             if (commandDispatcher.IsExitCommand(commandLine))
             {
-                IsExiting = true;
+                _isExiting = true;
             }
 
             TerminalCommandContext commandContext = contextFactory();
