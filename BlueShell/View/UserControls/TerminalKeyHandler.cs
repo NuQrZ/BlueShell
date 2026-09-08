@@ -50,6 +50,18 @@ namespace BlueShell.View.UserControls
                 return TerminalKeyAction.BlockInput;
             }
 
+            if (isCtrlPressed && isShiftPressed)
+            {
+                if (key == VirtualKey.Left)
+                {
+                    return TerminalKeyAction.SelectWordLeft;
+                }
+                if (key == VirtualKey.Right)
+                {
+                    return TerminalKeyAction.SelectWordRight;
+                }
+            }
+
             if (isCtrlPressed)
             {
                 if (key == VirtualKey.Left)
@@ -70,11 +82,11 @@ namespace BlueShell.View.UserControls
             {
                 if (key == VirtualKey.Left)
                 {
-                    return TerminalKeyAction.SelectWordLeft;
+                    return TerminalKeyAction.SelectCaretLeft;
                 }
                 if (key == VirtualKey.Right)
                 {
-                    return TerminalKeyAction.SelectWordRight;
+                    return TerminalKeyAction.SelectCaretRight;
                 }
                 if (key == VirtualKey.Home)
                 {

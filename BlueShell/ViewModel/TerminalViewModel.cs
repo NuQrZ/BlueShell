@@ -81,18 +81,6 @@ namespace BlueShell.ViewModel
             }
         }
 
-        public void SelectWordLeft()
-        {
-            if (CaretPosition <= 0)
-            {
-                return;
-            }
-
-            SelectionAnchor ??= CaretPosition;
-
-            CaretPosition--;
-        }
-
         public void MoveCaretRight()
         {
             if (HasSelection)
@@ -110,7 +98,19 @@ namespace BlueShell.ViewModel
             }
         }
 
-        public void SelectWordRight()
+        public void SelectCaretLeft()
+        {
+            if (CaretPosition <= 0)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
+
+            CaretPosition--;
+        }
+
+        public void SelectCaretRight()
         {
             if (CaretPosition >= _currentLine.Length)
             {
@@ -158,19 +158,59 @@ namespace BlueShell.ViewModel
                 return;
             }
 
-            SelectionAnchor = null;
-
             if (CaretPosition >= _currentLine.Length)
             {
                 return;
+            }
+
+            SelectionAnchor = null;
+
+            while (CaretPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
+            {
+                CaretPosition++;
             }
 
             while (CaretPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }
+        }
+
+        public void SelectWordLeft()
+        {
+            if (CaretPosition == 0)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
+
+            while (CaretPosition > 0 && char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+            {
+                CaretPosition--;
+            }
+
+            while (CaretPosition > 0 && !char.IsWhiteSpace(_currentLine[CaretPosition - 1]))
+            {
+                CaretPosition--;
+            }
+        }
+
+        public void SelectWordRight()
+        {
+            if (CaretPosition >= _currentLine.Length)
+            {
+                return;
+            }
+
+            SelectionAnchor ??= CaretPosition;
 
             while (CaretPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
+            {
+                CaretPosition++;
+            }
+
+            while (CaretPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
                 CaretPosition++;
             }

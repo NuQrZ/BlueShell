@@ -205,6 +205,16 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.SelectCaretLeft:
+                    _terminalViewModel.SelectCaretLeft();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.SelectCaretRight:
+                    _terminalViewModel.SelectCaretRight();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.SelectWordLeft:
                     _terminalViewModel.SelectWordLeft();
                     Terminal.Invalidate();
