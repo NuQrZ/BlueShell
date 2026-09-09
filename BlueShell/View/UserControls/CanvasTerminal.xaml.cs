@@ -1,5 +1,6 @@
 using BlueShell.Helpers;
 using BlueShell.Model;
+using BlueShell.Services;
 using BlueShell.Terminal;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Implementations;
@@ -53,7 +54,8 @@ namespace BlueShell.View.UserControls
 
             _terminalViewModel = new TerminalViewModel(
                 dispatcher,
-                () => new TerminalCommandContext(_terminalOutput, _tabModel, CancellationToken.None));
+                () => new TerminalCommandContext(_terminalOutput, _tabModel, CancellationToken.None),
+                new ClipboardService());
 
             _terminalRenderer = new TerminalRenderer(_terminalBuffer, _terminalViewModel, () => ActualTheme);
 
@@ -245,12 +247,22 @@ namespace BlueShell.View.UserControls
                     Terminal.Invalidate();
                     return true;
 
+                case TerminalKeyAction.SelectAll:
+                    _terminalViewModel.SelectAll();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.ClearSelection:
+                    _terminalViewModel.ClearSelection();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.Copy:
                     _terminalViewModel.Copy();
                     return true;
 
                 case TerminalKeyAction.Paste:
-                    _terminalViewModel.Paste();
+                    await _terminalViewModel.PasteAsync();
                     Terminal.Invalidate();
                     return true;
 

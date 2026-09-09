@@ -92,6 +92,10 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.Cut;
                 }
+                if (key == VirtualKey.A)
+                {
+                    return TerminalKeyAction.SelectAll;
+                }
             }
 
             if (isShiftPressed)
@@ -116,6 +120,7 @@ namespace BlueShell.View.UserControls
 
             return key switch
             {
+                VirtualKey.Escape => TerminalKeyAction.ClearSelection,
                 VirtualKey.Left => TerminalKeyAction.MoveCaretLeft,
                 VirtualKey.Right => TerminalKeyAction.MoveCaretRight,
                 VirtualKey.Home => TerminalKeyAction.GoToHome,

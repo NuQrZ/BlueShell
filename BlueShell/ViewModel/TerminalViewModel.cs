@@ -1,16 +1,17 @@
-﻿using BlueShell.Terminal.Abstractions;
+﻿using BlueShell.Services;
+using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace BlueShell.ViewModel
 {
     public sealed class TerminalViewModel(
         TerminalCommandDispatcher commandDispatcher,
-        Func<TerminalCommandContext> contextFactory)
+        Func<TerminalCommandContext> contextFactory,
+        IClipboardService clipboardService)
     {
         private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
@@ -56,13 +57,6 @@ namespace BlueShell.ViewModel
 
             _currentLine.Insert(CaretPosition, text);
             CaretPosition += text.Length;
-        }
-
-        public void ClearCurrentLine()
-        {
-            _currentLine.Clear();
-            SelectionAnchor = null;
-            CaretPosition = 0;
         }
 
         public void MoveCaretLeft()
@@ -159,12 +153,12 @@ namespace BlueShell.ViewModel
                 return;
             }
 
+            SelectionAnchor = null;
+
             if (CaretPosition >= Length)
             {
                 return;
             }
-
-            SelectionAnchor = null;
 
             while (CaretPosition < Length && char.IsWhiteSpace(_currentLine[CaretPosition]))
             {
@@ -179,11 +173,6 @@ namespace BlueShell.ViewModel
 
         public void Delete()
         {
-            if (Length == 0 || CaretPosition >= Length)
-            {
-                return;
-            }
-
             if (HasSelection)
             {
                 DeleteSelection();
@@ -191,6 +180,11 @@ namespace BlueShell.ViewModel
             }
 
             SelectionAnchor = null;
+
+            if (CaretPosition >= Length)
+            {
+                return;
+            }
 
             _currentLine.Remove(CaretPosition, 1);
         }
@@ -268,6 +262,24 @@ namespace BlueShell.ViewModel
             {
                 CaretPosition++;
             }
+        }
+
+        public void SelectAll()
+        {
+            if (Length == 0)
+            {
+                SelectionAnchor = null;
+                CaretPosition = 0;
+                return;
+            }
+
+            SelectionAnchor = 0;
+            CaretPosition = Length;
+        }
+
+        public void ClearSelection()
+        {
+            SelectionAnchor = null;
         }
 
         public void Backspace()
@@ -348,7 +360,7 @@ namespace BlueShell.ViewModel
 
         public void SelectEnd()
         {
-            if (CaretPosition > Length)
+            if (CaretPosition >= Length)
             {
                 return;
             }
@@ -364,27 +376,16 @@ namespace BlueShell.ViewModel
                 return;
             }
 
-            string copiedText = CurrentLine[SelectionStart..SelectionEnd];
+            string text = CurrentLine[SelectionStart..SelectionEnd];
 
-            DataPackage dataPackage = new()
-            {
-                RequestedOperation = DataPackageOperation.Copy
-            };
-
-            dataPackage.SetText(copiedText);
-            Clipboard.SetContent(dataPackage);
+            clipboardService.Copy(text);
         }
 
         public async Task PasteAsync()
         {
-            DataPackageView dataPackageView = Clipboard.GetContent();
+            string copiedText = await clipboardService.GetTextAsync();
 
-            if (!dataPackageView.Contains(StandardDataFormats.Text))
-            {
-                return;
-            }
-
-            string copiedText = await dataPackageView.GetTextAsync();
+            copiedText = copiedText.Replace("\r", "").Replace("\n", " ");
 
             InsertText(copiedText);
         }
@@ -396,28 +397,22 @@ namespace BlueShell.ViewModel
                 return;
             }
 
-            string copiedText = CurrentLine[SelectionStart..SelectionEnd];
+            string text = CurrentLine[SelectionStart..SelectionEnd];
 
-            DataPackage dataPackage = new()
-            {
-                RequestedOperation = DataPackageOperation.Move
-            };
-
-            dataPackage.SetText(copiedText);
-            Clipboard.SetContent(dataPackage);
+            clipboardService.Copy(text);
 
             DeleteSelection();
         }
 
         public void StartPointerSelection(int caretPosition)
         {
-            CaretPosition = caretPosition;
+            CaretPosition = Math.Clamp(caretPosition, 0, Length);
             SelectionAnchor = CaretPosition;
         }
 
         public void UpdatePointerSelection(int caretPosition)
         {
-            CaretPosition = caretPosition;
+            CaretPosition = Math.Clamp(caretPosition, 0, Length);
         }
 
         public void ReleasePointerSelection()

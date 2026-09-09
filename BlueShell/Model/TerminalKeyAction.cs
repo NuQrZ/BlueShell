@@ -23,6 +23,8 @@
         SelectCaretRight,
         SelectHome,
         SelectEnd,
+        SelectAll,
+        ClearSelection,
 
         Copy,
         Paste,
