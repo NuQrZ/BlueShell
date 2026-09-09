@@ -1,4 +1,4 @@
-﻿namespace BlueShell.Model
+﻿namespace BlueShell.Model.Terminal
 {
     public enum TerminalKeyAction
     {
@@ -29,6 +29,9 @@
         Copy,
         Paste,
         Cut,
+
+        Undo,
+        Redo,
 
         GoToHome,
         GoToEnd,

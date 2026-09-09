@@ -1,7 +1,7 @@
 ﻿using Windows.UI;
 using Windows.UI.Text;
 
-namespace BlueShell.Model
+namespace BlueShell.Model.Terminal
 {
     public sealed class TerminalLineSegment(string text, Color? color, FontWeight fontWeight, FontStyle fontStyle)
     {

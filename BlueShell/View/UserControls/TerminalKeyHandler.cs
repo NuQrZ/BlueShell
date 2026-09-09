@@ -1,4 +1,4 @@
-﻿using BlueShell.Model;
+﻿using BlueShell.Model.Terminal;
 using Microsoft.UI.Input;
 using Windows.System;
 
@@ -95,6 +95,14 @@ namespace BlueShell.View.UserControls
                 if (key == VirtualKey.A)
                 {
                     return TerminalKeyAction.SelectAll;
+                }
+                if (key == VirtualKey.Z)
+                {
+                    return TerminalKeyAction.Undo;
+                }
+                if (key == VirtualKey.Y)
+                {
+                    return TerminalKeyAction.Redo;
                 }
             }
 

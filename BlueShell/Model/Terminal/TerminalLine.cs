@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BlueShell.Model
+namespace BlueShell.Model.Terminal
 {
     public sealed class TerminalLine
     {

@@ -1,4 +1,5 @@
-﻿using BlueShell.Services;
+﻿using BlueShell.Model.Terminal;
+using BlueShell.Services;
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using System;
@@ -17,6 +18,8 @@ namespace BlueShell.ViewModel
         private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
         private List<string> _commandHistory = [];
+        private Stack<TerminalInputState> _undoStack = [];
+        private Stack<TerminalInputState> _redoStack = [];
         private int _historyIndex = 0;
         private bool _isExiting = false;
 
@@ -54,8 +57,33 @@ namespace BlueShell.ViewModel
             SelectionAnchor = null;
         }
 
+        private TerminalInputState GetCurrentState()
+        {
+            return new TerminalInputState(
+                CurrentLine,
+                CaretPosition,
+                SelectionAnchor);
+        }
+
+        private void RestoreState(TerminalInputState state)
+        {
+            ClearCurrentLine();
+            _currentLine.AppendLine(state.Text);
+
+            CaretPosition = state.CaretPosition;
+            SelectionAnchor = state.SelectionAnchor;
+        }
+
+        private void SaveUndoState()
+        {
+            _undoStack.Push(GetCurrentState());
+            _redoStack.Clear();
+        }
+
         public void InsertText(string text)
         {
+            SaveUndoState();
+
             if (HasSelection)
             {
                 DeleteSelection();
@@ -183,6 +211,8 @@ namespace BlueShell.ViewModel
 
         public void Delete()
         {
+            SaveUndoState();
+
             if (HasSelection)
             {
                 DeleteSelection();
@@ -201,6 +231,8 @@ namespace BlueShell.ViewModel
 
         public void ControlDelete()
         {
+            SaveUndoState();
+
             if (HasSelection)
             {
                 DeleteSelection();
@@ -294,6 +326,8 @@ namespace BlueShell.ViewModel
 
         public void Backspace()
         {
+            SaveUndoState();
+
             if (HasSelection)
             {
                 DeleteSelection();
@@ -311,6 +345,8 @@ namespace BlueShell.ViewModel
 
         public void ControlBackspace()
         {
+            SaveUndoState();
+
             if (HasSelection)
             {
                 DeleteSelection();
@@ -393,6 +429,8 @@ namespace BlueShell.ViewModel
 
         public async Task PasteAsync()
         {
+            SaveUndoState();
+
             string copiedText = await clipboardService.GetTextAsync();
 
             copiedText = copiedText.Replace("\r", "").Replace("\n", " ");
@@ -402,6 +440,8 @@ namespace BlueShell.ViewModel
 
         public void Cut()
         {
+            SaveUndoState();
+
             if (!HasSelection)
             {
                 return;
@@ -461,6 +501,32 @@ namespace BlueShell.ViewModel
             {
                 SelectionAnchor = null;
             }
+        }
+
+        public void Undo()
+        {
+            if (_undoStack.Count == 0)
+            {
+                return;
+            }
+
+            _redoStack.Push(GetCurrentState());
+
+            TerminalInputState previousState = _undoStack.Pop();
+            RestoreState(previousState);
+        }
+
+        public void Redo()
+        {
+            if (_redoStack.Count == 0)
+            {
+                return;
+            }
+
+            _undoStack.Push(GetCurrentState());
+
+            TerminalInputState nextState = _redoStack.Pop();
+            RestoreState(nextState);
         }
 
         public string TakeCurrentLine()

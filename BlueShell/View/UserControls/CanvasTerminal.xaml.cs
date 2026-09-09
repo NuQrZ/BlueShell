@@ -1,5 +1,6 @@
 using BlueShell.Helpers;
 using BlueShell.Model;
+using BlueShell.Model.Terminal;
 using BlueShell.Services;
 using BlueShell.Terminal;
 using BlueShell.Terminal.Abstractions;
@@ -289,12 +290,12 @@ namespace BlueShell.View.UserControls
                     return true;
 
                 case TerminalKeyAction.ArrowUp:
-                    _terminalViewModel.HistoryArrowUp();
+                    _terminalViewModel.HistoryPrevious();
                     Terminal.Invalidate();
                     return true;
 
                 case TerminalKeyAction.ArrowDown:
-                    _terminalViewModel.HistoryArrowDown();
+                    _terminalViewModel.HistoryNext();
                     Terminal.Invalidate();
                     return true;
 
@@ -305,6 +306,16 @@ namespace BlueShell.View.UserControls
 
                 case TerminalKeyAction.ControlBackspace:
                     _terminalViewModel.ControlBackspace();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.Undo:
+                    _terminalViewModel.Undo();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.Redo:
+                    _terminalViewModel.Redo();
                     Terminal.Invalidate();
                     return true;
 

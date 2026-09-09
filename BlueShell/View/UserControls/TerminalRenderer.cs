@@ -1,5 +1,5 @@
 ﻿using BlueShell.Helpers;
-using BlueShell.Model;
+using BlueShell.Model.Terminal;
 using BlueShell.Terminal;
 using BlueShell.ViewModel;
 using Microsoft.Graphics.Canvas;

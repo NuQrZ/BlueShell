@@ -1,4 +1,4 @@
-﻿using BlueShell.Model;
+﻿using BlueShell.Model.Terminal;
 using System;
 using System.Collections.Generic;
 using Windows.UI;
