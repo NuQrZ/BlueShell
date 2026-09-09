@@ -2,6 +2,7 @@
 using BlueShell.Terminal.Abstractions;
 using BlueShell.Terminal.Infrastructure;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ namespace BlueShell.ViewModel
     {
         private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
+        private List<string> _commandHistory = [];
+        private int _historyIndex = 0;
         private bool _isExiting = false;
 
         public int? SelectionAnchor { get; private set; }
@@ -27,6 +30,13 @@ namespace BlueShell.ViewModel
         public bool HasSelection => SelectionAnchor.HasValue && SelectionAnchor.Value != CaretPosition;
 
         public string CurrentLine => _currentLine.ToString();
+
+        private void ClearCurrentLine()
+        {
+            _currentLine.Clear();
+            SelectionAnchor = null;
+            CaretPosition = 0;
+        }
 
         private void DeleteSelection()
         {
@@ -404,6 +414,36 @@ namespace BlueShell.ViewModel
             DeleteSelection();
         }
 
+        public void HistoryPrevious()
+        {
+            if (_commandHistory.Count == 0 || _historyIndex <= 0)
+            {
+                return;
+            }
+
+            _historyIndex--;
+
+            ClearCurrentLine();
+            InsertText(_commandHistory[_historyIndex]);
+        }
+
+        public void HistoryNext()
+        {
+            if (_commandHistory.Count == 0 || _historyIndex >= _commandHistory.Count)
+            {
+                return;
+            }
+
+            _historyIndex++;
+
+            ClearCurrentLine();
+
+            if (_historyIndex < _commandHistory.Count)
+            {
+                InsertText(_commandHistory[_historyIndex]);
+            }
+        }
+
         public void StartPointerSelection(int caretPosition)
         {
             CaretPosition = Math.Clamp(caretPosition, 0, Length);
@@ -427,10 +467,7 @@ namespace BlueShell.ViewModel
         {
             string currentLine = _currentLine.ToString();
 
-            _currentLine.Clear();
-
-            SelectionAnchor = null;
-            CaretPosition = 0;
+            ClearCurrentLine();
 
             return currentLine;
         }
@@ -456,6 +493,9 @@ namespace BlueShell.ViewModel
 
             _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = new CancellationTokenSource();
+
+            _commandHistory.Add(commandLine);
+            _historyIndex++;
 
             IsCommandRunning = true;
 

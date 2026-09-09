@@ -288,6 +288,16 @@ namespace BlueShell.View.UserControls
                     ScrollPageDown();
                     return true;
 
+                case TerminalKeyAction.ArrowUp:
+                    _terminalViewModel.HistoryArrowUp();
+                    Terminal.Invalidate();
+                    return true;
+
+                case TerminalKeyAction.ArrowDown:
+                    _terminalViewModel.HistoryArrowDown();
+                    Terminal.Invalidate();
+                    return true;
+
                 case TerminalKeyAction.Backspace:
                     _terminalViewModel.Backspace();
                     Terminal.Invalidate();

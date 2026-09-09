@@ -36,6 +36,9 @@
         PageUp,
         PageDown,
 
+        ArrowUp,
+        ArrowDown,
+
         Backspace,
         ControlBackspace,
         Submit

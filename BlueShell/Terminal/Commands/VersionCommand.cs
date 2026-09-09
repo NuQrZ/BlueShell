@@ -11,7 +11,7 @@ namespace BlueShell.Terminal.Commands
         public Task Execute(TerminalCommandContext context, string? commandArguments)
         {
             context.TerminalOutput.WriteLine("");
-            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.1.4].", TerminalMessageKind.Info);
+            context.TerminalOutput.WriteLine(">> Currently installed version: [3.0.1.5].", TerminalMessageKind.Info);
             context.TerminalOutput.WriteLine("");
             return Task.FromResult(0);
         }
