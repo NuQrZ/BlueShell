@@ -47,8 +47,6 @@ namespace BlueShell.View.UserControls
         {
             InitializeComponent();
 
-            ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.IBeam);
-
             _terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
 
             TerminalCommandDispatcher dispatcher = new(TerminalCommandRegistry.CreateDefault());
@@ -64,7 +62,7 @@ namespace BlueShell.View.UserControls
             _terminalBuffer.Changed += TerminalBuffer_Changed;
         }
 
-        public void BuildTabModel(TabModel? tabModel)
+        public void SetTabModel(TabModel? tabModel)
         {
             _tabModel = tabModel;
         }
@@ -138,14 +136,14 @@ namespace BlueShell.View.UserControls
             terminalLine.AddSegment(
                 new TerminalLineSegment(
                     TerminalRenderer.Prompt,
-                    _terminalRenderer.DefaultColor,
+                    _terminalRenderer.DefaultTextColor,
                     FontWeights.Normal,
                     FontStyle.Normal));
 
             terminalLine.AddSegment(
                 new TerminalLineSegment(
                     currentLine,
-                    TerminalUtilities.GetCommandColor(currentLine, ActualTheme, _terminalRenderer.DefaultColor),
+                    TerminalUtilities.GetCommandColor(currentLine, _terminalRenderer.ResolvedTheme, _terminalRenderer.DefaultTextColor),
                     FontWeights.Normal,
                     FontStyle.Normal));
 
@@ -269,6 +267,7 @@ namespace BlueShell.View.UserControls
 
                 case TerminalKeyAction.Cut:
                     _terminalViewModel.Cut();
+                    Terminal.Invalidate();
                     return true;
 
                 case TerminalKeyAction.GoToHome:
@@ -289,12 +288,12 @@ namespace BlueShell.View.UserControls
                     ScrollPageDown();
                     return true;
 
-                case TerminalKeyAction.ArrowUp:
+                case TerminalKeyAction.HistoryPrevious:
                     _terminalViewModel.HistoryPrevious();
                     Terminal.Invalidate();
                     return true;
 
-                case TerminalKeyAction.ArrowDown:
+                case TerminalKeyAction.HistoryNext:
                     _terminalViewModel.HistoryNext();
                     Terminal.Invalidate();
                     return true;
@@ -356,7 +355,7 @@ namespace BlueShell.View.UserControls
                 return;
             }
 
-            _terminalRenderer.CaretVisible = _terminalRenderer.CaretVisible;
+            _terminalRenderer.CaretVisible = !_terminalRenderer.CaretVisible;
 
             Terminal.Invalidate();
         }
@@ -446,7 +445,7 @@ namespace BlueShell.View.UserControls
 
         private void TerminalUserControl_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
-            if (TerminalKeyHandler.IsKeyDown(VirtualKey.Control))
+            if (!TerminalKeyHandler.IsKeyDown(VirtualKey.Control))
             {
                 return;
             }
@@ -486,17 +485,28 @@ namespace BlueShell.View.UserControls
 
         private void Terminal_PointerPressed(object sender, PointerRoutedEventArgs eventArgs)
         {
-            PointerPoint pointerPoint = eventArgs.GetCurrentPoint(Terminal);
-
-            double mouseX = pointerPoint.Position.X;
-            int caretPosition = _terminalRenderer.GetCaretPositionFromX(Terminal, (int)mouseX);
-
-            _isPointerSelecting = pointerPoint.Properties.IsLeftButtonPressed;
-
-            if (!_isPointerSelecting)
+            if (_terminalViewModel.IsCommandRunning)
             {
                 return;
             }
+
+            PointerPoint pointerPoint = eventArgs.GetCurrentPoint(Terminal);
+
+            bool isInCurrentLine = _terminalRenderer.IsPointOnCurrentInput((float)pointerPoint.Position.Y);
+            bool isLeftButtonPressed = pointerPoint.Properties.IsLeftButtonPressed;
+
+            if (!isLeftButtonPressed || !isInCurrentLine)
+            {
+                _isPointerSelecting = false;
+                return;
+            }
+
+            _isPointerSelecting = true;
+
+            double mouseX = pointerPoint.Position.X;
+            int caretPosition = _terminalRenderer.GetCaretPositionFromX(Terminal, (float)mouseX);
+
+            Terminal.CapturePointer(eventArgs.Pointer);
 
             _terminalViewModel.StartPointerSelection(caretPosition);
             Terminal.Invalidate();
@@ -524,8 +534,24 @@ namespace BlueShell.View.UserControls
             }
 
             _terminalViewModel.ReleasePointerSelection();
+            Terminal.ReleasePointerCapture(eventArgs.Pointer);
             _isPointerSelecting = false;
             Terminal.Invalidate();
+        }
+
+        private void Terminal_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            _isPointerSelecting = false;
+        }
+
+        private void Terminal_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.IBeam);
+        }
+
+        private void Terminal_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            ProtectedCursor = null;
         }
     }
 }

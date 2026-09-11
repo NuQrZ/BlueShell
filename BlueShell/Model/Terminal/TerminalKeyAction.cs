@@ -39,8 +39,8 @@
         PageUp,
         PageDown,
 
-        ArrowUp,
-        ArrowDown,
+        HistoryPrevious,
+        HistoryNext,
 
         Backspace,
         ControlBackspace,

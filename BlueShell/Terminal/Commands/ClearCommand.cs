@@ -8,7 +8,7 @@ namespace BlueShell.Terminal.Commands
         public string CommandName => "Clear";
         public bool NoArguments => true;
 
-        public Task Execute(TerminalCommandContext context, string? commandArguments = null)
+        public Task ExecuteAsync(TerminalCommandContext context, string? commandArguments = null)
         {
             context.TerminalOutput.Clear();
             return Task.FromResult(0);

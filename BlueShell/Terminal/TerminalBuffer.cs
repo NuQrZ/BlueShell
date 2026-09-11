@@ -8,23 +8,24 @@ namespace BlueShell.Terminal
 {
     public sealed class TerminalBuffer
     {
-        private const int MaxHistorySize = 100_010;
+        private const int MaxLineCount = 100_000;
+        private const int TrimLineCount = 10_000;
 
         private bool _startNewOutputLine = true;
 
-        private readonly List<TerminalLine> _completedLines = [];
+        private readonly List<TerminalLine> _lines = [];
 
         public event EventHandler? Changed;
 
-        public int Count => _completedLines.Count;
+        public int Count => _lines.Count;
 
-        public IReadOnlyList<TerminalLine> Lines => _completedLines;
+        public IReadOnlyList<TerminalLine> Lines => _lines;
 
         public void AddTerminalLine(TerminalLine line)
         {
-            _completedLines.Add(line);
+            _lines.Add(line);
             _startNewOutputLine = true;
-            TrimHistory();
+            TrimBuffer();
 
             OnChanged();
         }
@@ -41,7 +42,7 @@ namespace BlueShell.Terminal
 
             line.AddSegment(segment);
 
-            TrimHistory();
+            TrimBuffer();
 
             OnChanged();
         }
@@ -59,7 +60,7 @@ namespace BlueShell.Terminal
             line.AddSegment(segment);
             _startNewOutputLine = true;
 
-            TrimHistory();
+            TrimBuffer();
 
             OnChanged();
         }
@@ -77,49 +78,51 @@ namespace BlueShell.Terminal
                         fontWeight,
                         fontStyle));
 
-                _completedLines.Add(line);
+                _lines.Add(line);
             }
 
             _startNewOutputLine = true;
 
-            TrimHistory();
+            TrimBuffer();
 
             OnChanged();
         }
 
         public void Clear()
         {
-            _completedLines.Clear();
+            _lines.Clear();
 
             _startNewOutputLine = true;
 
             OnChanged();
         }
 
-        private void TrimHistory()
+        private void TrimBuffer()
         {
-            int totalCount = _completedLines.Count;
-            int overflow = totalCount - MaxHistorySize;
-
-            if (totalCount > MaxHistorySize)
+            if (_lines.Count <= MaxLineCount)
             {
-                _completedLines.RemoveRange(0, overflow);
+                return;
             }
+
+            int overflow = _lines.Count - MaxLineCount;
+            int removeCount = Math.Max(overflow, TrimLineCount);
+
+            _lines.RemoveRange(0, Math.Min(removeCount, _lines.Count));
         }
 
         private TerminalLine GetCurrentOutputLine()
         {
-            if (_startNewOutputLine || _completedLines.Count == 0)
+            if (_startNewOutputLine || _lines.Count == 0)
             {
                 TerminalLine line = new();
 
-                _completedLines.Add(line);
+                _lines.Add(line);
                 _startNewOutputLine = false;
 
                 return line;
             }
 
-            return _completedLines[^1];
+            return _lines[^1];
         }
 
         private void OnChanged()

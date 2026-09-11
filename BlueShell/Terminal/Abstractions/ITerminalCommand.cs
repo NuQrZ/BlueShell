@@ -6,6 +6,6 @@ namespace BlueShell.Terminal.Abstractions
     {
         public string CommandName { get; }
         public bool NoArguments { get; }
-        public Task Execute(TerminalCommandContext context, string? commandArguments = null);
+        public Task ExecuteAsync(TerminalCommandContext context, string? commandArguments = null);
     }
 }

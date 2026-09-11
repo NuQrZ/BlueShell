@@ -8,8 +8,8 @@ namespace BlueShell.Terminal.Abstractions
         TabModel? tabModel,
         CancellationToken cancellationToken)
     {
-        public readonly ITerminalOutput TerminalOutput = terminalOutput;
-        public readonly TabModel? TabModel = tabModel;
-        public CancellationToken CancellationToken = cancellationToken;
+        public ITerminalOutput TerminalOutput { get; } = terminalOutput;
+        public TabModel? TabModel { get; } = tabModel;
+        public CancellationToken CancellationToken { get; } = cancellationToken;
     }
 }

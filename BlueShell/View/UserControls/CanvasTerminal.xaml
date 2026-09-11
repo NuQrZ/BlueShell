@@ -28,7 +28,10 @@
             RegionsInvalidated="Terminal_RegionsInvalidated"
                 PointerPressed="Terminal_PointerPressed"
                 PointerMoved="Terminal_PointerMoved"
-                PointerReleased="Terminal_PointerReleased"/>
+                PointerReleased="Terminal_PointerReleased"
+                PointerCaptureLost="Terminal_PointerCaptureLost"
+                PointerEntered="Terminal_PointerEntered"
+                PointerExited="Terminal_PointerExited"/>
         </ScrollViewer>
     </Grid>
 </UserControl>

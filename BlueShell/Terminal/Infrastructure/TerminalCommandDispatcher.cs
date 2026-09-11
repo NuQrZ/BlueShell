@@ -58,7 +58,7 @@ namespace BlueShell.Terminal.Infrastructure
                 return;
             }
 
-            await terminalCommand.Execute(context, commandLine);
+            await terminalCommand.ExecuteAsync(context, commandLine);
         }
     }
 }

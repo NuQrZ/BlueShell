@@ -17,11 +17,12 @@ namespace BlueShell.ViewModel
     {
         private CancellationTokenSource? _cancellationTokenSource;
         private readonly StringBuilder _currentLine = new();
-        private List<string> _commandHistory = [];
-        private Stack<TerminalInputState> _undoStack = [];
-        private Stack<TerminalInputState> _redoStack = [];
+        private readonly List<string> _commandHistory = [];
+        private readonly Stack<TerminalInputSnapshot> _undoStack = [];
+        private readonly Stack<TerminalInputSnapshot> _redoStack = [];
         private int _historyIndex = 0;
         private bool _isExiting = false;
+        private string _historyDraft = "";
 
         public int? SelectionAnchor { get; private set; }
         public int CaretPosition { get; private set; } = 0;
@@ -41,6 +42,17 @@ namespace BlueShell.ViewModel
             CaretPosition = 0;
         }
 
+        private void SetCurrentLine(string text)
+        {
+            _currentLine.Clear();
+            _currentLine.Append(text);
+
+            SelectionAnchor = null;
+            CaretPosition = Length;
+
+            ClearUndoHistory();
+        }
+
         private void DeleteSelection()
         {
             if (!HasSelection)
@@ -57,18 +69,18 @@ namespace BlueShell.ViewModel
             SelectionAnchor = null;
         }
 
-        private TerminalInputState GetCurrentState()
+        private TerminalInputSnapshot GetCurrentState()
         {
-            return new TerminalInputState(
+            return new TerminalInputSnapshot(
                 CurrentLine,
                 CaretPosition,
                 SelectionAnchor);
         }
 
-        private void RestoreState(TerminalInputState state)
+        private void RestoreState(TerminalInputSnapshot state)
         {
             ClearCurrentLine();
-            _currentLine.AppendLine(state.Text);
+            _currentLine.Append(state.Text);
 
             CaretPosition = state.CaretPosition;
             SelectionAnchor = state.SelectionAnchor;
@@ -80,8 +92,19 @@ namespace BlueShell.ViewModel
             _redoStack.Clear();
         }
 
+        private void ClearUndoHistory()
+        {
+            _undoStack.Clear();
+            _redoStack.Clear();
+        }
+
         public void InsertText(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
             SaveUndoState();
 
             if (HasSelection)
@@ -211,6 +234,12 @@ namespace BlueShell.ViewModel
 
         public void Delete()
         {
+            if (!HasSelection && CaretPosition >= Length)
+            {
+                SelectionAnchor = null;
+                return;
+            }
+
             SaveUndoState();
 
             if (HasSelection)
@@ -220,17 +249,17 @@ namespace BlueShell.ViewModel
             }
 
             SelectionAnchor = null;
-
-            if (CaretPosition >= Length)
-            {
-                return;
-            }
-
             _currentLine.Remove(CaretPosition, 1);
         }
 
         public void ControlDelete()
         {
+            if (!HasSelection && CaretPosition >= Length)
+            {
+                SelectionAnchor = null;
+                return;
+            }
+
             SaveUndoState();
 
             if (HasSelection)
@@ -241,23 +270,18 @@ namespace BlueShell.ViewModel
 
             SelectionAnchor = null;
 
-            if (CaretPosition >= _currentLine.Length)
-            {
-                return;
-            }
-
             int endPosition = CaretPosition;
 
             if (char.IsWhiteSpace(_currentLine[endPosition]))
             {
-                while (endPosition < _currentLine.Length && char.IsWhiteSpace(_currentLine[endPosition]))
+                while (endPosition < Length && char.IsWhiteSpace(_currentLine[endPosition]))
                 {
                     endPosition++;
                 }
             }
             else
             {
-                while (endPosition < _currentLine.Length && !char.IsWhiteSpace(_currentLine[endPosition]))
+                while (endPosition < Length && !char.IsWhiteSpace(_currentLine[endPosition]))
                 {
                     endPosition++;
                 }
@@ -326,6 +350,12 @@ namespace BlueShell.ViewModel
 
         public void Backspace()
         {
+            if (!HasSelection && CaretPosition == 0)
+            {
+                SelectionAnchor = null;
+                return;
+            }
+
             SaveUndoState();
 
             if (HasSelection)
@@ -336,15 +366,18 @@ namespace BlueShell.ViewModel
 
             SelectionAnchor = null;
 
-            if (CaretPosition > 0)
-            {
-                _currentLine.Remove(CaretPosition - 1, 1);
-                CaretPosition--;
-            }
+            _currentLine.Remove(CaretPosition - 1, 1);
+            CaretPosition--;
         }
 
         public void ControlBackspace()
         {
+            if (!HasSelection && CaretPosition == 0)
+            {
+                SelectionAnchor = null;
+                return;
+            }
+
             SaveUndoState();
 
             if (HasSelection)
@@ -354,11 +387,6 @@ namespace BlueShell.ViewModel
             }
 
             SelectionAnchor = null;
-
-            if (CaretPosition == 0)
-            {
-                return;
-            }
 
             int endPosition = CaretPosition;
 
@@ -377,8 +405,7 @@ namespace BlueShell.ViewModel
                 }
             }
 
-            int length = endPosition - CaretPosition;
-            _currentLine.Remove(CaretPosition, length);
+            _currentLine.Remove(CaretPosition, endPosition - CaretPosition);
         }
 
         public void GoToHome()
@@ -429,8 +456,6 @@ namespace BlueShell.ViewModel
 
         public async Task PasteAsync()
         {
-            SaveUndoState();
-
             string copiedText = await clipboardService.GetTextAsync();
 
             copiedText = copiedText.Replace("\r", "").Replace("\n", " ");
@@ -440,17 +465,16 @@ namespace BlueShell.ViewModel
 
         public void Cut()
         {
-            SaveUndoState();
-
             if (!HasSelection)
             {
                 return;
             }
 
+            SaveUndoState();
+
             string text = CurrentLine[SelectionStart..SelectionEnd];
 
             clipboardService.Copy(text);
-
             DeleteSelection();
         }
 
@@ -461,10 +485,14 @@ namespace BlueShell.ViewModel
                 return;
             }
 
+            if (_historyIndex == _commandHistory.Count)
+            {
+                _historyDraft = CurrentLine;
+            }
+
             _historyIndex--;
 
-            ClearCurrentLine();
-            InsertText(_commandHistory[_historyIndex]);
+            SetCurrentLine(_commandHistory[_historyIndex]);
         }
 
         public void HistoryNext()
@@ -476,12 +504,13 @@ namespace BlueShell.ViewModel
 
             _historyIndex++;
 
-            ClearCurrentLine();
-
-            if (_historyIndex < _commandHistory.Count)
+            if (_historyIndex == _commandHistory.Count)
             {
-                InsertText(_commandHistory[_historyIndex]);
+                SetCurrentLine(_historyDraft);
+                return;
             }
+
+            SetCurrentLine(_commandHistory[_historyIndex]);
         }
 
         public void StartPointerSelection(int caretPosition)
@@ -512,7 +541,7 @@ namespace BlueShell.ViewModel
 
             _redoStack.Push(GetCurrentState());
 
-            TerminalInputState previousState = _undoStack.Pop();
+            TerminalInputSnapshot previousState = _undoStack.Pop();
             RestoreState(previousState);
         }
 
@@ -525,7 +554,7 @@ namespace BlueShell.ViewModel
 
             _undoStack.Push(GetCurrentState());
 
-            TerminalInputState nextState = _redoStack.Pop();
+            TerminalInputSnapshot nextState = _redoStack.Pop();
             RestoreState(nextState);
         }
 
@@ -534,6 +563,7 @@ namespace BlueShell.ViewModel
             string currentLine = _currentLine.ToString();
 
             ClearCurrentLine();
+            ClearUndoHistory();
 
             return currentLine;
         }
@@ -561,7 +591,8 @@ namespace BlueShell.ViewModel
             _cancellationTokenSource = new CancellationTokenSource();
 
             _commandHistory.Add(commandLine);
-            _historyIndex++;
+            _historyIndex = _commandHistory.Count;
+            _historyDraft = "";
 
             IsCommandRunning = true;
 

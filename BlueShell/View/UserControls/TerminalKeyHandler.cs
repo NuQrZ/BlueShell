@@ -128,8 +128,8 @@ namespace BlueShell.View.UserControls
 
             return key switch
             {
-                VirtualKey.Up => TerminalKeyAction.ArrowUp,
-                VirtualKey.Down => TerminalKeyAction.ArrowDown,
+                VirtualKey.Up => TerminalKeyAction.HistoryPrevious,
+                VirtualKey.Down => TerminalKeyAction.HistoryNext,
                 VirtualKey.Escape => TerminalKeyAction.ClearSelection,
                 VirtualKey.Left => TerminalKeyAction.MoveCaretLeft,
                 VirtualKey.Right => TerminalKeyAction.MoveCaretRight,

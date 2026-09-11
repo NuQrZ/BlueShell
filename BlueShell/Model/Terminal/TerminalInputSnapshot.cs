@@ -1,6 +1,6 @@
 ﻿namespace BlueShell.Model.Terminal
 {
-    public sealed record TerminalInputState(
+    public sealed record TerminalInputSnapshot(
         string Text,
         int CaretPosition,
         int? SelectionAnchor);

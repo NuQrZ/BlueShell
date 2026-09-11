@@ -10,7 +10,7 @@ namespace BlueShell.Terminal.Commands
 
         public bool NoArguments => true;
 
-        public async Task Execute(TerminalCommandContext context, string? commandArguments = null)
+        public async Task ExecuteAsync(TerminalCommandContext context, string? commandArguments = null)
         {
             const int totalLines = 10_000;
             const int linesPerFrame = 777;

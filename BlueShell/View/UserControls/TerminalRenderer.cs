@@ -37,13 +37,30 @@ namespace BlueShell.View.UserControls
             set => _textFormat.FontSize = value;
         }
         public float LineHeight => _textFormat.FontSize + 4;
-        public Color DefaultColor
+        public Color DefaultTextColor
         {
             get
             {
-                ElementTheme theme = GetCurrentTheme();
+                return ResolvedTheme == ElementTheme.Light
+                    ? Colors.Black
+                    : Colors.White;
+            }
+        }
 
-                return theme == ElementTheme.Light ? Colors.Black : Colors.White;
+        public ElementTheme ResolvedTheme
+        {
+            get
+            {
+                ElementTheme theme = themeProvider();
+
+                if (theme == ElementTheme.Default)
+                {
+                    return Application.Current.RequestedTheme == ApplicationTheme.Dark
+                        ? ElementTheme.Dark
+                        : ElementTheme.Light;
+                }
+
+                return theme;
             }
         }
 
@@ -114,6 +131,13 @@ namespace BlueShell.View.UserControls
             return currentInput.Length;
         }
 
+        public bool IsPointOnCurrentInput(float y)
+        {
+            float inputY = PaddingTop + terminalBuffer.Count * LineHeight;
+
+            return y >= inputY && y <= inputY + LineHeight;
+        }
+
         private void DrawTerminalLine(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, TerminalLine line, float lineY)
         {
             float currentX = PaddingLeft;
@@ -127,7 +151,7 @@ namespace BlueShell.View.UserControls
                     segment.Text,
                     currentX,
                     lineY,
-                    segment.Color ?? DefaultColor,
+                    segment.Color ?? DefaultTextColor,
                     _textFormat);
 
                 float segmentWidth = MeasureTextWidth(sender, segment.Text);
@@ -184,14 +208,14 @@ namespace BlueShell.View.UserControls
 
             DrawSelection(sender, drawingSession, promptY, promptWidth, lineHeight);
 
-            DrawText(sender, drawingSession, promptY, promptWidth);
+            DrawCurrentInput(sender, drawingSession, promptY, promptWidth);
 
             DrawCaret(sender, drawingSession, promptY, promptWidth, caretOffsetY, caretHeight);
         }
 
         private void DrawPrompt(CanvasDrawingSession drawingSession, float promptY)
         {
-            drawingSession.DrawText(Prompt, PaddingLeft, promptY, DefaultColor, _textFormat);
+            drawingSession.DrawText(Prompt, PaddingLeft, promptY, DefaultTextColor, _textFormat);
         }
 
         private void DrawSelection(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, float promptY, float promptWidth, float lineHeight)
@@ -213,15 +237,18 @@ namespace BlueShell.View.UserControls
 
             Rect selectionRect = new(selectionX, promptY, selectedTextWidth, lineHeight);
 
-            drawingSession.DrawRectangle(selectionRect, Colors.DodgerBlue);
-
             drawingSession.FillRectangle(selectionRect, Colors.DodgerBlue);
         }
 
-        private void DrawText(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, float promptY, float promptWidth)
+        private void DrawCurrentInput(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, float promptY, float promptWidth)
         {
             string currentInput = terminalViewModel!.CurrentLine;
             float currentX = PaddingLeft + promptWidth;
+
+            Color textColor = TerminalUtilities.GetCommandColor(
+                currentInput,
+                ResolvedTheme,
+                DefaultTextColor);
 
             if (terminalViewModel.HasSelection)
             {
@@ -232,13 +259,13 @@ namespace BlueShell.View.UserControls
                 float textBeforeSelectionWidth = MeasureTextWidth(sender, textBeforeSelection);
                 float selectedTextWidth = MeasureTextWidth(sender, selectedText);
 
-                drawingSession.DrawText(textBeforeSelection, currentX, promptY, DefaultColor, _textFormat);
+                drawingSession.DrawText(textBeforeSelection, currentX, promptY, textColor, _textFormat);
                 currentX += textBeforeSelectionWidth;
 
                 drawingSession.DrawText(selectedText, currentX, promptY, GetSelectionColor(), _textFormat);
                 currentX += selectedTextWidth;
 
-                drawingSession.DrawText(textAfterSelection, currentX, promptY, DefaultColor, _textFormat);
+                drawingSession.DrawText(textAfterSelection, currentX, promptY, textColor, _textFormat);
             }
             else
             {
@@ -246,7 +273,7 @@ namespace BlueShell.View.UserControls
                     currentInput,
                     PaddingLeft + promptWidth,
                     promptY,
-                    TerminalUtilities.GetCommandColor(currentInput, GetCurrentTheme(), DefaultColor),
+                    textColor,
                     _textFormat);
             }
         }
@@ -271,35 +298,12 @@ namespace BlueShell.View.UserControls
                 promptY + caretOffsetY,
                 caretX,
                 promptY + caretOffsetY + caretHeight,
-                DefaultColor);
-        }
-
-        private ElementTheme GetCurrentTheme()
-        {
-            ElementTheme theme = themeProvider();
-
-            if (theme == ElementTheme.Default)
-            {
-                theme = Application.Current.RequestedTheme == ApplicationTheme.Dark
-                    ? ElementTheme.Dark
-                    : ElementTheme.Light;
-            }
-
-            return theme;
+                DefaultTextColor);
         }
 
         private Color GetSelectionColor()
         {
-            ElementTheme theme = GetCurrentTheme();
-
-            if (theme == ElementTheme.Default)
-            {
-                theme = Application.Current.RequestedTheme == ApplicationTheme.Dark
-                    ? ElementTheme.Dark
-                    : ElementTheme.Light;
-            }
-
-            return theme == ElementTheme.Dark ? Colors.Black : Colors.White;
+            return ResolvedTheme == ElementTheme.Dark ? Colors.Black : Colors.White;
         }
     }
 }

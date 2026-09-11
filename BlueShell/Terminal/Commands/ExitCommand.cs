@@ -9,7 +9,7 @@ namespace BlueShell.Terminal.Commands
         public string CommandName => "Exit";
         public bool NoArguments => true;
 
-        public async Task Execute(TerminalCommandContext context, string? commandArguments = null)
+        public async Task ExecuteAsync(TerminalCommandContext context, string? commandArguments = null)
         {
             context.TerminalOutput.WriteLine();
             context.TerminalOutput.WriteLine("Exiting BlueShell...", TerminalMessageKind.Error);

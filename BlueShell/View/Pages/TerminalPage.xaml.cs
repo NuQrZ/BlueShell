@@ -22,7 +22,7 @@ namespace BlueShell.View.Pages
                 _tabViewModel = tabViewModel;
             }
 
-            TerminalControl.BuildTabModel(_tabViewModel?.Tab);
+            TerminalControl.SetTabModel(_tabViewModel?.Tab);
         }
     }
 }
