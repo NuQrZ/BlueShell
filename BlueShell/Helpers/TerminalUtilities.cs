@@ -33,5 +33,17 @@ namespace BlueShell.Helpers
                     ? color
                     : defaultColor;
         }
+
+        public static string GetCommandName(string input)
+        {
+            int separatorIndex = input.IndexOf(' ');
+
+            if (separatorIndex < 0)
+            {
+                return input;
+            }
+
+            return input[..separatorIndex];
+        }
     }
 }

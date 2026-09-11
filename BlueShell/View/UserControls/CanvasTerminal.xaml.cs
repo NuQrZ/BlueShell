@@ -17,6 +17,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.System;
+using Windows.UI;
 using Windows.UI.Text;
 
 namespace BlueShell.View.UserControls
@@ -140,10 +141,17 @@ namespace BlueShell.View.UserControls
                     FontWeights.Normal,
                     FontStyle.Normal));
 
+            string commandName = TerminalUtilities.GetCommandName(currentLine);
+
+            Color commandColor = TerminalUtilities.GetCommandColor(
+                commandName,
+                _terminalRenderer.ResolvedTheme,
+                _terminalRenderer.DefaultTextColor);
+
             terminalLine.AddSegment(
                 new TerminalLineSegment(
                     currentLine,
-                    TerminalUtilities.GetCommandColor(currentLine, _terminalRenderer.ResolvedTheme, _terminalRenderer.DefaultTextColor),
+                    commandColor,
                     FontWeights.Normal,
                     FontStyle.Normal));
 
