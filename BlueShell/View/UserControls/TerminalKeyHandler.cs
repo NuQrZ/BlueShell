@@ -104,6 +104,10 @@ namespace BlueShell.View.UserControls
                 {
                     return TerminalKeyAction.Redo;
                 }
+                if (key == VirtualKey.Space)
+                {
+                    return TerminalKeyAction.ShowCompletionsBox;
+                }
             }
 
             if (isShiftPressed)

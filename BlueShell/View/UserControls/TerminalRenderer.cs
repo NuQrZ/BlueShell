@@ -138,6 +138,21 @@ namespace BlueShell.View.UserControls
             return y >= inputY && y <= inputY + LineHeight;
         }
 
+        public Point GetCaretPoint(CanvasVirtualControl sender)
+        {
+            string textBeforeCaret = terminalViewModel.CurrentLine[..terminalViewModel.CaretPosition];
+
+            float promptWidth = MeasureTextWidth(sender, Prompt);
+            float textBeforeCaretWidth = MeasureTextWidth(sender, textBeforeCaret);
+
+            int lineCount = terminalBuffer.Count;
+
+            float x = PaddingLeft + promptWidth + textBeforeCaretWidth;
+            float y = PaddingTop + lineCount * LineHeight;
+
+            return new Point(x, y);
+        }
+
         private void DrawTerminalLine(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, TerminalLine line, float lineY)
         {
             float currentX = PaddingLeft;
@@ -245,36 +260,50 @@ namespace BlueShell.View.UserControls
             string currentInput = terminalViewModel!.CurrentLine;
             float currentX = PaddingLeft + promptWidth;
 
-            Color textColor = TerminalUtilities.GetCommandColor(
-                currentInput,
-                ResolvedTheme,
-                DefaultTextColor);
+            int index = 0;
+            int length = currentInput.Length;
 
-            if (terminalViewModel.HasSelection)
+            while (index < length)
             {
-                string textBeforeSelection = currentInput[..terminalViewModel.SelectionStart];
-                string selectedText = currentInput[terminalViewModel.SelectionStart..terminalViewModel.SelectionEnd];
-                string textAfterSelection = currentInput[terminalViewModel.SelectionEnd..];
+                int start = index;
+                bool isWhitespace = char.IsWhiteSpace(currentInput[index]);
 
-                float textBeforeSelectionWidth = MeasureTextWidth(sender, textBeforeSelection);
-                float selectedTextWidth = MeasureTextWidth(sender, selectedText);
+                while (index < length && char.IsWhiteSpace(currentInput[index]) == isWhitespace)
+                {
+                    index++;
+                }
 
-                drawingSession.DrawText(textBeforeSelection, currentX, promptY, textColor, _textFormat);
-                currentX += textBeforeSelectionWidth;
+                string text = currentInput[start..index];
 
-                drawingSession.DrawText(selectedText, currentX, promptY, GetSelectionColor(), _textFormat);
-                currentX += selectedTextWidth;
+                Color color = isWhitespace
+                    ? DefaultTextColor
+                    : TerminalUtilities.GetCommandColor(
+                        text,
+                        ResolvedTheme,
+                        DefaultTextColor);
 
-                drawingSession.DrawText(textAfterSelection, currentX, promptY, textColor, _textFormat);
+                DrawInputSegment(sender, drawingSession, text, start, index, ref currentX, promptY, color);
             }
-            else
+        }
+
+        private void DrawInputSegment(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, string text, int start, int end, ref float currentX, float promptY, Color color)
+        {
+            if (!terminalViewModel.HasSelection || end <= terminalViewModel.SelectionStart || start >= terminalViewModel.SelectionEnd)
             {
-                drawingSession.DrawText(
-                    currentInput,
-                    PaddingLeft + promptWidth,
-                    promptY,
-                    textColor,
-                    _textFormat);
+                drawingSession.DrawText(text, currentX, promptY, color, _textFormat);
+                currentX += MeasureTextWidth(sender, text);
+                return;
+            }
+
+            for (int i = start; i < end; i++)
+            {
+                string character = terminalViewModel.CurrentLine[i].ToString();
+
+                bool isSelected = i >= terminalViewModel.SelectionStart && i < terminalViewModel.SelectionEnd;
+
+                drawingSession.DrawText(character, currentX, promptY, isSelected ? GetSelectionColor() : color, _textFormat);
+
+                currentX += MeasureTextWidth(sender, character);
             }
         }
 

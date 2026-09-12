@@ -6,12 +6,14 @@ namespace BlueShell.Terminal.Infrastructure
 {
     public static class TerminalCommandRegistry
     {
-        public static IReadOnlyList<ITerminalCommand> CreateDefault() =>
+        private static readonly IReadOnlyList<ITerminalCommand> _commands =
         [
             new ClearCommand(),
+            new VersionCommand(),
             new ExitCommand(),
-            new SimulateCommand(),
-            new VersionCommand()
+            new SimulateCommand()
         ];
+
+        public static IReadOnlyList<ITerminalCommand> Commands => _commands;
     }
 }

@@ -13,9 +13,13 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Text;
@@ -39,6 +43,7 @@ namespace BlueShell.View.UserControls
 
         private TabModel? _tabModel;
 
+        private IReadOnlyList<ITerminalCommand> _commands => TerminalCommandRegistry.Commands;
         private readonly ITerminalOutput _terminalOutput;
         private readonly TerminalViewModel _terminalViewModel;
         private readonly TerminalRenderer _terminalRenderer;
@@ -50,7 +55,7 @@ namespace BlueShell.View.UserControls
 
             _terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
 
-            TerminalCommandDispatcher dispatcher = new(TerminalCommandRegistry.CreateDefault());
+            TerminalCommandDispatcher dispatcher = new(TerminalCommandRegistry.Commands);
 
             _terminalViewModel = new TerminalViewModel(
                 dispatcher,
@@ -61,6 +66,7 @@ namespace BlueShell.View.UserControls
 
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _terminalBuffer.Changed += TerminalBuffer_Changed;
+            _terminalViewModel.CurrentLineChanged += TerminalViewModel_CurrentLineChanged;
         }
 
         public void SetTabModel(TabModel? tabModel)
@@ -128,6 +134,39 @@ namespace BlueShell.View.UserControls
             });
         }
 
+        private void AddInputSegments(TerminalLine terminalLine, string input)
+        {
+            int index = 0;
+
+            while (index < input.Length)
+            {
+                int start = index;
+                bool isWhitespace = char.IsWhiteSpace(input[index]);
+
+                while (index < input.Length &&
+                       char.IsWhiteSpace(input[index]) == isWhitespace)
+                {
+                    index++;
+                }
+
+                string text = input[start..index];
+
+                Color color = isWhitespace
+                    ? _terminalRenderer.DefaultTextColor
+                    : TerminalUtilities.GetCommandColor(
+                        text,
+                        _terminalRenderer.ResolvedTheme,
+                        _terminalRenderer.DefaultTextColor);
+
+                terminalLine.AddSegment(
+                    new TerminalLineSegment(
+                        text,
+                        color,
+                        FontWeights.Normal,
+                        FontStyle.Normal));
+            }
+        }
+
         private async Task SubmitLineAsync()
         {
             string currentLine = _terminalViewModel.TakeCurrentLine();
@@ -141,19 +180,7 @@ namespace BlueShell.View.UserControls
                     FontWeights.Normal,
                     FontStyle.Normal));
 
-            string commandName = TerminalUtilities.GetCommandName(currentLine);
-
-            Color commandColor = TerminalUtilities.GetCommandColor(
-                commandName,
-                _terminalRenderer.ResolvedTheme,
-                _terminalRenderer.DefaultTextColor);
-
-            terminalLine.AddSegment(
-                new TerminalLineSegment(
-                    currentLine,
-                    commandColor,
-                    FontWeights.Normal,
-                    FontStyle.Normal));
+            AddInputSegments(terminalLine, currentLine);
 
             _terminalBuffer.AddTerminalLine(terminalLine);
 
@@ -168,6 +195,58 @@ namespace BlueShell.View.UserControls
                 _terminalRenderer.CaretVisible = true;
                 RefreshTerminal(true);
             }
+        }
+
+        private void TerminalViewModel_CurrentLineChanged(object? sender, EventArgs e)
+        {
+            string currentToken = _terminalViewModel.GetCurrentToken();
+
+            IEnumerable<ITerminalCommand> commands = [];
+
+            if (currentToken != "")
+            {
+                commands = _commands.Where(command =>
+                   command.CommandName.StartsWith(
+                       currentToken,
+                       StringComparison.OrdinalIgnoreCase));
+            }
+
+            ShowCompletionPopup(commands);
+        }
+
+        private void ShowCompletionPopup(IEnumerable<ITerminalCommand> commands)
+        {
+            CompletionList.Items.Clear();
+
+            foreach (ITerminalCommand command in commands)
+            {
+                CompletionList.Items.Add(command.CommandName);
+            }
+
+            if (CompletionList.Items.Count == 0)
+            {
+                CompletionPopup.IsOpen = false;
+                return;
+            }
+
+            CompletionList.ItemClick += CompletionList_ItemClick;
+
+            CompletionList.SelectedIndex = 0;
+
+            Point caretPoint = _terminalRenderer.GetCaretPoint(Terminal);
+
+            GeneralTransform transform = Terminal.TransformToVisual(RootGrid);
+            Point popupPoint = transform.TransformPoint(caretPoint);
+
+            CompletionPopup.HorizontalOffset = popupPoint.X;
+            CompletionPopup.VerticalOffset = popupPoint.Y + _terminalRenderer.LineHeight;
+
+            CompletionPopup.IsOpen = true;
+        }
+
+        private void CompletionList_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            AcceptCompletion();
         }
 
         private async Task<bool> HandleKeyActionAsync(TerminalKeyAction terminalKeyAction)
@@ -329,6 +408,11 @@ namespace BlueShell.View.UserControls
                 case TerminalKeyAction.Submit:
                     await SubmitLineAsync();
                     return true;
+
+                case TerminalKeyAction.ShowCompletionsBox:
+                    ShowCompletionPopup(_commands);
+                    return true;
+
                 default:
                     return false;
             }
@@ -354,6 +438,41 @@ namespace BlueShell.View.UserControls
                 TerminalScrollView.VerticalOffset + scrollAmount);
 
             TerminalScrollView.ChangeView(null, targetOffset, null, true);
+        }
+
+        private void MoveCompletionSelection(int direction)
+        {
+            if (CompletionList.Items.Count == 0)
+            {
+                return;
+            }
+
+            int index = CompletionList.SelectedIndex + direction;
+
+            if (index < 0)
+            {
+                index = CompletionList.Items.Count - 1;
+            }
+            else if (index >= CompletionList.Items.Count)
+            {
+                index = 0;
+            }
+
+            CompletionList.SelectedIndex = index;
+            CompletionList.ScrollIntoView(CompletionList.SelectedItem);
+        }
+
+        private void AcceptCompletion()
+        {
+            if (CompletionList.SelectedItem is not string command)
+            {
+                return;
+            }
+
+            _terminalViewModel.ReplaceCurrentToken(command);
+
+            CompletionPopup.IsOpen = false;
+            Terminal.Invalidate();
         }
 
         private void DispatcherTimer_Tick(object? sender, object e)
@@ -446,7 +565,37 @@ namespace BlueShell.View.UserControls
 
         private async void TerminalUserControl_KeyDown(object sender, KeyRoutedEventArgs eventArgs)
         {
-            TerminalKeyAction terminalKeyAction = TerminalKeyHandler.HandleKey(eventArgs.OriginalKey, eventArgs.Key, _terminalViewModel.IsCommandRunning);
+            if (CompletionPopup.IsOpen)
+            {
+                switch (eventArgs.Key)
+                {
+                    case VirtualKey.Up:
+                        MoveCompletionSelection(-1);
+                        eventArgs.Handled = true;
+                        return;
+
+                    case VirtualKey.Down:
+                        MoveCompletionSelection(1);
+                        eventArgs.Handled = true;
+                        return;
+
+                    case VirtualKey.Tab:
+                        AcceptCompletion();
+                        eventArgs.Handled = true;
+                        return;
+
+                    case VirtualKey.Escape:
+                        CompletionPopup.IsOpen = false;
+                        eventArgs.Handled = true;
+                        return;
+                }
+            }
+
+            TerminalKeyAction terminalKeyAction =
+                TerminalKeyHandler.HandleKey(
+                    eventArgs.OriginalKey,
+                    eventArgs.Key,
+                    _terminalViewModel.IsCommandRunning);
 
             eventArgs.Handled = await HandleKeyActionAsync(terminalKeyAction);
         }
@@ -544,6 +693,12 @@ namespace BlueShell.View.UserControls
             _terminalViewModel.ReleasePointerSelection();
             Terminal.ReleasePointerCapture(eventArgs.Pointer);
             _isPointerSelecting = false;
+            Terminal.Invalidate();
+        }
+
+        private void Terminal_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        {
+            _terminalViewModel.SelectAll();
             Terminal.Invalidate();
         }
 

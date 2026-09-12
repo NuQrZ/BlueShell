@@ -17,21 +17,60 @@
     PointerWheelChanged="TerminalUserControl_PointerWheelChanged"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <ScrollViewer x:Name="TerminalScrollView"
                       VerticalScrollMode="Auto"
                       VerticalScrollBarVisibility="Auto"
                       SizeChanged="TerminalScrollView_SizeChanged"
                       ViewChanged="TerminalScrollView_ViewChanged">
-            <graphicsControls:CanvasVirtualControl
-            x:Name="Terminal"
-            RegionsInvalidated="Terminal_RegionsInvalidated"
+            <graphicsControls:CanvasVirtualControl 
+                x:Name="Terminal"
+                RegionsInvalidated="Terminal_RegionsInvalidated"
                 PointerPressed="Terminal_PointerPressed"
                 PointerMoved="Terminal_PointerMoved"
                 PointerReleased="Terminal_PointerReleased"
                 PointerCaptureLost="Terminal_PointerCaptureLost"
                 PointerEntered="Terminal_PointerEntered"
-                PointerExited="Terminal_PointerExited"/>
+                PointerExited="Terminal_PointerExited"
+                IsDoubleTapEnabled="True"
+                DoubleTapped="Terminal_DoubleTapped"/>
         </ScrollViewer>
+
+        <Popup x:Name="CompletionPopup"
+               IsLightDismissEnabled="False">
+
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="4">
+
+                <ListView x:Name="CompletionList"
+          SelectionMode="Single"
+          IsTabStop="False"
+          AllowFocusOnInteraction="False"
+          MaxHeight="250">
+
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="MinHeight" Value="0"/>
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="Padding" Value="8,4"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                       FontFamily="Cascadia Mono"
+                       FontSize="13"/>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
+        </Popup>
     </Grid>
 </UserControl>

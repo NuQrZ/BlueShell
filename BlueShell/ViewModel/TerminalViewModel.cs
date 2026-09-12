@@ -35,11 +35,19 @@ namespace BlueShell.ViewModel
 
         public string CurrentLine => _currentLine.ToString();
 
+        public event EventHandler? CurrentLineChanged;
+
+        private void OnCurrentLineChanged()
+        {
+            CurrentLineChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         private void ClearCurrentLine()
         {
             _currentLine.Clear();
             SelectionAnchor = null;
             CaretPosition = 0;
+            OnCurrentLineChanged();
         }
 
         private void SetCurrentLine(string text)
@@ -51,6 +59,7 @@ namespace BlueShell.ViewModel
             CaretPosition = Length;
 
             ClearUndoHistory();
+            OnCurrentLineChanged();
         }
 
         private void DeleteSelection()
@@ -67,6 +76,7 @@ namespace BlueShell.ViewModel
 
             CaretPosition = SelectionStart;
             SelectionAnchor = null;
+            OnCurrentLineChanged();
         }
 
         private TerminalInputSnapshot GetCurrentState()
@@ -79,11 +89,13 @@ namespace BlueShell.ViewModel
 
         private void RestoreState(TerminalInputSnapshot state)
         {
-            ClearCurrentLine();
+            _currentLine.Clear();
             _currentLine.Append(state.Text);
 
             CaretPosition = state.CaretPosition;
             SelectionAnchor = state.SelectionAnchor;
+
+            OnCurrentLineChanged();
         }
 
         private void SaveUndoState()
@@ -96,6 +108,57 @@ namespace BlueShell.ViewModel
         {
             _undoStack.Clear();
             _redoStack.Clear();
+        }
+
+        public string GetCurrentToken()
+        {
+            if (Length == 0)
+            {
+                return "";
+            }
+
+            int start = CaretPosition;
+
+            while (start > 0 && !char.IsWhiteSpace(_currentLine[start - 1]))
+            {
+                start--;
+            }
+
+            int end = CaretPosition;
+
+            while (end < Length && !char.IsWhiteSpace(_currentLine[end]))
+            {
+                end++;
+            }
+
+            return _currentLine.ToString(start, end - start);
+        }
+
+        public void ReplaceCurrentToken(string completedCommand)
+        {
+            int start = CaretPosition;
+
+            while (start > 0 && !char.IsWhiteSpace(_currentLine[start]))
+            {
+                start--;
+            }
+
+            int end = CaretPosition;
+
+            while (end < Length && !char.IsWhiteSpace(_currentLine[end]))
+            {
+                end++;
+            }
+
+            SaveUndoState();
+
+            _currentLine.Remove(start, end - start);
+            _currentLine.Insert(start, completedCommand);
+
+            CaretPosition += start + completedCommand.Length;
+            SelectionAnchor = null;
+
+            OnCurrentLineChanged();
         }
 
         public void InsertText(string text)
@@ -118,6 +181,7 @@ namespace BlueShell.ViewModel
 
             _currentLine.Insert(CaretPosition, text);
             CaretPosition += text.Length;
+            OnCurrentLineChanged();
         }
 
         public void MoveCaretLeft()
@@ -250,6 +314,7 @@ namespace BlueShell.ViewModel
 
             SelectionAnchor = null;
             _currentLine.Remove(CaretPosition, 1);
+            OnCurrentLineChanged();
         }
 
         public void ControlDelete()
@@ -288,6 +353,7 @@ namespace BlueShell.ViewModel
             }
 
             _currentLine.Remove(CaretPosition, endPosition - CaretPosition);
+            OnCurrentLineChanged();
         }
 
         public void SelectWordLeft()
@@ -368,6 +434,7 @@ namespace BlueShell.ViewModel
 
             _currentLine.Remove(CaretPosition - 1, 1);
             CaretPosition--;
+            OnCurrentLineChanged();
         }
 
         public void ControlBackspace()
@@ -406,6 +473,7 @@ namespace BlueShell.ViewModel
             }
 
             _currentLine.Remove(CaretPosition, endPosition - CaretPosition);
+            OnCurrentLineChanged();
         }
 
         public void GoToHome()

@@ -44,6 +44,8 @@
 
         Backspace,
         ControlBackspace,
-        Submit
+        Submit,
+
+        ShowCompletionsBox
     }
 }
