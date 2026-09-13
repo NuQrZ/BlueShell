@@ -15,6 +15,7 @@
     LostFocus="TerminalUserControl_LostFocus"
     PointerPressed="TerminalUserControl_PointerPressed"
     PointerWheelChanged="TerminalUserControl_PointerWheelChanged"
+    ActualThemeChanged="TerminalUserControl_ActualThemeChanged"
     mc:Ignorable="d">
 
     <Grid x:Name="RootGrid">
@@ -46,10 +47,12 @@
                     Padding="4">
 
                 <ListView x:Name="CompletionList"
-          SelectionMode="Single"
-          IsTabStop="False"
-          AllowFocusOnInteraction="False"
-          MaxHeight="250">
+                          SelectionMode="Single"
+                          IsTabStop="False"
+                          AllowFocusOnInteraction="False"
+                          MaxHeight="250"
+                          IsItemClickEnabled="True"
+                          ItemClick="CompletionList_ItemClick">
 
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
@@ -65,8 +68,8 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}"
-                       FontFamily="Cascadia Mono"
-                       FontSize="13"/>
+                                       FontFamily="Cascadia Mono"
+                                       FontSize="13"/>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>

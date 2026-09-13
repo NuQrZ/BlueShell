@@ -43,7 +43,7 @@ namespace BlueShell.View.UserControls
 
         private TabModel? _tabModel;
 
-        private IReadOnlyList<ITerminalCommand> _commands => TerminalCommandRegistry.Commands;
+        private IReadOnlyList<ITerminalCommand> Commands => TerminalCommandRegistry.Commands;
         private readonly ITerminalOutput _terminalOutput;
         private readonly TerminalViewModel _terminalViewModel;
         private readonly TerminalRenderer _terminalRenderer;
@@ -67,6 +67,7 @@ namespace BlueShell.View.UserControls
             _dispatcherTimer.Tick += DispatcherTimer_Tick;
             _terminalBuffer.Changed += TerminalBuffer_Changed;
             _terminalViewModel.CurrentLineChanged += TerminalViewModel_CurrentLineChanged;
+            _terminalViewModel.CaretPositionChanged += TerminalViewModel_CaretPositionChanged;
         }
 
         public void SetTabModel(TabModel? tabModel)
@@ -197,7 +198,7 @@ namespace BlueShell.View.UserControls
             }
         }
 
-        private void TerminalViewModel_CurrentLineChanged(object? sender, EventArgs e)
+        private IEnumerable<ITerminalCommand> GetCommandSuggestions()
         {
             string currentToken = _terminalViewModel.GetCurrentToken();
 
@@ -205,17 +206,26 @@ namespace BlueShell.View.UserControls
 
             if (currentToken != "")
             {
-                commands = _commands.Where(command =>
+                commands = Commands.Where(command =>
                    command.CommandName.StartsWith(
                        currentToken,
                        StringComparison.OrdinalIgnoreCase));
             }
 
-            ShowCompletionPopup(commands);
+            foreach (ITerminalCommand command in commands)
+            {
+                if (command.CommandName == currentToken)
+                {
+                    return [];
+                }
+            }
+
+            return commands;
         }
 
         private void ShowCompletionPopup(IEnumerable<ITerminalCommand> commands)
         {
+            CompletionPopup.IsOpen = false;
             CompletionList.Items.Clear();
 
             foreach (ITerminalCommand command in commands)
@@ -242,11 +252,6 @@ namespace BlueShell.View.UserControls
             CompletionPopup.VerticalOffset = popupPoint.Y + _terminalRenderer.LineHeight;
 
             CompletionPopup.IsOpen = true;
-        }
-
-        private void CompletionList_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            AcceptCompletion();
         }
 
         private async Task<bool> HandleKeyActionAsync(TerminalKeyAction terminalKeyAction)
@@ -410,7 +415,7 @@ namespace BlueShell.View.UserControls
                     return true;
 
                 case TerminalKeyAction.ShowCompletionsBox:
-                    ShowCompletionPopup(_commands);
+                    ShowCompletionPopup(Commands);
                     return true;
 
                 default:
@@ -484,6 +489,21 @@ namespace BlueShell.View.UserControls
 
             _terminalRenderer.CaretVisible = !_terminalRenderer.CaretVisible;
 
+            Terminal.Invalidate();
+        }
+
+        private void TerminalViewModel_CurrentLineChanged(object? sender, EventArgs e)
+        {
+            ShowCompletionPopup(GetCommandSuggestions());
+        }
+
+        private void TerminalViewModel_CaretPositionChanged(object? sender, EventArgs e)
+        {
+            ShowCompletionPopup(GetCommandSuggestions());
+        }
+
+        private void TerminalUserControl_ActualThemeChanged(FrameworkElement sender, object args)
+        {
             Terminal.Invalidate();
         }
 
@@ -715,6 +735,19 @@ namespace BlueShell.View.UserControls
         private void Terminal_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             ProtectedCursor = null;
+        }
+
+        private void CompletionList_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is not string command)
+            {
+                return;
+            }
+
+            _terminalViewModel.ReplaceCurrentToken(command);
+
+            CompletionPopup.IsOpen = false;
+            Terminal.Invalidate();
         }
     }
 }

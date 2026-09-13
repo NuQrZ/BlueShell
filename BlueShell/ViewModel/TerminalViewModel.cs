@@ -21,11 +21,27 @@ namespace BlueShell.ViewModel
         private readonly Stack<TerminalInputSnapshot> _undoStack = [];
         private readonly Stack<TerminalInputSnapshot> _redoStack = [];
         private int _historyIndex = 0;
+        private int _caretPosition = 0;
         private bool _isExiting = false;
         private string _historyDraft = "";
 
         public int? SelectionAnchor { get; private set; }
-        public int CaretPosition { get; private set; } = 0;
+
+        public int CaretPosition
+        {
+            get => _caretPosition;
+
+            private set
+            {
+                if (_caretPosition == value)
+                {
+                    return;
+                }
+
+                _caretPosition = value;
+                OnCaretPositionChanged();
+            }
+        }
         public int SelectionStart => SelectionAnchor.HasValue ? Math.Min(SelectionAnchor.Value, CaretPosition) : CaretPosition;
         public int SelectionEnd => SelectionAnchor.HasValue ? Math.Max(SelectionAnchor.Value, CaretPosition) : CaretPosition;
         public int Length => _currentLine.Length;
@@ -36,10 +52,16 @@ namespace BlueShell.ViewModel
         public string CurrentLine => _currentLine.ToString();
 
         public event EventHandler? CurrentLineChanged;
+        public event EventHandler? CaretPositionChanged;
 
         private void OnCurrentLineChanged()
         {
             CurrentLineChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnCaretPositionChanged()
+        {
+            CaretPositionChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void ClearCurrentLine()
@@ -138,7 +160,7 @@ namespace BlueShell.ViewModel
         {
             int start = CaretPosition;
 
-            while (start > 0 && !char.IsWhiteSpace(_currentLine[start]))
+            while (start > 0 && !char.IsWhiteSpace(_currentLine[start - 1]))
             {
                 start--;
             }
@@ -155,7 +177,7 @@ namespace BlueShell.ViewModel
             _currentLine.Remove(start, end - start);
             _currentLine.Insert(start, completedCommand);
 
-            CaretPosition += start + completedCommand.Length;
+            CaretPosition = start + completedCommand.Length;
             SelectionAnchor = null;
 
             OnCurrentLineChanged();
@@ -561,6 +583,8 @@ namespace BlueShell.ViewModel
             _historyIndex--;
 
             SetCurrentLine(_commandHistory[_historyIndex]);
+
+            OnCurrentLineChanged();
         }
 
         public void HistoryNext()
@@ -579,6 +603,8 @@ namespace BlueShell.ViewModel
             }
 
             SetCurrentLine(_commandHistory[_historyIndex]);
+
+            OnCurrentLineChanged();
         }
 
         public void StartPointerSelection(int caretPosition)

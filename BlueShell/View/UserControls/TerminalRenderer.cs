@@ -81,6 +81,8 @@ namespace BlueShell.View.UserControls
 
                     float lineY = PaddingTop + i * lineHeight;
 
+
+
                     DrawTerminalLine(sender, drawingSession, line, lineY);
                 }
 
@@ -162,11 +164,15 @@ namespace BlueShell.View.UserControls
                 _textFormat.FontWeight = segment.FontWeight;
                 _textFormat.FontStyle = segment.FontStyle;
 
+                Color color = segment.Color.HasValue
+                    ? GetThemeAdjustedColor(segment.Color.Value)
+                    : DefaultTextColor;
+
                 drawingSession.DrawText(
                     segment.Text,
                     currentX,
                     lineY,
-                    segment.Color ?? DefaultTextColor,
+                    color,
                     _textFormat);
 
                 float segmentWidth = MeasureTextWidth(sender, segment.Text);
@@ -333,6 +339,45 @@ namespace BlueShell.View.UserControls
         private Color GetSelectionColor()
         {
             return ResolvedTheme == ElementTheme.Dark ? Colors.Black : Colors.White;
+        }
+
+        private Color GetThemeAdjustedColor(Color color)
+        {
+            return ResolvedTheme == ElementTheme.Dark
+                ? Lighten(color, 0.50)
+                : Darken(color, 0.55);
+        }
+
+        private static Color Darken(Color color, double amount)
+        {
+            if (color == Colors.White)
+            {
+                return Colors.Black;
+            }
+
+            amount = Math.Clamp(amount, 0, 1);
+
+            return Color.FromArgb(
+                color.A,
+                (byte)(color.R * (1 - amount)),
+                (byte)(color.G * (1 - amount)),
+                (byte)(color.B * (1 - amount)));
+        }
+
+        private static Color Lighten(Color color, double amount)
+        {
+            if (color == Colors.Black)
+            {
+                return Colors.White;
+            }
+
+            amount = Math.Clamp(amount, 0, 1);
+
+            return Color.FromArgb(
+                color.A,
+                (byte)(color.R + (255 - color.R) * amount),
+                (byte)(color.G + (255 - color.G) * amount),
+                (byte)(color.B + (255 - color.B) * amount));
         }
     }
 }

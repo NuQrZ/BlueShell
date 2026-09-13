@@ -75,6 +75,5 @@ namespace BlueShell.Terminal.Implementations
                 _ => Colors.Gray
             };
         }
-
     }
 }
