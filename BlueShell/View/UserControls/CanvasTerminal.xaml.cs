@@ -43,16 +43,16 @@ namespace BlueShell.View.UserControls
 
         private TabModel? _tabModel;
 
-        private IReadOnlyList<ITerminalCommand> Commands => TerminalCommandRegistry.Commands;
         private readonly ITerminalOutput _terminalOutput;
         private readonly TerminalViewModel _terminalViewModel;
         private readonly TerminalRenderer _terminalRenderer;
-        private readonly TerminalBuffer _terminalBuffer = new();
+        private readonly TerminalBuffer _terminalBuffer;
 
         public CanvasTerminal()
         {
             InitializeComponent();
 
+            _terminalBuffer = new(() => ActualTheme);
             _terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
 
             TerminalCommandDispatcher dispatcher = new(TerminalCommandRegistry.Commands);
@@ -162,6 +162,7 @@ namespace BlueShell.View.UserControls
                 terminalLine.AddSegment(
                     new TerminalLineSegment(
                         text,
+                        ActualTheme == ElementTheme.Dark,
                         color,
                         FontWeights.Normal,
                         FontStyle.Normal));
@@ -177,6 +178,7 @@ namespace BlueShell.View.UserControls
             terminalLine.AddSegment(
                 new TerminalLineSegment(
                     TerminalRenderer.Prompt,
+                    ActualTheme == ElementTheme.Dark,
                     _terminalRenderer.DefaultTextColor,
                     FontWeights.Normal,
                     FontStyle.Normal));
@@ -204,13 +206,10 @@ namespace BlueShell.View.UserControls
 
             IEnumerable<ITerminalCommand> commands = [];
 
-            if (currentToken != "")
-            {
-                commands = Commands.Where(command =>
-                   command.CommandName.StartsWith(
-                       currentToken,
-                       StringComparison.OrdinalIgnoreCase));
-            }
+            commands = TerminalCommandRegistry.Commands.Where(command =>
+               command.CommandName.StartsWith(
+                   currentToken,
+                   StringComparison.OrdinalIgnoreCase));
 
             foreach (ITerminalCommand command in commands)
             {
@@ -249,9 +248,22 @@ namespace BlueShell.View.UserControls
             Point popupPoint = transform.TransformPoint(caretPoint);
 
             CompletionPopup.HorizontalOffset = popupPoint.X;
-            CompletionPopup.VerticalOffset = popupPoint.Y + _terminalRenderer.LineHeight;
 
             CompletionPopup.IsOpen = true;
+
+            CompletionList.UpdateLayout();
+
+            double popupHeight = CompletionList.ActualHeight;
+
+            double spaceBelow =
+                RootGrid.ActualHeight -
+                (popupPoint.Y + _terminalRenderer.LineHeight);
+
+            bool showAbove = spaceBelow < popupHeight;
+
+            CompletionPopup.VerticalOffset = showAbove
+                ? popupPoint.Y - popupHeight - 12
+                : popupPoint.Y + _terminalRenderer.LineHeight;
         }
 
         private async Task<bool> HandleKeyActionAsync(TerminalKeyAction terminalKeyAction)
@@ -415,7 +427,7 @@ namespace BlueShell.View.UserControls
                     return true;
 
                 case TerminalKeyAction.ShowCompletionsBox:
-                    ShowCompletionPopup(Commands);
+                    ShowCompletionPopup(GetCommandSuggestions());
                     return true;
 
                 default:
@@ -494,11 +506,23 @@ namespace BlueShell.View.UserControls
 
         private void TerminalViewModel_CurrentLineChanged(object? sender, EventArgs e)
         {
+            if (_terminalViewModel.CurrentLine == "")
+            {
+                CompletionPopup.IsOpen = false;
+                return;
+            }
+
             ShowCompletionPopup(GetCommandSuggestions());
         }
 
         private void TerminalViewModel_CaretPositionChanged(object? sender, EventArgs e)
         {
+            if (_terminalViewModel.CurrentLine == "")
+            {
+                CompletionPopup.IsOpen = false;
+                return;
+            }
+
             ShowCompletionPopup(GetCommandSuggestions());
         }
 

@@ -36,40 +36,69 @@
                 IsDoubleTapEnabled="True"
                 DoubleTapped="Terminal_DoubleTapped"/>
         </ScrollViewer>
-
-        <Popup x:Name="CompletionPopup"
-               IsLightDismissEnabled="False">
-
-            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="4">
-
-                <ListView x:Name="CompletionList"
-                          SelectionMode="Single"
-                          IsTabStop="False"
-                          AllowFocusOnInteraction="False"
-                          MaxHeight="250"
-                          IsItemClickEnabled="True"
-                          ItemClick="CompletionList_ItemClick">
-
+        <Popup
+            x:Name="CompletionPopup"
+            IsLightDismissEnabled="False">
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="4,3"
+                MinWidth="170">
+                <ListView
+                    x:Name="CompletionList"
+                    Padding="0"
+                    SelectionMode="Single"
+                    IsTabStop="False"
+                    AllowFocusOnInteraction="False"
+                    IsItemClickEnabled="True"
+                    ItemClick="CompletionList_ItemClick"
+                    MaxHeight="300">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
-                            <Setter Property="MinHeight" Value="0"/>
+                            <Setter Property="MinHeight" Value="30"/>
                             <Setter Property="MinWidth" Value="0"/>
-                            <Setter Property="Padding" Value="8,4"/>
-                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="Padding" Value="10,4"/>
+                            <Setter Property="Margin" Value="0,1"/>
                             <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="CornerRadius" Value="5"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <ListViewItemPresenter
+                                            Content="{TemplateBinding Content}"
+                                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                                            ContentTransitions="{TemplateBinding ContentTransitions}"
+                                            ContentMargin="{TemplateBinding Padding}"
+                                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="{TemplateBinding CornerRadius}"
+                                            PointerOverBackground="{ThemeResource ListViewItemBackgroundPointerOver}"
+                                            PressedBackground="{ThemeResource ListViewItemBackgroundPressed}"
+                                            SelectedBackground="{ThemeResource ListViewItemBackgroundSelected}"
+                                            SelectedPointerOverBackground="{ThemeResource ListViewItemBackgroundSelectedPointerOver}"
+                                            SelectedPressedBackground="{ThemeResource ListViewItemBackgroundSelectedPressed}"
+                                            PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
+                                            SelectedForeground="{ThemeResource ListViewItemForegroundSelected}"
+                                            FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}"
+                                            FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"
+                                            Control.IsTemplateFocusTarget="True"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </ListView.ItemContainerStyle>
-
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       FontFamily="Cascadia Mono"
-                                       FontSize="13"/>
+                            <TextBlock
+                                Text="{Binding}"
+                                FontFamily="Cascadia Mono"
+                                FontSize="13"/>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>

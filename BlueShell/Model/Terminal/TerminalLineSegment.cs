@@ -3,9 +3,10 @@ using Windows.UI.Text;
 
 namespace BlueShell.Model.Terminal
 {
-    public sealed class TerminalLineSegment(string text, Color? color, FontWeight fontWeight, FontStyle fontStyle)
+    public sealed class TerminalLineSegment(string text, bool IsDark, Color? color, FontWeight fontWeight, FontStyle fontStyle)
     {
         public string Text { get; set; } = text;
+        public bool IsDark { get; set; } = IsDark;
         public Color? Color { get; set; } = color;
         public FontWeight FontWeight { get; set; } = fontWeight;
         public FontStyle FontStyle { get; set; } = fontStyle;

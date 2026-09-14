@@ -1,4 +1,5 @@
 ﻿using BlueShell.Model.Terminal;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using Windows.UI;
@@ -6,7 +7,7 @@ using Windows.UI.Text;
 
 namespace BlueShell.Terminal
 {
-    public sealed class TerminalBuffer
+    public sealed class TerminalBuffer(Func<ElementTheme> themeProvider)
     {
         private const int MaxLineCount = 100_000;
         private const int TrimLineCount = 10_000;
@@ -36,6 +37,7 @@ namespace BlueShell.Terminal
 
             TerminalLineSegment segment = new(
                 text,
+                themeProvider() == ElementTheme.Dark,
                 textColor,
                 fontWeight,
                 fontStyle);
@@ -53,6 +55,7 @@ namespace BlueShell.Terminal
 
             TerminalLineSegment segment = new(
                 text,
+                themeProvider() == ElementTheme.Dark,
                 textColor,
                 fontWeight,
                 fontStyle);
@@ -74,6 +77,7 @@ namespace BlueShell.Terminal
                 line.AddSegment(
                     new TerminalLineSegment(
                         text,
+                        themeProvider() == ElementTheme.Dark,
                         textColor,
                         fontWeight,
                         fontStyle));

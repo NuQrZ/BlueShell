@@ -165,7 +165,7 @@ namespace BlueShell.View.UserControls
                 _textFormat.FontStyle = segment.FontStyle;
 
                 Color color = segment.Color.HasValue
-                    ? GetThemeAdjustedColor(segment.Color.Value)
+                    ? GetThemeAdjustedColor(segment)
                     : DefaultTextColor;
 
                 drawingSession.DrawText(
@@ -341,11 +341,26 @@ namespace BlueShell.View.UserControls
             return ResolvedTheme == ElementTheme.Dark ? Colors.Black : Colors.White;
         }
 
-        private Color GetThemeAdjustedColor(Color color)
+        private Color GetThemeAdjustedColor(TerminalLineSegment segment)
         {
-            return ResolvedTheme == ElementTheme.Dark
-                ? Lighten(color, 0.50)
-                : Darken(color, 0.55);
+            if (!segment.Color.HasValue)
+            {
+                return DefaultTextColor;
+            }
+
+            bool isCurrentThemeDark = ResolvedTheme == ElementTheme.Dark;
+
+            if (segment.IsDark == isCurrentThemeDark)
+            {
+                return segment.Color.Value;
+            }
+
+            if (segment.IsDark)
+            {
+                return Darken(segment.Color.Value, 0.30);
+            }
+
+            return Lighten(segment.Color.Value, 0.25);
         }
 
         private static Color Darken(Color color, double amount)
