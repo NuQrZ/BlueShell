@@ -1,26 +1,30 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using BlueShell.Model;
+using BlueShell.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace BlueShell.ViewModel
 {
-    public sealed partial class SettingsViewModel : ObservableObject
+    public sealed partial class SettingsViewModel(IWindowAppearanceService windowAppearanceService) : ObservableObject
     {
         [ObservableProperty]
-        public partial string SelectedBackdrop { get; set; } = "MicaAlt";
+        public partial AppBackdrop SelectedBackdrop { get; set; } = AppBackdrop.MicaAlt;
 
         [ObservableProperty]
-        public partial string SelectedTheme { get; set; } = "Default";
+        public partial AppTheme SelectedTheme { get; set; } = AppTheme.Default;
 
         [RelayCommand]
-        private void SetSelectedBackdrop(string backdrop)
+        private void SetSelectedBackdrop(AppBackdrop backdrop)
         {
             SelectedBackdrop = backdrop;
+            windowAppearanceService.ApplyBackdrop(backdrop);
         }
 
         [RelayCommand]
-        private void SetSelectedTheme(string theme)
+        private void SetSelectedTheme(AppTheme theme)
         {
             SelectedTheme = theme;
+            windowAppearanceService.ApplyTheme(theme);
         }
     }
 }

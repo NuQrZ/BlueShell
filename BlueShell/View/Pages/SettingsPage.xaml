@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BlueShell.View.Pages"
+    xmlns:model="using:BlueShell.Model"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:converters="using:BlueShell.Converters"
@@ -16,15 +17,21 @@
     <Grid>
         <Grid Margin="15">
             <Grid.RowDefinitions>
-                <RowDefinition Height="85"/>
-                <RowDefinition Height="85"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0">
-                <TextBlock Text="Application Backdrop"
-                           FontFamily="Cascadia Mono"
-                           FontSize="16"/>
-
+            <Expander Grid.Row="0"
+                      VerticalAlignment="Top"
+                      VerticalContentAlignment="Top"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Left"
+                      IsExpanded="True">
+                <Expander.Header>
+                    <TextBlock Text="Application Backdrop"
+                               FontFamily="Cascadia Mono"
+                               FontSize="16"/>
+                </Expander.Header>
                 <Grid Margin="0, 25, 0, 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="150"/>
@@ -37,56 +44,58 @@
                     <RadioButton x:Name="MicaAltBackdrop" 
                                  Grid.Column="0"
                                  Command="{x:Bind _settingsViewModel.SetSelectedBackdropCommand}"
-                                 CommandParameter="MicaAlt"
+                                 CommandParameter="{x:Bind model:AppBackdrop.MicaAlt}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedBackdrop, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=MicaAlt}"
                                  Content="Mica Alt"
                                  FontFamily="Cascadia Mono"
-                                 Checked="MicaAltBackdrop_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="MicaBackdrop" 
                                  Grid.Column="1"
                                  Command="{x:Bind _settingsViewModel.SetSelectedBackdropCommand}"
-                                 CommandParameter="Mica"
+                                 CommandParameter="{x:Bind model:AppBackdrop.Mica}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedBackdrop, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Mica}"
                                  Content="Mica"
                                  FontFamily="Cascadia Mono"
-                                 Checked="MicaBackdrop_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="AcrylicThinBackdrop" 
                                  Grid.Column="2"
                                  Command="{x:Bind _settingsViewModel.SetSelectedBackdropCommand}"
-                                 CommandParameter="ThinAcrylic"
+                                 CommandParameter="{x:Bind model:AppBackdrop.ThinAcrylic}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedBackdrop, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=ThinAcrylic}"
                                  Content="Thin Acrylic"
                                  FontFamily="Cascadia Mono"
-                                 Checked="AcrylicThinBackdrop_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="AcrylicDefaultBackdrop" 
                                  Grid.Column="3"
                                  Command="{x:Bind _settingsViewModel.SetSelectedBackdropCommand}"
-                                 CommandParameter="Acrylic"
+                                 CommandParameter="{x:Bind model:AppBackdrop.Acrylic}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedBackdrop, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Acrylic}"
                                  Content="Acrylic"
                                  FontFamily="Cascadia Mono"
-                                 Checked="AcrylicDefaultBackdrop_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="NullBackdrop"
                                  Grid.Column="4"
                                  Command="{x:Bind _settingsViewModel.SetSelectedBackdropCommand}"
-                                 CommandParameter="None"
+                                 CommandParameter="{x:Bind model:AppBackdrop.None}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedBackdrop, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=None}"
                                  Content="None"
                                  FontFamily="Cascadia Mono"
-                                 Checked="NullBackdrop_Checked"
                                  FontSize="16"/>
                 </Grid>
-            </Grid>
+            </Expander>
 
-            <Grid Grid.Row="1">
-                <TextBlock Text="Application Theme"
-                           FontFamily="Cascadia Mono"
-                           FontSize="16"/>
-
+            <Expander Grid.Row="1"
+                      VerticalAlignment="Top"
+                      VerticalContentAlignment="Top"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Left"
+                      IsExpanded="True"
+                      Margin="0, 15, 0, 0">
+                <Expander.Header>
+                    <TextBlock Text="Application Theme"
+                               FontFamily="Cascadia Mono"
+                               FontSize="16"/>
+                </Expander.Header>
                 <Grid Margin="0, 25, 0, 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="150"/>
@@ -98,32 +107,29 @@
                     <RadioButton x:Name="DefaultColor" 
                                  Grid.Column="0"
                                  Command="{x:Bind _settingsViewModel.SetSelectedThemeCommand}"
-                                 CommandParameter="Default"
+                                 CommandParameter="{x:Bind model:AppTheme.Default}"
                                  Content="Default"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedTheme, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Default}"
                                  FontFamily="Cascadia Mono"
-                                 Checked="DefaultColor_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="DarkColor" 
                                  Grid.Column="1"
                                  Command="{x:Bind _settingsViewModel.SetSelectedThemeCommand}"
-                                 CommandParameter="Dark"
+                                 CommandParameter="{x:Bind model:AppTheme.Dark}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedTheme, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Dark}"
                                  Content="Dark"
                                  FontFamily="Cascadia Mono"
-                                 Checked="DarkColor_Checked"
                                  FontSize="16"/>
                     <RadioButton x:Name="LightColor" 
                                  Grid.Column="2"
                                  Command="{x:Bind _settingsViewModel.SetSelectedThemeCommand}"
-                                 CommandParameter="Light"
+                                 CommandParameter="{x:Bind model:AppTheme.Light}"
                                  IsChecked="{x:Bind _settingsViewModel.SelectedTheme, Mode=OneWay, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Light}"
                                  Content="Light"
                                  FontFamily="Cascadia Mono"
-                                 Checked="LightColor_Checked"
                                  FontSize="16"/>
                 </Grid>
-            </Grid>
+            </Expander>
         </Grid>
     </Grid>
 </Page>

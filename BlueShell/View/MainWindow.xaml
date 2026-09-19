@@ -10,24 +10,24 @@
     xmlns:converter="using:BlueShell.Converters"
     mc:Ignorable="d"
     Title="BlueShell">
+    <Border>
+        <Grid>
+            <Grid.Resources>
+                <converter:FilePathToIconConverter x:Key="FilePathToIconConverter"/>
+            </Grid.Resources>
 
-    <Grid x:Name="RootGrid">
-        <Grid.Resources>
-            <converter:FilePathToIconConverter x:Key="FilePathToIconConverter"/>
-        </Grid.Resources>
-        
-        <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="50"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <ToggleButton Name="SettingsButton"
+                <ToggleButton Name="SettingsButton"
                           Grid.Column="0"
                           Command="{x:Bind _mainWindowViewModel.ToggleSettingsPageCommand}"
                           Background="Transparent"
@@ -36,22 +36,22 @@
                           Width="38"
                           Height="36"
                           Margin="10, 0, 0, 0">
-                <ToggleButton.CommandParameter>
-                    <Binding Path="IsChecked" ElementName="SettingsButton" />
-                </ToggleButton.CommandParameter>
-                <ToolTipService.ToolTip>
-                    <ToolTip Content="Settings" Placement="Bottom"/>
-                </ToolTipService.ToolTip>
-                <ToggleButton.ContentTemplate>
-                    <DataTemplate>
-                        <FontIcon Glyph="&#xE713;" FontSize="15"/>
-                    </DataTemplate>
-                </ToggleButton.ContentTemplate>
-            </ToggleButton>
+                    <ToggleButton.CommandParameter>
+                        <Binding Path="IsChecked" ElementName="SettingsButton" />
+                    </ToggleButton.CommandParameter>
+                    <ToolTipService.ToolTip>
+                        <ToolTip Content="Settings" Placement="Bottom"/>
+                    </ToolTipService.ToolTip>
+                    <ToggleButton.ContentTemplate>
+                        <DataTemplate>
+                            <FontIcon Glyph="&#xE713;" FontSize="15"/>
+                        </DataTemplate>
+                    </ToggleButton.ContentTemplate>
+                </ToggleButton>
 
-            <Grid x:Name="AppTitleBar"
+                <Grid x:Name="AppTitleBar"
                   Grid.Column="1">
-                <TabView Name="TabView"
+                    <TabView Name="TabView"
                      DataContext="{x:Bind _mainWindowViewModel}"
                      TabItemsSource="{x:Bind _mainWindowViewModel.Tabs}"
                      SelectedItem="{x:Bind _mainWindowViewModel.SelectedTab, Mode=TwoWay}"
@@ -62,75 +62,75 @@
                      CanReorderTabs="True"
                      CanDrag="True"
                      Margin="-5, 0, 0, 0">
-                    <TabView.Resources>
-                        <Style TargetType="TabViewItem">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="TabViewItem">
-                                        <Grid x:Name="RootGrid"
+                        <TabView.Resources>
+                            <Style TargetType="TabViewItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TabViewItem">
+                                            <Grid x:Name="RootGrid"
                                           CornerRadius="4, 4, 4, 0"
                                           Height="36">
-                                            <VisualStateManager.VisualStateGroups>
-                                                <VisualStateGroup x:Name="SelectionStates">
-                                                    <VisualState x:Name="Selected">
-                                                        <Storyboard>
-                                                            <ObjectAnimationUsingKeyFrames
+                                                <VisualStateManager.VisualStateGroups>
+                                                    <VisualStateGroup x:Name="SelectionStates">
+                                                        <VisualState x:Name="Selected">
+                                                            <Storyboard>
+                                                                <ObjectAnimationUsingKeyFrames
                                                             Storyboard.TargetProperty="Background"
                                                             Storyboard.TargetName="RootGrid">
-                                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                                    <DiscreteObjectKeyFrame KeyTime="0"
                                                                 Value="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"/>
-                                                            </ObjectAnimationUsingKeyFrames>
-                                                        </Storyboard>
-                                                    </VisualState>
-                                                    <VisualState x:Name="Normal">
-                                                        <Storyboard>
-                                                            <ObjectAnimationUsingKeyFrames
+                                                                </ObjectAnimationUsingKeyFrames>
+                                                            </Storyboard>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Normal">
+                                                            <Storyboard>
+                                                                <ObjectAnimationUsingKeyFrames
                                                             Storyboard.TargetProperty="Background"
                                                             Storyboard.TargetName="RootGrid">
-                                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                                    <DiscreteObjectKeyFrame KeyTime="0"
                                                                 Value="{ThemeResource ControlAltFillColorTransparentBrush}"/>
-                                                            </ObjectAnimationUsingKeyFrames>
-                                                        </Storyboard>
-                                                    </VisualState>
-                                                    <VisualState x:Name="PointerOver">
-                                                        <Storyboard>
-                                                            <ObjectAnimationUsingKeyFrames
+                                                                </ObjectAnimationUsingKeyFrames>
+                                                            </Storyboard>
+                                                        </VisualState>
+                                                        <VisualState x:Name="PointerOver">
+                                                            <Storyboard>
+                                                                <ObjectAnimationUsingKeyFrames
                                                             Storyboard.TargetProperty="Background"
                                                             Storyboard.TargetName="RootGrid">
-                                                                <DiscreteObjectKeyFrame KeyTime="0"
+                                                                    <DiscreteObjectKeyFrame KeyTime="0"
                                                                 Value="{ThemeResource LayerOnMicaBaseAltFillColorSecondaryBrush}"/>
-                                                            </ObjectAnimationUsingKeyFrames>
-                                                        </Storyboard>
-                                                    </VisualState>
-                                                </VisualStateGroup>
-                                            </VisualStateManager.VisualStateGroups>
+                                                                </ObjectAnimationUsingKeyFrames>
+                                                            </Storyboard>
+                                                        </VisualState>
+                                                    </VisualStateGroup>
+                                                </VisualStateManager.VisualStateGroups>
 
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Column="0"
+                                                <StackPanel Grid.Column="0"
                                                     Orientation="Horizontal"
                                                     Spacing="5"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
                                                     Width="Auto"
                                                     Margin="10,0,0,0">
-                                                <IconSourceElement IconSource="{TemplateBinding IconSource}"
+                                                    <IconSourceElement IconSource="{TemplateBinding IconSource}"
                                                                Width="24"
                                                                Height="24"/>
-                                                <ContentPresenter x:Name="HeaderPresenter"
+                                                    <ContentPresenter x:Name="HeaderPresenter"
                                                               Content="{TemplateBinding Header}"
                                                               FontFamily="Consolas"
                                                               FontSize="16"
                                                               FontWeight="SemiLight"
                                                               VerticalAlignment="Center"
                                                               Margin="8,0,0,0"/>
-                                            </StackPanel>
+                                                </StackPanel>
 
-                                            <Button x:Name="CloseButton"
+                                                <Button x:Name="CloseButton"
                                                 Grid.Column="1"
                                                 Content="&#xE894;"
                                                 CornerRadius="6"
@@ -144,39 +144,40 @@
                                                 Padding="0"
                                                 Margin="0, 0, 5, 0"/>
 
-                                            <Border x:Name="TabSeparator"
+                                                <Border x:Name="TabSeparator"
                                                 Grid.Column="2"
                                                 Width="1"
                                                 Height="20"
                                                 VerticalAlignment="Center"
                                                 Background="{ThemeResource TabViewItemSeparator}"/>
-                                        </Grid>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </TabView.Resources>
-                    <TabView.TabItemTemplate>
-                        <DataTemplate x:DataType="viewModel:TabViewModel">
-                            <TabViewItem>
-                                <TabViewItem.IconSource>
-                                    <Binding Path="IconPath" Mode="TwoWay" Converter="{StaticResource FilePathToIconConverter}"/>
-                                </TabViewItem.IconSource>
-                                <TabViewItem.Header>
-                                    <Binding Path="TabHeader" Mode="TwoWay"/>
-                                </TabViewItem.Header>
-                                <TabViewItem.Transitions>
-                                    <EdgeUIThemeTransition Edge="Left"/>
-                                </TabViewItem.Transitions>
-                            </TabViewItem>
-                        </DataTemplate>
-                    </TabView.TabItemTemplate>
-                </TabView>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TabView.Resources>
+                        <TabView.TabItemTemplate>
+                            <DataTemplate x:DataType="viewModel:TabViewModel">
+                                <TabViewItem>
+                                    <TabViewItem.IconSource>
+                                        <Binding Path="IconPath" Mode="TwoWay" Converter="{StaticResource FilePathToIconConverter}"/>
+                                    </TabViewItem.IconSource>
+                                    <TabViewItem.Header>
+                                        <Binding Path="TabHeader" Mode="TwoWay"/>
+                                    </TabViewItem.Header>
+                                    <TabViewItem.Transitions>
+                                        <EdgeUIThemeTransition Edge="Left"/>
+                                    </TabViewItem.Transitions>
+                                </TabViewItem>
+                            </DataTemplate>
+                        </TabView.TabItemTemplate>
+                    </TabView>
+                </Grid>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Frame x:Name="MainWindowFrame"/>
             </Grid>
         </Grid>
-
-        <Grid Grid.Row="1">
-            <Frame x:Name="MainWindowFrame"/>
-        </Grid>
-    </Grid>
+    </Border>
 </Window>

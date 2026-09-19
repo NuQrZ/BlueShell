@@ -23,6 +23,7 @@ namespace BlueShell
 
             serviceCollection.AddSingleton<MainWindowViewModel>();
             serviceCollection.AddSingleton<INavigationService, NavigationService>();
+            serviceCollection.AddSingleton<IWindowAppearanceService, WindowAppearanceService>();
             serviceCollection.AddSingleton<MainWindow>();
 
             serviceCollection.AddSingleton<SettingsViewModel>();
