@@ -1,4 +1,5 @@
 using BlueShell.Services;
+using BlueShell.Services.Settings;
 using BlueShell.View.Pages;
 using BlueShell.ViewModel;
 using Microsoft.UI.Composition.SystemBackdrops;
@@ -7,7 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System.ComponentModel;
 
-namespace BlueShell
+namespace BlueShell.View
 {
     public sealed partial class MainWindow : Window
     {
@@ -15,7 +16,8 @@ namespace BlueShell
         private readonly INavigationService? _navigationService;
         public MainWindow(
             MainWindowViewModel mainWindowViewModel,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            IWindowAppearanceService windowAppearanceService)
         {
             InitializeComponent();
 
@@ -32,24 +34,28 @@ namespace BlueShell
 
             navigationService.SetFrame(MainWindowFrame);
             navigationService.Navigate(typeof(MainPage), _mainWindowViewModel);
+            windowAppearanceService.AddBorder(RootBorder);
+            windowAppearanceService.AddTitleBar(AppWindow.TitleBar);
 
             _mainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
         }
 
         private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.IsSettingsOpen))
+            if (e.PropertyName != nameof(MainWindowViewModel.IsSettingsOpen))
             {
-                bool isSettingsOpen = _mainWindowViewModel?.IsSettingsOpen ?? false;
+                return;
+            }
 
-                if (isSettingsOpen)
-                {
-                    _navigationService?.Navigate(typeof(SettingsPage));
-                }
-                else
-                {
-                    _navigationService?.Navigate(typeof(MainPage), _mainWindowViewModel);
-                }
+            bool isSettingsOpen = _mainWindowViewModel?.IsSettingsOpen ?? false;
+
+            if (isSettingsOpen)
+            {
+                _navigationService?.Navigate(typeof(SettingsPage));
+            }
+            else
+            {
+                _navigationService?.Navigate(typeof(MainPage), _mainWindowViewModel);
             }
         }
 

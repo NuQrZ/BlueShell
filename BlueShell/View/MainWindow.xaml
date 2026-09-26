@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="BlueShell.MainWindow"
+    x:Class="BlueShell.View.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BlueShell"
@@ -10,7 +10,7 @@
     xmlns:converter="using:BlueShell.Converters"
     mc:Ignorable="d"
     Title="BlueShell">
-    <Border>
+    <Border x:Name="RootBorder">
         <Grid>
             <Grid.Resources>
                 <converter:FilePathToIconConverter x:Key="FilePathToIconConverter"/>

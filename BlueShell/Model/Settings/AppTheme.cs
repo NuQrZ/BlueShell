@@ -1,4 +1,4 @@
-﻿namespace BlueShell.Model
+﻿namespace BlueShell.Model.Settings
 {
     public enum AppTheme
     {

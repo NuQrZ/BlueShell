@@ -1,4 +1,5 @@
 ﻿using BlueShell.Services;
+using BlueShell.Services.Settings;
 using BlueShell.ViewModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -8,7 +9,7 @@ namespace BlueShell
 {
     public partial class App : Application
     {
-        public static MainWindow? MainWindow { get; private set; }
+        public static View.MainWindow? MainWindow { get; private set; }
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         public App()
@@ -24,7 +25,9 @@ namespace BlueShell
             serviceCollection.AddSingleton<MainWindowViewModel>();
             serviceCollection.AddSingleton<INavigationService, NavigationService>();
             serviceCollection.AddSingleton<IWindowAppearanceService, WindowAppearanceService>();
-            serviceCollection.AddSingleton<MainWindow>();
+            serviceCollection.AddSingleton<IImageService, ImageService>();
+            serviceCollection.AddSingleton<IFilePickerService, FilePickerService>();
+            serviceCollection.AddSingleton<View.MainWindow>();
 
             serviceCollection.AddSingleton<SettingsViewModel>();
             serviceCollection.AddSingleton<TabViewModel>();
@@ -34,7 +37,7 @@ namespace BlueShell
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            MainWindow = ServiceProvider!.GetRequiredService<MainWindow>();
+            MainWindow = ServiceProvider!.GetRequiredService<View.MainWindow>();
             MainWindow.Activate();
         }
     }

@@ -48,30 +48,34 @@ public sealed partial class MainPage : Page
 
     private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedTab))
+        if (e.PropertyName != nameof(MainWindowViewModel.SelectedTab))
         {
-            TabViewModel? currentTab = _mainWindowViewModel?.SelectedTab;
-            NavigationViewItem navigationViewItem = _navItemTagsNavViewItems[currentTab!.SelectedNavItemTag];
-            NavigationViewControl.SelectedItem = navigationViewItem;
+            return;
         }
+
+        TabViewModel? currentTab = _mainWindowViewModel?.SelectedTab;
+        NavigationViewItem navigationViewItem = _navItemTagsNavViewItems[currentTab!.SelectedNavItemTag];
+        NavigationViewControl.SelectedItem = navigationViewItem;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is MainWindowViewModel mainWindowViewModel)
+        if (e.Parameter is not MainWindowViewModel mainWindowViewModel)
         {
-            if (_mainWindowViewModel is not null)
-            {
-                _mainWindowViewModel?.PropertyChanged -= MainWindowViewModel_PropertyChanged;
-            }
-
-            _mainWindowViewModel = mainWindowViewModel;
-            _mainWindowViewModel?.PropertyChanged += MainWindowViewModel_PropertyChanged;
-
-            UpdateNavigationSelection();
+            return;
         }
+
+        if (_mainWindowViewModel is not null)
+        {
+            _mainWindowViewModel?.PropertyChanged -= MainWindowViewModel_PropertyChanged;
+        }
+
+        _mainWindowViewModel = mainWindowViewModel;
+        _mainWindowViewModel?.PropertyChanged += MainWindowViewModel_PropertyChanged;
+
+        UpdateNavigationSelection();
     }
 
     private void UpdateNavigationSelection()
@@ -108,20 +112,22 @@ public sealed partial class MainPage : Page
 
         string? itemTag = navigationViewItem.Tag.ToString();
 
-        if (itemTag is not null)
+        if (itemTag is null)
         {
-            string tabHeader = _mainWindowViewModel.SelectedTab.TabHeader;
-            string[] headerParts = tabHeader.Split(' ');
-
-            int tabIndex = Convert.ToInt32(headerParts[1]);
-
-            _mainWindowViewModel.SelectedTab.TabHeader = $"{itemTag} {tabIndex}";
-            _mainWindowViewModel.SelectedTab.IconPath = _itemTagsFilePaths[itemTag];
-            _mainWindowViewModel.SelectedTab.SelectedNavItemTag = itemTag;
-
-            _navItemTagsPageTypes.TryGetValue(itemTag, out Type? pageType);
-
-            MainFrame.Navigate(pageType, _mainWindowViewModel.SelectedTab);
+            return;
         }
+
+        string tabHeader = _mainWindowViewModel.SelectedTab.TabHeader;
+        string[] headerParts = tabHeader.Split(' ');
+
+        int tabIndex = Convert.ToInt32(headerParts[1]);
+
+        _mainWindowViewModel.SelectedTab.TabHeader = $"{itemTag} {tabIndex}";
+        _mainWindowViewModel.SelectedTab.IconPath = _itemTagsFilePaths[itemTag];
+        _mainWindowViewModel.SelectedTab.SelectedNavItemTag = itemTag;
+
+        _navItemTagsPageTypes.TryGetValue(itemTag, out Type? pageType);
+
+        MainFrame.Navigate(pageType, _mainWindowViewModel.SelectedTab);
     }
 }

@@ -7,7 +7,7 @@ namespace BlueShell.Helpers
 {
     public static class TerminalUtilities
     {
-        public static Dictionary<string, Color> DarkThemeKeywordColors { get; } = new()
+        private static Dictionary<string, Color> DarkThemeKeywordColors { get; } = new()
         {
             { "Exit", Color.FromArgb(255, 255, 80, 80) },
             { "Clear", Color.FromArgb(255, 0, 255, 200) },
@@ -15,7 +15,7 @@ namespace BlueShell.Helpers
             { "Simulate", Colors.MediumPurple }
         };
 
-        public static Dictionary<string, Color> LightThemeKeywordColors { get; } = new()
+        private static Dictionary<string, Color> LightThemeKeywordColors { get; } = new()
         {
             { "Exit", Color.FromArgb(255, 210, 30, 30) },
             { "Clear", Color.FromArgb(255, 0, 170, 140) },
@@ -30,11 +30,7 @@ namespace BlueShell.Helpers
                     ? LightThemeKeywordColors
                     : DarkThemeKeywordColors;
 
-            return colors.TryGetValue(
-                command,
-                out Color color)
-                    ? color
-                    : defaultColor;
+            return colors.GetValueOrDefault(command, defaultColor);
         }
     }
 }
