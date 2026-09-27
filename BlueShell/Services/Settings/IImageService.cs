@@ -8,9 +8,12 @@ namespace BlueShell.Services.Settings
 {
     public interface IImageService
     {
+        void SetImageFilePath(string filePath);
+        void ClearSaveImageFilepath();
         bool IsImageBright(WriteableBitmap writeableBitmap);
         bool IsGradientBright(List<Color> colors);
         string GetDesktopWallpaperPath();
+        string GetSavedImageFilePath();
         Task<WriteableBitmap> LoadWriteableBitmap(StorageFile imageFile);
     }
 }

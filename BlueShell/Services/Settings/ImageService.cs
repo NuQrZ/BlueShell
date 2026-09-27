@@ -15,6 +15,17 @@ namespace BlueShell.Services.Settings
 {
     public sealed class ImageService : IImageService
     {
+        private string _imageFilePath = string.Empty;
+        public void SetImageFilePath(string filePath)
+        {
+            _imageFilePath = filePath;
+        }
+
+        public void ClearSaveImageFilepath()
+        {
+            _imageFilePath = string.Empty;
+        }
+
         public bool IsImageBright(WriteableBitmap writeableBitmap)
         {
             using Stream buffer = writeableBitmap.PixelBuffer.AsStream();
@@ -65,6 +76,11 @@ namespace BlueShell.Services.Settings
 
             object? wallpaperValue = registryKey.GetValue("Wallpaper");
             return wallpaperValue?.ToString() ?? "";
+        }
+
+        public string GetSavedImageFilePath()
+        {
+            return _imageFilePath;
         }
 
         public async Task<WriteableBitmap> LoadWriteableBitmap(StorageFile imageFile)

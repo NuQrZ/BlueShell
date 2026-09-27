@@ -14,7 +14,6 @@ namespace BlueShell.ViewModel
                                                   IImageService imageService,
                                                   IFilePickerService filePickerService) : ObservableObject
     {
-        private string? _imageFilePath;
         public IReadOnlyList<GradientDirection> GradientDirections { get; } = Enum.GetValues<GradientDirection>();
 
         [ObservableProperty]
@@ -70,7 +69,8 @@ namespace BlueShell.ViewModel
                     SetLinearGradient();
                     return;
                 case AppBackgroundType.Image:
-                    await SetImage(_imageFilePath == null ? null : await StorageFile.GetFileFromPathAsync(_imageFilePath));
+                    string imageFilePath = imageService.GetSavedImageFilePath();
+                    await SetImage(imageFilePath == string.Empty ? null : await StorageFile.GetFileFromPathAsync(imageFilePath));
                     return;
                 case AppBackgroundType.Backdrop:
                     windowAppearanceService.RemoveBackground();
@@ -142,7 +142,7 @@ namespace BlueShell.ViewModel
             WriteableBitmap writeableBitmap = await imageService.LoadWriteableBitmap(imageFile);
             bool isImageBright = imageService.IsImageBright(writeableBitmap);
 
-            _imageFilePath = imageFile.Path;
+            imageService.SetImageFilePath(imageFile.Path);
 
             ImageBackground imageBackground = new()
             {
@@ -164,7 +164,7 @@ namespace BlueShell.ViewModel
             }
             else
             {
-                _imageFilePath = null;
+                imageService.ClearSaveImageFilepath();
                 windowAppearanceService.RemoveBackground();
                 windowAppearanceService.ApplyBackdrop(SelectedBackdrop);
                 windowAppearanceService.ApplyTheme(SelectedTheme);
