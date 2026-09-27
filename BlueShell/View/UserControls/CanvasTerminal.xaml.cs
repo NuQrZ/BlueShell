@@ -34,7 +34,7 @@ namespace BlueShell.View.UserControls
         private bool _scrollToBottomPending;
         private bool _followingOutput = true;
         private bool _updatingScrollView;
-        private bool _isPointerSelecting = false;
+        private bool _isPointerSelecting;
 
         private readonly DispatcherTimer _dispatcherTimer = new()
         {
@@ -43,7 +43,6 @@ namespace BlueShell.View.UserControls
 
         private TabModel? _tabModel;
 
-        private readonly ITerminalOutput _terminalOutput;
         private readonly TerminalViewModel _terminalViewModel;
         private readonly TerminalRenderer _terminalRenderer;
         private readonly TerminalBuffer _terminalBuffer;
@@ -52,14 +51,14 @@ namespace BlueShell.View.UserControls
         {
             InitializeComponent();
 
-            _terminalBuffer = new(() => ActualTheme);
-            _terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
+            _terminalBuffer = new TerminalBuffer(() => ActualTheme);
+            ITerminalOutput terminalOutput = new TerminalOutput(_terminalBuffer, () => ActualTheme);
 
             TerminalCommandDispatcher dispatcher = new(TerminalCommandRegistry.Commands);
 
             _terminalViewModel = new TerminalViewModel(
                 dispatcher,
-                () => new TerminalCommandContext(_terminalOutput, _tabModel, CancellationToken.None),
+                () => new TerminalCommandContext(terminalOutput, _tabModel, CancellationToken.None),
                 new ClipboardService());
 
             _terminalRenderer = new TerminalRenderer(_terminalBuffer, _terminalViewModel, () => ActualTheme);
@@ -204,22 +203,15 @@ namespace BlueShell.View.UserControls
         {
             string currentToken = _terminalViewModel.GetCurrentToken();
 
-            IEnumerable<ITerminalCommand> commands = [];
+            List<ITerminalCommand> commands =
+            [
+                .. TerminalCommandRegistry.Commands.Where(command =>
+                    command.CommandName.StartsWith(
+                        currentToken,
+                        StringComparison.OrdinalIgnoreCase))
+            ];
 
-            commands = TerminalCommandRegistry.Commands.Where(command =>
-               command.CommandName.StartsWith(
-                   currentToken,
-                   StringComparison.OrdinalIgnoreCase));
-
-            foreach (ITerminalCommand command in commands)
-            {
-                if (command.CommandName == currentToken)
-                {
-                    return [];
-                }
-            }
-
-            return commands;
+            return commands.Any(command => command.CommandName == currentToken) ? [] : commands;
         }
 
         private void ShowCompletionPopup(IEnumerable<ITerminalCommand> commands)
@@ -553,7 +545,7 @@ namespace BlueShell.View.UserControls
                 return;
             }
 
-            int intChar = (int)eventArgs.Character;
+            int intChar = eventArgs.Character;
 
             if (intChar < 32 || intChar == 127)
             {

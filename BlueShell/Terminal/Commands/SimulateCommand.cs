@@ -17,7 +17,7 @@ namespace BlueShell.Terminal.Commands
 
             List<string> batch = [with(linesPerFrame)];
 
-            context.TerminalOutput.WriteLine("");
+            context.TerminalOutput.WriteLine();
 
             for (int i = 0; i <= totalLines; i++)
             {
@@ -40,11 +40,11 @@ namespace BlueShell.Terminal.Commands
                 context.TerminalOutput.WriteLines(batch, TerminalMessageKind.PrintOutput);
             }
 
-            context.TerminalOutput.WriteLine("");
+            context.TerminalOutput.WriteLine();
             context.TerminalOutput.Write("Info: ", TerminalMessageKind.Info);
             context.TerminalOutput.Write("Simulation complete!", TerminalMessageKind.Success);
-            context.TerminalOutput.WriteLine("");
-            context.TerminalOutput.WriteLine("");
+            context.TerminalOutput.WriteLine();
+            context.TerminalOutput.WriteLine();
         }
     }
 }

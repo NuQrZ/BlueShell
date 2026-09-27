@@ -20,33 +20,33 @@ namespace BlueShell.ViewModel
         private readonly List<string> _commandHistory = [];
         private readonly Stack<TerminalInputSnapshot> _undoStack = [];
         private readonly Stack<TerminalInputSnapshot> _redoStack = [];
-        private int _historyIndex = 0;
-        private int _caretPosition = 0;
-        private bool _isExiting = false;
+        private int _historyIndex;
+        private int Length => _currentLine.Length;
+        private bool _isExiting;
         private string _historyDraft = "";
 
-        public int? SelectionAnchor { get; private set; }
+        private int? SelectionAnchor { get; set; }
 
         public int CaretPosition
         {
-            get => _caretPosition;
+            get;
 
             private set
             {
-                if (_caretPosition == value)
+                if (field == value)
                 {
                     return;
                 }
 
-                _caretPosition = value;
+                field = value;
                 OnCaretPositionChanged();
             }
-        }
+        } = 0;
+
         public int SelectionStart => SelectionAnchor.HasValue ? Math.Min(SelectionAnchor.Value, CaretPosition) : CaretPosition;
         public int SelectionEnd => SelectionAnchor.HasValue ? Math.Max(SelectionAnchor.Value, CaretPosition) : CaretPosition;
-        public int Length => _currentLine.Length;
 
-        public bool IsCommandRunning { get; private set; } = false;
+        public bool IsCommandRunning { get; private set; }
         public bool HasSelection => SelectionAnchor.HasValue && SelectionAnchor.Value != CaretPosition;
 
         public string CurrentLine => _currentLine.ToString();
@@ -701,19 +701,19 @@ namespace BlueShell.ViewModel
             }
             catch (OperationCanceledException)
             {
-                commandContext.TerminalOutput.WriteLine("");
+                commandContext.TerminalOutput.WriteLine();
                 commandContext.TerminalOutput.WriteLine(
                     ">> Operation Canceled.",
                     TerminalMessageKind.Info);
-                commandContext.TerminalOutput.WriteLine("");
+                commandContext.TerminalOutput.WriteLine();
             }
             catch (Exception exception)
             {
-                commandContext.TerminalOutput.WriteLine("");
+                commandContext.TerminalOutput.WriteLine();
                 commandContext.TerminalOutput.WriteLine(
                     $">> Error: {exception.Message}",
                     TerminalMessageKind.Error);
-                commandContext.TerminalOutput.WriteLine("");
+                commandContext.TerminalOutput.WriteLine();
             }
             finally
             {

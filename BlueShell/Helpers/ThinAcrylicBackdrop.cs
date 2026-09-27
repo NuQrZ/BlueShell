@@ -8,14 +8,12 @@ namespace BlueShell.Helpers
     public sealed partial class ThinAcrylicBackdrop : SystemBackdrop
     {
         private DesktopAcrylicController? _controller;
-        private ICompositionSupportsSystemBackdrop? _target;
         private SystemBackdropConfiguration? _configuration;
 
         protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
         {
             base.OnTargetConnected(connectedTarget, xamlRoot);
 
-            _target = connectedTarget;
             _controller = new DesktopAcrylicController
             {
                 Kind = DesktopAcrylicKind.Thin
@@ -33,7 +31,6 @@ namespace BlueShell.Helpers
 
             _controller?.Dispose();
             _controller = null;
-            _target = null;
         }
     }
 }

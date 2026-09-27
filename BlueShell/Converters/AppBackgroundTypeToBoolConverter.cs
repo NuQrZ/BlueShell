@@ -4,7 +4,7 @@ using System;
 
 namespace BlueShell.Converters
 {
-    public sealed class AppBackgroundTypeToBoolConverter : IValueConverter
+    public sealed partial class AppBackgroundTypeToBoolConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {

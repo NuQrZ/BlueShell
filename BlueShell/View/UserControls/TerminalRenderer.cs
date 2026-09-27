@@ -86,7 +86,7 @@ namespace BlueShell.View.UserControls
                     DrawTerminalLine(sender, drawingSession, line, lineY);
                 }
 
-                if (terminalViewModel!.IsCommandRunning)
+                if (terminalViewModel.IsCommandRunning)
                 {
                     continue;
                 }
@@ -263,7 +263,7 @@ namespace BlueShell.View.UserControls
 
         private void DrawCurrentInput(CanvasVirtualControl sender, CanvasDrawingSession drawingSession, float promptY, float promptWidth)
         {
-            string currentInput = terminalViewModel!.CurrentLine;
+            string currentInput = terminalViewModel.CurrentLine;
             float currentX = PaddingLeft + promptWidth;
 
             int index = 0;
@@ -320,9 +320,9 @@ namespace BlueShell.View.UserControls
                 return;
             }
 
-            string currentInput = terminalViewModel!.CurrentLine;
+            string currentInput = terminalViewModel.CurrentLine;
 
-            string textBeforeCaret = currentInput[..terminalViewModel!.CaretPosition];
+            string textBeforeCaret = currentInput[..terminalViewModel.CaretPosition];
 
             float textBeforeCaretWidth = MeasureTextWidth(sender, textBeforeCaret);
 

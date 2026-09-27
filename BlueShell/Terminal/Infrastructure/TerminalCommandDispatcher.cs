@@ -12,7 +12,7 @@ namespace BlueShell.Terminal.Infrastructure
         private readonly Dictionary<string, ITerminalCommand> _allCommands =
             allCommands.ToDictionary(command => command.CommandName, command => command);
 
-        public (ITerminalCommand?, int) ResolveCommand(string commandLine)
+        private (ITerminalCommand?, int) ResolveCommand(string commandLine)
         {
             commandLine = commandLine.Trim();
 
@@ -78,22 +78,22 @@ namespace BlueShell.Terminal.Infrastructure
 
             if (terminalCommand == null)
             {
-                context.TerminalOutput.WriteLine("");
+                context.TerminalOutput.WriteLine();
                 context.TerminalOutput.WriteLine($">> Unknown command: {commandLine}!",
                     TerminalMessageKind.Error);
-                context.TerminalOutput.WriteLine("");
+                context.TerminalOutput.WriteLine();
                 return;
             }
             if (returnValue == -4)
             {
-                context.TerminalOutput.WriteLine("");
-                context.TerminalOutput.WriteLine($">> Command does not take arguments, but argument: \"{commandLine.Replace(terminalCommand!.CommandName, "").Trim()}\" was passed!",
+                context.TerminalOutput.WriteLine();
+                context.TerminalOutput.WriteLine($">> Command does not take arguments, but argument: \"{commandLine.Replace(terminalCommand.CommandName, "").Trim()}\" was passed!",
                     TerminalMessageKind.Error);
-                context.TerminalOutput.WriteLine("");
+                context.TerminalOutput.WriteLine();
                 return;
             }
 
-            await terminalCommand!.ExecuteAsync(context, commandLine);
+            await terminalCommand.ExecuteAsync(context, commandLine);
         }
     }
 }
