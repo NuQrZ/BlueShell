@@ -276,7 +276,7 @@
                                     Content="System Processes"
                                     FontFamily="Cascadia Mono"
                                     FontSize="14"
-                                    Tag="SystemProcesses">
+                                    Tag="System Processes">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="/Assets/Icons/Processes.ico"/>
                     </NavigationViewItem.Icon>
@@ -286,7 +286,7 @@
                                     Content="Web Search"
                                     FontFamily="Cascadia Mono"
                                     FontSize="14"
-                                    Tag="WebSearch">
+                                    Tag="Web Search">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="/Assets/Icons/Web.ico"/>
                     </NavigationViewItem.Icon>
@@ -296,7 +296,7 @@
                                     Content="System Info"
                                     FontFamily="Cascadia Mono"
                                     FontSize="14"
-                                    Tag="SystemInfo">
+                                    Tag="System Info">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="/Assets/Icons/System Info.ico"/>
                     </NavigationViewItem.Icon>
@@ -306,7 +306,7 @@
                                             Content="Graphics Card"
                                             FontFamily="Cascadia Mono"
                                             FontSize="14"
-                                            Tag="GraphicsCard">
+                                            Tag="Graphics Card">
                             <NavigationViewItem.Icon>
                                 <ImageIcon Source="/Assets/Icons/Graphics Card.ico"/>
                             </NavigationViewItem.Icon>
@@ -326,7 +326,7 @@
                                             Content="Network Interface"
                                             FontFamily="Cascadia Mono"
                                             FontSize="14"
-                                            Tag="NetworkInterface">
+                                            Tag="Network Interface">
                             <NavigationViewItem.Icon>
                                 <ImageIcon Source="/Assets/Icons/Wifi.ico"/>
                             </NavigationViewItem.Icon>
@@ -336,7 +336,7 @@
                                             Content="Operating System"
                                             FontFamily="Cascadia Mono"
                                             FontSize="14"
-                                            Tag="OperatingSystem">
+                                            Tag="Operating System">
                             <NavigationViewItem.Icon>
                                 <ImageIcon Source="/Assets/Icons/Windows 11.ico"/>
                             </NavigationViewItem.Icon>

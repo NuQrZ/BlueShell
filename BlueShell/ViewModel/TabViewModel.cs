@@ -10,16 +10,23 @@ namespace BlueShell.ViewModel
         [ObservableProperty]
         public partial string SelectedNavItemTag { get; set; } = navTag;
 
+        public int TabIndex
+        {
+            get => Tab.TabIndex;
+            set
+            {
+                Tab.TabIndex = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string TabHeader
         {
             get => Tab.TabHeader;
             set
             {
-                if (Tab.TabHeader != value)
-                {
-                    Tab.TabHeader = value;
-                    OnPropertyChanged();
-                }
+                Tab.TabHeader = value;
+                OnPropertyChanged();
             }
         }
 
@@ -28,12 +35,17 @@ namespace BlueShell.ViewModel
             get => Tab.IconPath;
             set
             {
-                if (Tab.IconPath != value)
-                {
-                    Tab.IconPath = value;
-                    OnPropertyChanged();
-                }
+                Tab.IconPath = value;
+                OnPropertyChanged();
             }
+        }
+
+        public void NavigationItemSelected(int tabIndex, string navTag, string iconPath)
+        {
+            TabIndex = tabIndex;
+            TabHeader = navTag;
+            SelectedNavItemTag = navTag;
+            IconPath = iconPath;
         }
     }
 }

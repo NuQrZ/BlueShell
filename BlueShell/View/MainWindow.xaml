@@ -64,6 +64,7 @@
                      Margin="-5, 0, 0, 0">
                         <TabView.Resources>
                             <Style TargetType="TabViewItem">
+                                <Setter Property="MinWidth" Value="260"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="TabViewItem">
@@ -123,8 +124,8 @@
                                                                Height="24"/>
                                                     <ContentPresenter x:Name="HeaderPresenter"
                                                               Content="{TemplateBinding Header}"
-                                                              FontFamily="Consolas"
-                                                              FontSize="16"
+                                                              FontFamily="Cascadia Mono"
+                                                              FontSize="12"
                                                               FontWeight="SemiLight"
                                                               VerticalAlignment="Center"
                                                               Margin="8,0,0,0"/>
@@ -163,7 +164,14 @@
                                         <Binding Path="IconPath" Mode="TwoWay" Converter="{StaticResource FilePathToIconConverter}"/>
                                     </TabViewItem.IconSource>
                                     <TabViewItem.Header>
-                                        <Binding Path="TabHeader" Mode="TwoWay"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/> 
+                                                <ColumnDefinition Width="Auto"/> 
+                                            </Grid.ColumnDefinitions> 
+                                            <TextBlock Grid.Column="0" Text="{x:Bind TabHeader, Mode=TwoWay}" FontFamily="Cascadia Mono" FontSize="14" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{x:Bind TabIndex, Mode=TwoWay}" FontFamily="Cascadia Mono" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                        </Grid> 
                                     </TabViewItem.Header>
                                     <TabViewItem.Transitions>
                                         <EdgeUIThemeTransition Edge="Left"/>

@@ -28,7 +28,8 @@ namespace BlueShell.ViewModel
         {
             TabModel tabModel = new()
             {
-                TabHeader = $"Terminal {_tabIndex++}",
+                TabHeader = "Terminal",
+                TabIndex = _tabIndex++
             };
 
             TabViewModel tabViewModel = new(tabModel, "Terminal");

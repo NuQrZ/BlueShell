@@ -22,40 +22,28 @@ public sealed partial class MainPage : Page
 
         _itemTagsFilePaths["Terminal"] = "ms-appx:///Assets/Icons/Terminal.ico";
         _itemTagsFilePaths["Help"] = "ms-appx:///Assets/Icons/Help.ico";
-        _itemTagsFilePaths["SystemProcesses"] = "ms-appx:///Assets/Icons/Processes.ico";
-        _itemTagsFilePaths["WebSearch"] = "ms-appx:///Assets/Icons/Web.ico";
-        _itemTagsFilePaths["SystemInfo"] = "ms-appx:///Assets/Icons/System Info.ico";
-        _itemTagsFilePaths["GraphicsCard"] = "ms-appx:///Assets/Icons/Graphics Card.ico";
+        _itemTagsFilePaths["System Processes"] = "ms-appx:///Assets/Icons/Processes.ico";
+        _itemTagsFilePaths["Web Search"] = "ms-appx:///Assets/Icons/Web.ico";
+        _itemTagsFilePaths["System Info"] = "ms-appx:///Assets/Icons/System Info.ico";
+        _itemTagsFilePaths["Graphics Card"] = "ms-appx:///Assets/Icons/Graphics Card.ico";
         _itemTagsFilePaths["Motherboard"] = "ms-appx:///Assets/Icons/Motherboard.ico";
-        _itemTagsFilePaths["NetworkInterface"] = "ms-appx:///Assets/Icons/Wifi.ico";
-        _itemTagsFilePaths["OperatingSystem"] = "ms-appx:///Assets/Icons/Windows 11.ico";
+        _itemTagsFilePaths["Network Interface"] = "ms-appx:///Assets/Icons/Wifi.ico";
+        _itemTagsFilePaths["Operating System"] = "ms-appx:///Assets/Icons/Windows 11.ico";
         _itemTagsFilePaths["Processor"] = "ms-appx:///Assets/Icons/CPU.ico";
 
         _navItemTagsNavViewItems["Terminal"] = TerminalItem;
         _navItemTagsNavViewItems["Help"] = HelpItem;
-        _navItemTagsNavViewItems["SystemProcesses"] = SystemProcessesItem;
-        _navItemTagsNavViewItems["WebSearch"] = WebSearchItem;
-        _navItemTagsNavViewItems["SystemInfo"] = SystemInfoItem;
-        _navItemTagsNavViewItems["GraphicsCard"] = GraphicsCardInfoItem;
+        _navItemTagsNavViewItems["System Processes"] = SystemProcessesItem;
+        _navItemTagsNavViewItems["Web Search"] = WebSearchItem;
+        _navItemTagsNavViewItems["System Info"] = SystemInfoItem;
+        _navItemTagsNavViewItems["Graphics Card"] = GraphicsCardInfoItem;
         _navItemTagsNavViewItems["Motherboard"] = MotherboardInfoItem;
-        _navItemTagsNavViewItems["NetworkInterface"] = NetworkInfoItem;
-        _navItemTagsNavViewItems["OperatingSystem"] = OperatingSystemInfoItem;
+        _navItemTagsNavViewItems["Network Interface"] = NetworkInfoItem;
+        _navItemTagsNavViewItems["Operating System"] = OperatingSystemInfoItem;
         _navItemTagsNavViewItems["Processor"] = ProcessorInfoItem;
 
         _navItemTagsPageTypes["Terminal"] = typeof(TerminalPage);
         _navItemTagsPageTypes["Help"] = typeof(HelpPage);
-    }
-
-    private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(MainWindowViewModel.SelectedTab))
-        {
-            return;
-        }
-
-        TabViewModel? currentTab = _mainWindowViewModel?.SelectedTab;
-        NavigationViewItem navigationViewItem = _navItemTagsNavViewItems[currentTab!.SelectedNavItemTag];
-        NavigationViewControl.SelectedItem = navigationViewItem;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -76,6 +64,18 @@ public sealed partial class MainPage : Page
         _mainWindowViewModel?.PropertyChanged += MainWindowViewModel_PropertyChanged;
 
         UpdateNavigationSelection();
+    }
+
+    private void MainWindowViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainWindowViewModel.SelectedTab))
+        {
+            return;
+        }
+
+        TabViewModel? currentTab = _mainWindowViewModel?.SelectedTab;
+        NavigationViewItem navigationViewItem = _navItemTagsNavViewItems[currentTab!.SelectedNavItemTag];
+        NavigationViewControl.SelectedItem = navigationViewItem;
     }
 
     private void UpdateNavigationSelection()
@@ -117,16 +117,16 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        string tabHeader = _mainWindowViewModel.SelectedTab.TabHeader;
-        string[] headerParts = tabHeader.Split(' ');
+        int tabIndex = _mainWindowViewModel.SelectedTab.TabIndex;
 
-        int tabIndex = Convert.ToInt32(headerParts[1]);
-
-        _mainWindowViewModel.SelectedTab.TabHeader = $"{itemTag} {tabIndex}";
-        _mainWindowViewModel.SelectedTab.IconPath = _itemTagsFilePaths[itemTag];
-        _mainWindowViewModel.SelectedTab.SelectedNavItemTag = itemTag;
+        _mainWindowViewModel.SelectedTab.NavigationItemSelected(tabIndex, itemTag, _itemTagsFilePaths[itemTag]);
 
         _navItemTagsPageTypes.TryGetValue(itemTag, out Type? pageType);
+
+        if (pageType == null)
+        {
+            return;
+        }
 
         MainFrame.Navigate(pageType, _mainWindowViewModel.SelectedTab);
     }
